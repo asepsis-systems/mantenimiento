@@ -1,0 +1,64 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String   // Hashed password
+  name      String
+  role      String   // "ADMIN" | "CREATOR" | "VIEWER"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Report {
+  id          String   @id @default(uuid())
+  title       String   // e.g. "Reporte semanal de mantenimiento"
+  periodFrom  String   // e.g. "12/06/26"
+  periodTo    String   // e.g. "20/06/26"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  items       Item[]
+}
+
+model Item {
+  id          String    @id @default(uuid())
+  reportId    String
+  report      Report    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  itemNumber  Int       // 1, 2, 3
+  date        String    // "15.06.26"
+  responsable String    // "PROMAQUIRSA"
+  machines    Machine[]
+
+  @@index([reportId])
+}
+
+model Machine {
+  id     String @id @default(uuid())
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  name   String // "Ablandador"
+  tasks  Task[]
+
+  @@index([itemId])
+}
+
+model Task {
+  id          String  @id @default(uuid())
+  machineId   String
+  machine     Machine @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  falla       String  // "No Succiona la sal"
+  tipo        String  // "correctivo"
+  descripcion String  // "Limpieza de filtro de succion"
+  repuestos   String  // "oring (tych)"
+  cantidad    String  // "1"
+  estado      String  // "completado" | "proceso" | "pendiente"
+
+  @@index([machineId])
+}
