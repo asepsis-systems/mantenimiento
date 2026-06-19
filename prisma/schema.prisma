@@ -1,6 +1,6 @@
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -15,6 +15,8 @@ model User {
   role      String   // "ADMIN" | "CREATOR" | "VIEWER"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("MaintUser")
 }
 
 model Report {
