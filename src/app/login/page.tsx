@@ -56,7 +56,7 @@ export default function LoginPage() {
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 mb-4 animate-pulse">
             <Wrench className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">ASEPSIS SYSTEMS</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight">ASEPSIS MANTENIMIENTO</h1>
           <p className="text-slate-400 mt-1 font-light">Control de Reportes de Mantenimiento</p>
         </div>
 

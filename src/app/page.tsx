@@ -212,6 +212,16 @@ export default function Dashboard() {
               </div>
             )}
 
+            {user?.role === 'ADMIN' && (
+              <button
+                onClick={() => router.push('/users')}
+                className="py-2.5 px-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 transition-all active:scale-95 flex items-center gap-2"
+              >
+                <UserIcon className="w-4 h-4 text-cyan-400" />
+                <span>Gestionar Usuarios</span>
+              </button>
+            )}
+
             <button
               onClick={handleLogout}
               className="p-2.5 rounded-2xl bg-white/5 hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/30 text-slate-300 hover:text-rose-400 transition-all active:scale-95"
