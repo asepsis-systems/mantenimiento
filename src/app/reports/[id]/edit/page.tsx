@@ -83,6 +83,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
   
   // Track expanded items in accordion
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [draggedOverColumn, setDraggedOverColumn] = useState<string | null>(null);
 
   const getInitials = (name: string) => {
     if (!name) return '??';
@@ -255,21 +256,21 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
     return [
       {
         key: 'doing',
-        title: 'Haciendo',
+        title: 'RESPONSABLE',
         tasks: doingTasks,
         countText: `${doingTasks.length} ${doingTasks.length === 1 ? 'tarjeta' : 'tarjetas'}`,
         dotColor: 'bg-amber-500'
       },
       {
         key: 'done',
-        title: 'Hecho',
+        title: 'DESCRIPCION',
         tasks: doneTasks,
         countText: `${doneTasks.length} ${doneTasks.length === 1 ? 'tarjeta' : 'tarjetas'}`,
         dotColor: 'bg-emerald-500'
       },
       {
         key: 'todo',
-        title: 'Por hacer',
+        title: 'ESTADO',
         tasks: todoTasks,
         countText: `${todoTasks.length} ${todoTasks.length === 1 ? 'tarjeta' : 'tarjetas'}`,
         dotColor: 'bg-slate-400'
@@ -478,6 +479,29 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
     });
   };
 
+  const handlePreviewTaskStatusChange = (taskId: string, targetEstado: string) => {
+    if (!report) return;
+    
+    // Find the task's parent item and machine
+    let foundItem = '';
+    let foundMachine = '';
+    
+    report.items.forEach(item => {
+      item.machines.forEach(m => {
+        m.tasks.forEach(t => {
+          if (t.id === taskId) {
+            foundItem = item.id;
+            foundMachine = m.id;
+          }
+        });
+      });
+    });
+    
+    if (foundItem && foundMachine) {
+      handleTaskFieldChange(foundItem, foundMachine, taskId, 'estado', targetEstado);
+    }
+  };
+ 
   // Save report to database
   const handleSave = async () => {
     if (!report) return;
@@ -1045,7 +1069,30 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                       {columns.map((col) => (
                         <div 
                           key={col.key} 
-                          className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-xl p-3 flex flex-col max-h-[600px] min-h-[350px]"
+                          className={`bg-slate-900/60 backdrop-blur-md border rounded-xl p-3 flex flex-col max-h-[600px] min-h-[350px] transition-all duration-200 ${
+                            draggedOverColumn === col.key 
+                              ? 'border-brand-500/80 bg-slate-900/80 ring-2 ring-brand-500/20' 
+                              : 'border-white/5'
+                          }`}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDragEnter={(e) => {
+                            e.preventDefault();
+                            setDraggedOverColumn(col.key);
+                          }}
+                          onDragLeave={() => {
+                            setDraggedOverColumn(null);
+                          }}
+                          onDrop={(e) => {
+                            setDraggedOverColumn(null);
+                            const taskId = e.dataTransfer.getData('taskId');
+                            if (!taskId) return;
+                            
+                            let targetStatus = 'pendiente';
+                            if (col.key === 'doing') targetStatus = 'proceso';
+                            else if (col.key === 'done') targetStatus = 'completado';
+                            
+                            handlePreviewTaskStatusChange(taskId, targetStatus);
+                          }}
                         >
                           <div className="flex items-center justify-between pb-1 border-b border-white/5 shrink-0">
                             <div className="flex items-center gap-1.5">
@@ -1066,7 +1113,12 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                               col.tasks.map((task) => (
                                 <div 
                                   key={task.taskId} 
-                                  className="bg-slate-800/85 border border-white/10 rounded-lg p-3 shadow-2xs transition-all duration-155"
+                                  draggable={true}
+                                  onDragStart={(e) => {
+                                    e.dataTransfer.setData('taskId', task.taskId);
+                                    e.dataTransfer.effectAllowed = 'move';
+                                  }}
+                                  className="bg-slate-800/85 border border-white/10 rounded-lg p-3 shadow-2xs transition-all duration-155 cursor-grab active:cursor-grabbing hover:border-brand-400/40"
                                 >
                                   <div className="flex items-start gap-1.5">
                                     {col.key === 'done' ? (

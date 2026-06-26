@@ -109,6 +109,7 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [createLoading, setCreateLoading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [draggedOverColumn, setDraggedOverColumn] = useState<string | null>(null);
 
   // Security: Logout on browser back button navigation
   useEffect(() => {
@@ -376,6 +377,52 @@ export default function Dashboard() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleTaskStatusChange = async (taskId: string, targetEstado: string) => {
+    if (!activeReport) return;
+
+    // Create a copy of activeReport with the updated task status
+    const updatedItems = activeReport.items.map(item => ({
+      ...item,
+      machines: item.machines.map(machine => ({
+        ...machine,
+        tasks: machine.tasks.map(task => {
+          if (task.id === taskId) {
+            return { ...task, estado: targetEstado };
+          }
+          return task;
+        })
+      }))
+    }));
+
+    const updatedReport = {
+      ...activeReport,
+      items: updatedItems
+    };
+
+    // Optimistic update
+    setActiveReport(updatedReport);
+    computeFlatRows(updatedReport);
+
+    try {
+      const res = await fetch(`/api/reports/${activeReport.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedReport)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActiveReport(data.report);
+        computeFlatRows(data.report);
+      } else {
+        console.error('Error al actualizar el estado de la tarea:', data.error);
+        alert('Error al guardar el cambio de estado en el servidor. Por favor recarga la página.');
+      }
+    } catch (err) {
+      console.error('Error de red al actualizar la tarea:', err);
+      alert('Error de red al actualizar el estado. Por favor recarga la página.');
+    }
   };
 
   const getStatusStyle = (status: string) => {
@@ -903,7 +950,35 @@ export default function Dashboard() {
                     {columns.map((col) => (
                       <div 
                         key={col.key} 
-                        className="bg-slate-900/65 backdrop-blur-md border border-white/5 rounded-2xl p-4 flex flex-col max-h-[720px] min-h-[450px] kanban-print-col"
+                        className={`bg-slate-900/65 backdrop-blur-md border rounded-2xl p-4 flex flex-col max-h-[720px] min-h-[450px] transition-all duration-200 kanban-print-col ${
+                          draggedOverColumn === col.key 
+                            ? 'border-brand-500/80 bg-slate-900/85 ring-2 ring-brand-500/20' 
+                            : 'border-white/5'
+                        }`}
+                        onDragOver={(e) => {
+                          if (user?.role === 'VIEWER') return;
+                          e.preventDefault();
+                        }}
+                        onDragEnter={(e) => {
+                          if (user?.role === 'VIEWER') return;
+                          e.preventDefault();
+                          setDraggedOverColumn(col.key);
+                        }}
+                        onDragLeave={() => {
+                          setDraggedOverColumn(null);
+                        }}
+                        onDrop={(e) => {
+                          if (user?.role === 'VIEWER') return;
+                          setDraggedOverColumn(null);
+                          const taskId = e.dataTransfer.getData('taskId');
+                          if (!taskId) return;
+                          
+                          let targetStatus = 'pendiente';
+                          if (col.key === 'doing') targetStatus = 'proceso';
+                          else if (col.key === 'done') targetStatus = 'completado';
+                          
+                          handleTaskStatusChange(taskId, targetStatus);
+                        }}
                       >
                         {/* Column Header */}
                         <div className="flex items-center justify-between pb-1 border-b border-white/5">
@@ -927,7 +1002,15 @@ export default function Dashboard() {
                             col.tasks.map((task) => (
                               <div 
                                 key={task.taskId} 
-                                className="bg-slate-800/85 border border-white/10 hover:border-brand-400/40 rounded-xl p-4.5 shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer group kanban-print-card"
+                                draggable={user?.role !== 'VIEWER'}
+                                onDragStart={(e) => {
+                                  if (user?.role === 'VIEWER') return;
+                                  e.dataTransfer.setData('taskId', task.taskId);
+                                  e.dataTransfer.effectAllowed = 'move';
+                                }}
+                                className={`bg-slate-800/85 border border-white/10 hover:border-brand-400/40 rounded-xl p-4.5 shadow-sm hover:shadow-lg transition-all duration-200 group kanban-print-card ${
+                                  user?.role === 'VIEWER' ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+                                }`}
                               >
                                 {/* Title (Description) */}
                                 <div className="flex items-start gap-2.5">
