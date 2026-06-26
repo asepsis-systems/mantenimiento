@@ -79,12 +79,12 @@ export default function LoginPage() {
             style={{ height: '80px', width: 'auto' }}
             className="h-20 w-auto mb-4 object-contain rounded-2xl border border-white/15 shadow-xl"
           />
-          <h1 className="text-2xl font-bold text-white tracking-tight">ASEPSIS MANTENIMIENTO</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">MANTENIMIENTO-ASEPSIS</h1>
           <p className="text-xs uppercase tracking-[0.24em] text-brand-200 mt-2 mb-2">
             MANTENIMIENTO
           </p>
           <p className="text-xs text-slate-400 mt-1.5 max-w-[280px]">
-            Control de Reportes de Mantenimiento
+            Gestión inteligente de control de calidad y almacenamiento documental seguro.
           </p>
         </div>
 

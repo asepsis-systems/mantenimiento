@@ -11,7 +11,10 @@ import {
   ChevronRight, 
   AlertCircle, 
   CheckCircle,
-  Eye
+  Eye,
+  Table,
+  LayoutGrid,
+  Clock
 } from 'lucide-react';
 
 interface Task {
@@ -76,9 +79,40 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   
   // Track expanded items in accordion
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+
+  const getInitials = (name: string) => {
+    if (!name) return '??';
+    const cleanName = name.trim().toUpperCase();
+    const words = cleanName.split(/\s+/);
+    if (words.length >= 2) {
+      return (words[0][0] || '') + (words[1][0] || '');
+    }
+    return cleanName.substring(0, 2);
+  };
+
+  const getAvatarColor = (name: string) => {
+    const colors = [
+      'bg-amber-500 text-white',
+      'bg-sky-505 text-white',
+      'bg-emerald-500 text-white',
+      'bg-violet-500 text-white',
+      'bg-pink-500 text-white',
+      'bg-indigo-500 text-white',
+      'bg-rose-500 text-white',
+      'bg-teal-500 text-white'
+    ];
+    if (!name) return colors[0];
+    let sum = 0;
+    for (let i = 0; i < name.length; i++) {
+      sum += name.charCodeAt(i);
+    }
+    return colors[sum % colors.length];
+  };
+
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -199,6 +233,49 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
 
     return rows;
   }, [report]);
+
+  // Filter tasks out of flatRows for Kanban board preview
+  const validTasks = useMemo(() => {
+    return flatRows.filter(row => !row.taskId.startsWith('empty-') && row.descripcion.trim() !== '');
+  }, [flatRows]);
+
+  const todoTasks = useMemo(() => {
+    return validTasks.filter(row => row.estado.toLowerCase().trim() === 'pendiente');
+  }, [validTasks]);
+
+  const doingTasks = useMemo(() => {
+    return validTasks.filter(row => ['proceso', 'haciendo', 'en proceso', 'en_proceso'].includes(row.estado.toLowerCase().trim()));
+  }, [validTasks]);
+
+  const doneTasks = useMemo(() => {
+    return validTasks.filter(row => ['completado', 'hecho', 'finalizado'].includes(row.estado.toLowerCase().trim()));
+  }, [validTasks]);
+
+  const columns = useMemo(() => {
+    return [
+      {
+        key: 'doing',
+        title: 'Haciendo',
+        tasks: doingTasks,
+        countText: `${doingTasks.length} ${doingTasks.length === 1 ? 'tarjeta' : 'tarjetas'}`,
+        dotColor: 'bg-amber-500'
+      },
+      {
+        key: 'done',
+        title: 'Hecho',
+        tasks: doneTasks,
+        countText: `${doneTasks.length} ${doneTasks.length === 1 ? 'tarjeta' : 'tarjetas'}`,
+        dotColor: 'bg-emerald-500'
+      },
+      {
+        key: 'todo',
+        title: 'Por hacer',
+        tasks: todoTasks,
+        countText: `${todoTasks.length} ${todoTasks.length === 1 ? 'tarjeta' : 'tarjetas'}`,
+        dotColor: 'bg-slate-400'
+      }
+    ];
+  }, [todoTasks, doingTasks, doneTasks]);
 
   const toggleExpand = (itemId: string) => {
     setExpandedItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
@@ -825,107 +902,212 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
               </div>
             </div>
 
-            {/* RIGHT COLUMN: STICKY LIVE PREVIEW TABLE */}
+            {/* RIGHT COLUMN: STICKY LIVE PREVIEW */}
             <div className="lg:col-span-7 lg:sticky lg:top-24 max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
                 <div>
                   <h3 className="font-bold text-slate-800 text-base leading-tight">Vista Previa en Vivo</h3>
                   <p className="text-xs text-slate-400 mt-0.5">Se actualiza en tiempo real al editar a la izquierda.</p>
                 </div>
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-cyan-50 text-cyan-700 text-[10px] font-bold rounded-lg border border-cyan-100 animate-pulse">
-                  <span className="w-1.5 h-1.5 bg-cyan-600 rounded-full" />
-                  Live Preview
-                </span>
-              </div>
+                
+                <div className="flex items-center gap-3">
+                  {/* Selector de Vistas de Vista Previa */}
+                  <div className="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded-xl border border-slate-200/30">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('table')}
+                      className={`flex items-center gap-1 py-1 px-2.5 rounded-lg text-[10px] font-bold transition-all active:scale-[0.98] ${
+                        viewMode === 'table'
+                          ? 'bg-white text-slate-850 shadow-2xs border border-slate-200/10'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      <Table className="w-3.5 h-3.5" />
+                      <span>Tabla</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('kanban')}
+                      className={`flex items-center gap-1 py-1 px-2.5 rounded-lg text-[10px] font-bold transition-all active:scale-[0.98] ${
+                        viewMode === 'kanban'
+                          ? 'bg-white text-slate-850 shadow-2xs border border-slate-200/10'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                      <span>Kanban</span>
+                    </button>
+                  </div>
 
-              {/* Flattened visual table */}
-              <div className="overflow-x-auto">
-                <div className="border border-slate-800 rounded-md overflow-hidden min-w-[850px]">
-                  <table className="w-full border-collapse text-[10.5px] text-slate-900 leading-normal">
-                    <thead>
-                      <tr className="bg-slate-50 border-b border-slate-800">
-                        <th className="border border-slate-800 py-2 px-1 text-center font-bold w-10">Item</th>
-                        <th className="border border-slate-800 py-2 px-1.5 text-center font-bold w-16">Fecha</th>
-                        <th className="border border-slate-800 py-2 px-2 text-center font-bold w-24">Responsable</th>
-                        <th className="border border-slate-800 py-2 px-2 text-center font-bold w-28">Equipo/Maquina</th>
-                        <th className="border border-slate-800 py-2 px-2 text-center font-bold w-36">Falla</th>
-                        <th className="border border-slate-800 py-2 px-1.5 text-center font-bold w-24">Tipo de Mantenimiento</th>
-                        <th className="border border-slate-800 py-2 px-2 text-center font-bold">Descripcion del trabajo</th>
-                        <th className="border border-slate-800 py-2 px-2 text-center font-bold w-36">Repuestos/ Insumos usados</th>
-                        <th className="border border-slate-800 py-2 px-1 text-center font-bold w-12">Cantidad</th>
-                        <th className="border border-slate-800 py-2 px-1.5 text-center font-bold w-24">Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {flatRows.length === 0 ? (
-                        <tr>
-                          <td colSpan={10} className="text-center py-8 text-slate-400 text-xs">
-                            No hay datos. Agrega un Item para comenzar a previsualizar la tabla.
-                          </td>
-                        </tr>
-                      ) : (
-                        flatRows.map((row) => (
-                          <tr key={row.taskId} className="bg-white hover:bg-slate-50/20 transition-colors">
-                            {row.itemSpan > 0 && (
-                              <td rowSpan={row.itemSpan} className="border border-slate-800 text-center align-middle font-bold py-2.5 px-1.5">
-                                {row.itemIndex}
-                              </td>
-                            )}
-
-                            {row.itemSpan > 0 && (
-                              <td rowSpan={row.itemSpan} className="border border-slate-800 text-center align-middle py-2.5 px-1.5">
-                                {row.itemDate}
-                              </td>
-                            )}
-
-                            {row.itemSpan > 0 && (
-                              <td rowSpan={row.itemSpan} className="border border-slate-800 text-center align-middle uppercase py-2.5 px-1.5 font-medium leading-tight max-w-[100px] break-words">
-                                {row.itemResponsable}
-                              </td>
-                            )}
-
-                            {row.machineSpan > 0 && (
-                              <td rowSpan={row.machineSpan} className="border border-slate-800 text-left align-middle font-semibold py-2.5 px-2">
-                                {row.machineName}
-                              </td>
-                            )}
-
-                            {row.fallaSpan > 0 && (
-                              <td rowSpan={row.fallaSpan} className="border border-slate-800 text-left align-middle py-2.5 px-2 max-w-[130px] break-words">
-                                {row.falla || '-'}
-                              </td>
-                            )}
-
-                            {row.tipoSpan > 0 && (
-                              <td rowSpan={row.tipoSpan} className="border border-slate-800 text-center align-middle py-2.5 px-1.5 capitalize max-w-[90px] break-words">
-                                {row.tipo || '-'}
-                              </td>
-                            )}
-
-                            {row.descripcionSpan > 0 && (
-                              <td rowSpan={row.descripcionSpan} className="border border-slate-800 text-left align-middle py-2.5 px-2 leading-tight">
-                                {row.descripcion || '-'}
-                              </td>
-                            )}
-
-                            <td className="border border-slate-800 text-left align-middle py-2.5 px-2 max-w-[120px] break-words">
-                              {row.repuestos}
-                            </td>
-
-                            <td className="border border-slate-800 text-center align-middle py-2.5 px-1">
-                              {row.cantidad}
-                            </td>
-
-                            <td className={getStatusStyle(row.estado)}>
-                              {row.estado}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-cyan-50 text-cyan-700 text-[9px] font-bold rounded-lg border border-cyan-100">
+                    <span className="w-1.5 h-1.5 bg-cyan-600 rounded-full animate-pulse" />
+                    Live
+                  </span>
                 </div>
               </div>
+
+              {viewMode === 'table' ? (
+                /* Flattened visual table */
+                <div className="overflow-x-auto">
+                  <div className="border border-slate-800 rounded-md overflow-hidden min-w-[850px]">
+                    <table className="w-full border-collapse text-[10.5px] text-slate-900 leading-normal">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-800">
+                          <th className="border border-slate-800 py-2 px-1 text-center font-bold w-10">Item</th>
+                          <th className="border border-slate-800 py-2 px-1.5 text-center font-bold w-16">Fecha</th>
+                          <th className="border border-slate-800 py-2 px-2 text-center font-bold w-24">Responsable</th>
+                          <th className="border border-slate-800 py-2 px-2 text-center font-bold w-28">Equipo/Maquina</th>
+                          <th className="border border-slate-800 py-2 px-2 text-center font-bold w-36">Falla</th>
+                          <th className="border border-slate-800 py-2 px-1.5 text-center font-bold w-24">Tipo de Mantenimiento</th>
+                          <th className="border border-slate-800 py-2 px-2 text-center font-bold">Descripcion del trabajo</th>
+                          <th className="border border-slate-800 py-2 px-2 text-center font-bold w-36">Repuestos/ Insumos usados</th>
+                          <th className="border border-slate-800 py-2 px-1 text-center font-bold w-12">Cantidad</th>
+                          <th className="border border-slate-800 py-2 px-1.5 text-center font-bold w-24">Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {flatRows.length === 0 ? (
+                          <tr>
+                            <td colSpan={10} className="text-center py-8 text-slate-400 text-xs">
+                              No hay datos. Agrega un Item para comenzar a previsualizar la tabla.
+                            </td>
+                          </tr>
+                        ) : (
+                          flatRows.map((row) => (
+                            <tr key={row.taskId} className="bg-white hover:bg-slate-50/20 transition-colors">
+                              {row.itemSpan > 0 && (
+                                <td rowSpan={row.itemSpan} className="border border-slate-800 text-center align-middle font-bold py-2.5 px-1.5">
+                                  {row.itemIndex}
+                                </td>
+                              )}
+
+                              {row.itemSpan > 0 && (
+                                <td rowSpan={row.itemSpan} className="border border-slate-800 text-center align-middle py-2.5 px-1.5">
+                                  {row.itemDate}
+                                </td>
+                              )}
+
+                              {row.itemSpan > 0 && (
+                                <td rowSpan={row.itemSpan} className="border border-slate-800 text-center align-middle uppercase py-2.5 px-1.5 font-medium leading-tight max-w-[100px] break-words">
+                                  {row.itemResponsable}
+                                </td>
+                              )}
+
+                              {row.machineSpan > 0 && (
+                                <td rowSpan={row.machineSpan} className="border border-slate-800 text-left align-middle font-semibold py-2.5 px-2">
+                                  {row.machineName}
+                                </td>
+                              )}
+
+                              {row.fallaSpan > 0 && (
+                                <td rowSpan={row.fallaSpan} className="border border-slate-800 text-left align-middle py-2.5 px-2 max-w-[130px] break-words">
+                                  {row.falla || '-'}
+                                </td>
+                              )}
+
+                              {row.tipoSpan > 0 && (
+                                <td rowSpan={row.tipoSpan} className="border border-slate-800 text-center align-middle py-2.5 px-1.5 capitalize max-w-[90px] break-words">
+                                  {row.tipo || '-'}
+                                </td>
+                              )}
+
+                              {row.descripcionSpan > 0 && (
+                                <td rowSpan={row.descripcionSpan} className="border border-slate-800 text-left align-middle py-2.5 px-2 leading-tight">
+                                  {row.descripcion || '-'}
+                                </td>
+                              )}
+
+                              <td className="border border-slate-800 text-left align-middle py-2.5 px-2 max-w-[120px] break-words">
+                                {row.repuestos}
+                              </td>
+
+                              <td className="border border-slate-800 text-center align-middle py-2.5 px-1">
+                                {row.cantidad}
+                              </td>
+
+                              <td className={getStatusStyle(row.estado)}>
+                                {row.estado}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                /* Kanban Preview */
+                <div className="w-full overflow-x-auto">
+                  <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 rounded-2xl p-4 sm:p-5 border border-slate-800 shadow-md relative overflow-hidden min-w-[700px]">
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:2.5rem_2.5rem] opacity-20 pointer-events-none" />
+                    
+                    <div className="grid grid-cols-3 gap-4 relative z-10">
+                      {columns.map((col) => (
+                        <div 
+                          key={col.key} 
+                          className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-xl p-3 flex flex-col max-h-[600px] min-h-[350px]"
+                        >
+                          <div className="flex items-center justify-between pb-1 border-b border-white/5 shrink-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`w-2 h-2 rounded-full ${col.dotColor}`} />
+                              <h4 className="font-bold text-white text-[11px] uppercase tracking-wide">{col.title}</h4>
+                            </div>
+                            <span className="text-[9px] text-slate-400 bg-white/5 py-0.5 px-1.5 rounded-full border border-white/5 font-semibold">
+                              {col.tasks.length}
+                            </span>
+                          </div>
+
+                          <div className="space-y-2.5 overflow-y-auto flex-1 mt-3 pr-1 py-1">
+                            {col.tasks.length === 0 ? (
+                              <div className="h-20 border border-dashed border-white/10 rounded-lg flex items-center justify-center text-[9.5px] text-slate-600 bg-white/2 italic">
+                                Sin tareas
+                              </div>
+                            ) : (
+                              col.tasks.map((task) => (
+                                <div 
+                                  key={task.taskId} 
+                                  className="bg-slate-800/85 border border-white/10 rounded-lg p-3 shadow-2xs transition-all duration-155"
+                                >
+                                  <div className="flex items-start gap-1.5">
+                                    {col.key === 'done' ? (
+                                      <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                                    ) : col.key === 'doing' ? (
+                                      <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
+                                    ) : (
+                                      <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                                    )}
+                                    <h5 className="font-semibold text-white text-[10.5px] leading-snug">
+                                      {task.descripcion}
+                                    </h5>
+                                  </div>
+
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    <span className="text-[8px] font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-900/40 py-0.5 px-1.5 rounded-md uppercase shrink-0">
+                                      {task.machineName}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/5 shrink-0">
+                                    <span className="text-[8px] text-slate-500 font-light truncate max-w-[80px]">
+                                      {task.itemResponsable}
+                                    </span>
+                                    <div 
+                                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[8.5px] font-bold border border-slate-900/50 shrink-0 ${getAvatarColor(task.itemResponsable)}`}
+                                      title={task.itemResponsable}
+                                    >
+                                      {getInitials(task.itemResponsable)}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
           </div>

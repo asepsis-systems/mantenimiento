@@ -66,6 +66,34 @@ model Task {
 }
 
 // ==========================================
+// NEW MODELS: SPARE PARTS & LICENSES
+// ==========================================
+
+model SparePart {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  stock       Int      @default(0)
+  minStock    Int      @default(0)
+  price       Float?
+  location    String?  // Storage shelf/bin
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model License {
+  id          String   @id @default(uuid())
+  name        String
+  entity      String   // Issuing entity (e.g. SUSALUD, Diresa)
+  code        String?  // License number/code
+  issueDate   String
+  expiryDate  String
+  status      String   // "VIGENTE" | "VENCIDO" | "EN_TRAMITE"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ==========================================
 // MODELS FROM FILE MANAGER (ISO.ASEPSIS.PE)
 // To prevent Prisma from dropping them on db push
 // ==========================================
@@ -91,6 +119,10 @@ model Node {
   parent     Node?    @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children   Node[]   @relation("FolderHierarchy")
 
+  // Relaciones del módulo de áreas
+  areaFolder Area?     @relation("AreaFolderNode")
+  document   Document? @relation("DocumentNode")
+
   @@index([parentId])
 }
 
@@ -101,11 +133,22 @@ model AsepsisUser {
   name      String
   role      String          // e.g. "CREATOR", "VERIFIER", "ADMIN"
   signature String?         // Path to digital signature image
+  cargo     String?         // Cargo de la persona
+  email     String?         // Correo electrónico
   sessions  AsepsisSession[]
+  
+  // Relaciones del módulo de áreas
+  areaId     String?
+  area       Area?          @relation("UserArea", fields: [areaId], references: [id])
+  verifiers  Verifier[]
+  documents  Document[]     @relation("CreatorRelation")
+  signatures Signature[]
+
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 
   @@map("User")
+  @@index([areaId])
 }
 
 model AsepsisSession {
@@ -116,4 +159,81 @@ model AsepsisSession {
   createdAt DateTime    @default(now())
 
   @@map("Session")
+}
+
+model Area {
+  id           String     @id @default(uuid())
+  name         String     @unique
+  color        String?
+  folderNodeId String?    @unique
+  folderNode   Node?      @relation("AreaFolderNode", fields: [folderNodeId], references: [id])
+  users        AsepsisUser[] @relation("UserArea")
+  verifiers    Verifier[]
+  documents    Document[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([folderNodeId])
+}
+
+model Verifier {
+  id        String   @id @default(uuid())
+  areaId    String
+  area      Area     @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  userId    String
+  user      AsepsisUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  signOrder Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([areaId, userId])
+  @@index([areaId])
+  @@index([userId])
+}
+
+model Document {
+  id         String      @id @default(uuid())
+  areaId     String
+  area       Area        @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  nodeId     String?     @unique
+  node       Node?       @relation("DocumentNode", fields: [nodeId], references: [id], onDelete: Cascade)
+  status     String
+  creatorId  String
+  creator    AsepsisUser @relation("CreatorRelation", fields: [creatorId], references: [id], onDelete: Cascade)
+  signatures Signature[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([areaId])
+  @@index([creatorId])
+  @@index([nodeId])
+}
+
+model Signature {
+  id         String    @id @default(uuid())
+  documentId String
+  document   Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId     String
+  user       AsepsisUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status     String
+  signedAt   DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  pageNumber Int?
+  coordX     Float?
+  coordY     Float?
+  ipAddress  String?
+
+  @@unique([documentId, userId])
+  @@index([documentId])
+  @@index([userId])
+}
+
+model Audit {
+  id        String   @id @default(uuid())
+  username  String
+  action    String
+  detail    String   @db.Text
+  createdAt DateTime @default(now())
 }
