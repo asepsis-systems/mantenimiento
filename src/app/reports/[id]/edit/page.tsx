@@ -529,7 +529,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-        <svg className="animate-spin h-10 w-10 text-cyan-600" fill="none" viewBox="0 0 24 24">
+        <svg className="animate-spin h-10 w-10 text-brand-600" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
         </svg>
@@ -588,7 +588,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
             <button
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center gap-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 px-4 rounded-2xl transition-all text-sm shadow-md shadow-cyan-600/10 hover:shadow-cyan-500/15 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 px-4 rounded-2xl transition-all text-sm shadow-md shadow-brand-600/10 hover:shadow-brand-500/15 disabled:opacity-50"
             >
               {saving ? (
                 <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -636,7 +636,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                       value={report.title}
                       onChange={(e) => handleReportTitleChange(e.target.value)}
                       placeholder="Reporte semanal de mantenimiento"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-800 font-semibold focus:outline-none focus:border-cyan-500 text-sm"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-800 font-semibold focus:outline-none focus:border-brand-500 text-sm"
                     />
                   </div>
 
@@ -648,7 +648,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                         value={report.periodFrom}
                         onChange={(e) => handlePeriodChange('periodFrom', e.target.value)}
                         placeholder="12/06/26"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-800 text-sm focus:outline-none focus:border-cyan-500"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-800 text-sm focus:outline-none focus:border-brand-500"
                       />
                     </div>
                     <div>
@@ -658,7 +658,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                         value={report.periodTo}
                         onChange={(e) => handlePeriodChange('periodTo', e.target.value)}
                         placeholder="20/06/26"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-800 text-sm focus:outline-none focus:border-cyan-500"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-800 text-sm focus:outline-none focus:border-brand-500"
                       />
                     </div>
                   </div>
@@ -671,7 +671,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                   <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Items del Reporte ({report.items.length})</h3>
                   <button
                     onClick={addItem}
-                    className="inline-flex items-center gap-1 text-cyan-600 hover:text-cyan-500 text-xs font-bold bg-cyan-50 hover:bg-cyan-100/60 border border-cyan-100 py-1.5 px-3 rounded-xl transition-colors"
+                    className="inline-flex items-center gap-1 text-brand-600 hover:text-brand-500 text-xs font-bold bg-brand-50 hover:bg-brand-100/60 border border-brand-100 py-1.5 px-3 rounded-xl transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Agregar Item</span>
@@ -719,7 +719,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                                 value={item.date}
                                 onChange={(e) => handleItemFieldChange(item.id, 'date', e.target.value)}
                                 placeholder="15.06.26"
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-1.5 px-2.5 text-slate-800 text-xs focus:outline-none focus:border-cyan-500"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-1.5 px-2.5 text-slate-800 text-xs focus:outline-none focus:border-brand-500"
                               />
                             </div>
                             <div>
@@ -729,7 +729,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                                 value={item.responsable}
                                 onChange={(e) => handleItemFieldChange(item.id, 'responsable', e.target.value)}
                                 placeholder="PROMAQUIRSA"
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-1.5 px-2.5 text-slate-800 text-xs focus:outline-none focus:border-cyan-500 uppercase font-medium"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-1.5 px-2.5 text-slate-800 text-xs focus:outline-none focus:border-brand-500 uppercase font-medium"
                               />
                             </div>
                           </div>
@@ -766,7 +766,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                                           value={machine.name}
                                           onChange={(e) => handleMachineNameChange(item.id, machine.id, e.target.value)}
                                           placeholder="Nombre del Equipo (ej. Ablandador)"
-                                          className="w-full bg-white border border-slate-200 rounded-xl py-1.5 px-3 text-slate-800 text-xs font-bold focus:outline-none focus:border-cyan-500"
+                                          className="w-full bg-white border border-slate-200 rounded-xl py-1.5 px-3 text-slate-800 text-xs font-bold focus:outline-none focus:border-brand-500"
                                         />
                                       </div>
                                       <button
@@ -784,7 +784,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                                         <h5 className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tareas / Fallas</h5>
                                         <button
                                           onClick={() => addTask(item.id, machine.id)}
-                                          className="text-[9px] font-bold text-cyan-600 hover:text-cyan-500 flex items-center gap-0.5 hover:underline"
+                                          className="text-[9px] font-bold text-brand-600 hover:text-brand-500 flex items-center gap-0.5 hover:underline"
                                         >
                                           <Plus className="w-2.5 h-2.5" />
                                           <span>Agregar Falla</span>
@@ -819,7 +819,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                                                     value={task.falla}
                                                     onChange={(e) => handleTaskFieldChange(item.id, machine.id, task.id, 'falla', e.target.value)}
                                                     placeholder="No Succiona la sal"
-                                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 text-[10.5px] text-slate-800 focus:outline-none focus:border-cyan-500"
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 text-[10.5px] text-slate-800 focus:outline-none focus:border-brand-500"
                                                   />
                                                 </div>
                                                 <div>
@@ -829,7 +829,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                                                     value={task.tipo}
                                                     onChange={(e) => handleTaskFieldChange(item.id, machine.id, task.id, 'tipo', e.target.value)}
                                                     placeholder="correctivo"
-                                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 text-[10.5px] text-slate-800 focus:outline-none focus:border-cyan-500"
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 text-[10.5px] text-slate-800 focus:outline-none focus:border-brand-500"
                                                   />
                                                 </div>
                                               </div>
@@ -842,7 +842,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                                                   value={task.descripcion}
                                                   onChange={(e) => handleTaskFieldChange(item.id, machine.id, task.id, 'descripcion', e.target.value)}
                                                   placeholder="Limpieza de filtro de succion"
-                                                  className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 text-[10.5px] text-slate-800 focus:outline-none focus:border-cyan-500"
+                                                  className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 text-[10.5px] text-slate-800 focus:outline-none focus:border-brand-500"
                                                 />
                                               </div>
 
@@ -855,7 +855,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                                                     value={task.repuestos}
                                                     onChange={(e) => handleTaskFieldChange(item.id, machine.id, task.id, 'repuestos', e.target.value)}
                                                     placeholder="oring (tych)"
-                                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 text-[10.5px] text-slate-800 focus:outline-none focus:border-cyan-500"
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 text-[10.5px] text-slate-800 focus:outline-none focus:border-brand-500"
                                                   />
                                                 </div>
                                                 <div className="col-span-3">
@@ -865,7 +865,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                                                     value={task.cantidad}
                                                     onChange={(e) => handleTaskFieldChange(item.id, machine.id, task.id, 'cantidad', e.target.value)}
                                                     placeholder="1"
-                                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 text-[10.5px] text-slate-800 focus:outline-none focus:border-cyan-500 text-center"
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 text-[10.5px] text-slate-800 focus:outline-none focus:border-brand-500 text-center"
                                                   />
                                                 </div>
                                                 <div className="col-span-4">
@@ -873,7 +873,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                                                   <select
                                                     value={task.estado}
                                                     onChange={(e) => handleTaskFieldChange(item.id, machine.id, task.id, 'estado', e.target.value)}
-                                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 text-[10.5px] text-slate-850 focus:outline-none focus:border-cyan-500 font-medium capitalize"
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 text-[10.5px] text-slate-850 focus:outline-none focus:border-brand-500 font-medium capitalize"
                                                   >
                                                     <option value="completado">completado</option>
                                                     <option value="Completado">Completado</option>
@@ -939,8 +939,8 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                     </button>
                   </div>
 
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-cyan-50 text-cyan-700 text-[9px] font-bold rounded-lg border border-cyan-100">
-                    <span className="w-1.5 h-1.5 bg-cyan-600 rounded-full animate-pulse" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-50 text-brand-700 text-[9px] font-bold rounded-lg border border-brand-100">
+                    <span className="w-1.5 h-1.5 bg-brand-600 rounded-full animate-pulse" />
                     Live
                   </span>
                 </div>
@@ -1082,7 +1082,7 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                                   </div>
 
                                   <div className="flex flex-wrap gap-1 mt-2">
-                                    <span className="text-[8px] font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-900/40 py-0.5 px-1.5 rounded-md uppercase shrink-0">
+                                    <span className="text-[8px] font-bold text-brand-400 bg-brand-950/60 border border-brand-900/40 py-0.5 px-1.5 rounded-md uppercase shrink-0">
                                       {task.machineName}
                                     </span>
                                   </div>

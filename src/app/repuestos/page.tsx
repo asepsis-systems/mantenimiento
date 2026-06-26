@@ -219,7 +219,7 @@ export default function SparePartsPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-        <svg className="animate-spin h-10 w-10 text-cyan-600" fill="none" viewBox="0 0 24 24">
+        <svg className="animate-spin h-10 w-10 text-brand-600" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
         </svg>
@@ -234,7 +234,7 @@ export default function SparePartsPage() {
       <header className="bg-slate-900 text-white shadow-xl shadow-slate-950/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-500 flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 to-emerald-500 flex items-center justify-center shadow-md">
               <Wrench className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -268,7 +268,7 @@ export default function SparePartsPage() {
           <div className="flex items-center gap-4">
             {user && (
               <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl py-1.5 px-3">
-                <UserIcon className="w-4 h-4 text-cyan-400" />
+                <UserIcon className="w-4 h-4 text-brand-400" />
                 <div className="text-left">
                   <p className="text-xs font-semibold leading-tight">{user.name}</p>
                   <p className="text-[10px] text-slate-400 leading-none capitalize">{user.role.toLowerCase()}</p>
@@ -281,7 +281,7 @@ export default function SparePartsPage() {
                 onClick={() => router.push('/users')}
                 className="py-2.5 px-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 transition-all active:scale-95 flex items-center gap-2"
               >
-                <UserIcon className="w-4 h-4 text-cyan-400" />
+                <UserIcon className="w-4 h-4 text-brand-400" />
                 <span>Gestionar Usuarios</span>
               </button>
             )}
@@ -309,7 +309,7 @@ export default function SparePartsPage() {
           {user?.role !== 'VIEWER' && (
             <button
               onClick={openCreateModal}
-              className="flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-3 px-5 rounded-2xl shadow-lg shadow-cyan-600/15 hover:shadow-cyan-500/20 active:scale-[0.98] transition-all"
+              className="flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-medium py-3 px-5 rounded-2xl shadow-lg shadow-brand-600/15 hover:shadow-brand-500/20 active:scale-[0.98] transition-all"
             >
               <Plus className="w-5 h-5" />
               <span>Registrar Repuesto</span>
@@ -320,7 +320,7 @@ export default function SparePartsPage() {
         {/* Dashboard Widgets */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-3xl border border-slate-200/80 p-6 flex items-center gap-4 shadow-xs">
-            <div className="w-12 h-12 rounded-2xl bg-cyan-50 flex items-center justify-center text-cyan-600">
+            <div className="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-brand-600">
               <Package className="w-6 h-6" />
             </div>
             <div>
@@ -360,7 +360,7 @@ export default function SparePartsPage() {
             placeholder="Buscar repuesto por nombre, código o ubicación..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 text-sm transition-all"
+            className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 text-sm transition-all"
           />
         </div>
 
@@ -423,7 +423,7 @@ export default function SparePartsPage() {
                           <td className="p-4 flex items-center justify-center gap-1">
                             <button
                               onClick={() => openEditModal(part)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 transition-colors"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
                               title="Editar"
                             >
                               <Edit3 className="w-4 h-4" />
@@ -479,7 +479,7 @@ export default function SparePartsPage() {
                     value={formCode}
                     onChange={(e) => setFormCode(e.target.value)}
                     placeholder="REP-001"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 font-mono"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 font-mono"
                     required
                   />
                 </div>
@@ -492,7 +492,7 @@ export default function SparePartsPage() {
                     value={formPrice}
                     onChange={(e) => setFormPrice(e.target.value)}
                     placeholder="0.00"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 font-mono"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 font-mono"
                   />
                 </div>
               </div>
@@ -504,7 +504,7 @@ export default function SparePartsPage() {
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="ej. Filtro de carbón activado"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-slate-700 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
                   required
                 />
               </div>
@@ -517,7 +517,7 @@ export default function SparePartsPage() {
                     min="0"
                     value={formStock}
                     onChange={(e) => setFormStock(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
                     required
                   />
                 </div>
@@ -528,7 +528,7 @@ export default function SparePartsPage() {
                     min="0"
                     value={formMinStock}
                     onChange={(e) => setFormMinStock(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
                     required
                   />
                 </div>
@@ -541,7 +541,7 @@ export default function SparePartsPage() {
                   value={formLocation}
                   onChange={(e) => setFormLocation(e.target.value)}
                   placeholder="ej. Almacén Principal - Estante B"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-slate-700 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
                 />
               </div>
 
@@ -556,7 +556,7 @@ export default function SparePartsPage() {
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-colors disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-colors disabled:opacity-50"
                 >
                   {actionLoading ? 'Guardando...' : 'Guardar Repuesto'}
                 </button>

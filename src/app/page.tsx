@@ -455,7 +455,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-        <svg className="animate-spin h-10 w-10 text-cyan-600" fill="none" viewBox="0 0 24 24">
+        <svg className="animate-spin h-10 w-10 text-brand-600" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
         </svg>
@@ -470,7 +470,7 @@ export default function Dashboard() {
       <header className="bg-slate-900 text-white shadow-xl shadow-slate-950/10 no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-500 flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 to-emerald-500 flex items-center justify-center shadow-md">
               <Wrench className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -504,7 +504,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-4">
             {user && (
               <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl py-1.5 px-3">
-                <UserIcon className="w-4 h-4 text-cyan-400" />
+                <UserIcon className="w-4 h-4 text-brand-400" />
                 <div className="text-left">
                   <p className="text-xs font-semibold leading-tight">{user.name}</p>
                   <p className="text-[10px] text-slate-400 leading-none capitalize">{user.role.toLowerCase()}</p>
@@ -517,7 +517,7 @@ export default function Dashboard() {
                 onClick={() => router.push('/users')}
                 className="py-2.5 px-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 transition-all active:scale-95 flex items-center gap-2"
               >
-                <UserIcon className="w-4 h-4 text-cyan-400" />
+                <UserIcon className="w-4 h-4 text-brand-400" />
                 <span>Gestionar Usuarios</span>
               </button>
             )}
@@ -599,7 +599,7 @@ export default function Dashboard() {
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="flex items-center gap-2 bg-white border border-slate-200 hover:border-slate-350 rounded-2xl py-3 px-4.5 text-slate-700 text-sm font-semibold transition-all active:scale-[0.98] shadow-xs"
                 >
-                  <Calendar className="w-4 h-4 text-cyan-600 shrink-0" />
+                  <Calendar className="w-4 h-4 text-brand-600 shrink-0" />
                   <span>
                     {activeReport 
                       ? `Periodo: del ${activeReport.periodFrom} al ${activeReport.periodTo}`
@@ -621,12 +621,12 @@ export default function Dashboard() {
                           }}
                           className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between ${
                             r.id === selectedReportId
-                              ? 'bg-cyan-50 text-cyan-700 font-bold'
+                              ? 'bg-brand-50 text-brand-700 font-bold'
                               : 'text-slate-650 hover:bg-slate-50'
                           }`}
                         >
                           <span>del {r.periodFrom} al {r.periodTo}</span>
-                          {r.id === selectedReportId && <span className="w-1.5 h-1.5 bg-cyan-600 rounded-full" />}
+                          {r.id === selectedReportId && <span className="w-1.5 h-1.5 bg-brand-600 rounded-full" />}
                         </button>
                       ))}
                     </div>
@@ -666,7 +666,7 @@ export default function Dashboard() {
               <button
                 onClick={handleCreateReport}
                 disabled={createLoading}
-                className="flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-3 px-4.5 rounded-2xl shadow-lg shadow-cyan-600/15 hover:shadow-cyan-500/20 active:scale-[0.98] transition-all disabled:opacity-50 text-sm"
+                className="flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-semibold py-3 px-4.5 rounded-2xl shadow-lg shadow-brand-600/15 hover:shadow-brand-500/20 active:scale-[0.98] transition-all disabled:opacity-50 text-sm"
               >
                 {createLoading ? (
                   <div className="w-4.5 h-4.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -701,7 +701,7 @@ export default function Dashboard() {
             {user?.role !== 'VIEWER' && (
               <button
                 onClick={handleCreateReport}
-                className="mt-5 text-cyan-600 hover:text-cyan-500 font-semibold text-sm flex items-center gap-1.5 hover:underline"
+                className="mt-5 text-brand-600 hover:text-brand-500 font-semibold text-sm flex items-center gap-1.5 hover:underline"
               >
                 Crear reporte ahora &rarr;
               </button>
@@ -709,7 +709,7 @@ export default function Dashboard() {
           </div>
         ) : detailLoading ? (
           <div className="h-[50vh] flex flex-col items-center justify-center gap-4">
-            <svg className="animate-spin h-10 w-10 text-cyan-600" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-10 w-10 text-brand-600" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
@@ -721,7 +721,7 @@ export default function Dashboard() {
             <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 flex flex-col sm:flex-row items-center justify-between gap-4 no-print">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500">
-                  <Calendar className="w-5 h-5 text-cyan-600" />
+                  <Calendar className="w-5 h-5 text-brand-600" />
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-800 text-sm uppercase">{activeReport.title}</h4>
@@ -740,7 +740,7 @@ export default function Dashboard() {
 
                 <button
                   onClick={handlePrint}
-                  className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 hover:border-cyan-500/35 hover:bg-cyan-50 text-slate-700 hover:text-cyan-800 font-semibold py-2.5 px-4 rounded-xl transition-all text-xs shadow-xs"
+                  className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 hover:border-brand-500/35 hover:bg-brand-50 text-slate-700 hover:text-brand-800 font-semibold py-2.5 px-4 rounded-xl transition-all text-xs shadow-xs"
                 >
                   <Printer className="w-4 h-4" />
                   <span>Imprimir PDF</span>
@@ -945,7 +945,7 @@ export default function Dashboard() {
 
                                 {/* Badges */}
                                 <div className="flex flex-wrap gap-1.5 mt-3">
-                                  <span className="text-[8.5px] font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-900/40 py-0.5 px-2 rounded-md uppercase tracking-wider shrink-0 kanban-print-badge">
+                                  <span className="text-[8.5px] font-bold text-brand-400 bg-brand-950/60 border border-brand-900/40 py-0.5 px-2 rounded-md uppercase tracking-wider shrink-0 kanban-print-badge">
                                     {task.machineName}
                                   </span>
                                   {task.falla && (

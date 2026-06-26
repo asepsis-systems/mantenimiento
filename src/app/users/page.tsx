@@ -202,7 +202,7 @@ export default function UserManagement() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-        <svg className="animate-spin h-10 w-10 text-cyan-600" fill="none" viewBox="0 0 24 24">
+        <svg className="animate-spin h-10 w-10 text-brand-600" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
         </svg>
@@ -225,7 +225,7 @@ export default function UserManagement() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-emerald-500 flex items-center justify-center shadow-md">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-500 to-emerald-500 flex items-center justify-center shadow-md">
                 <Wrench className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -236,7 +236,7 @@ export default function UserManagement() {
           </div>
 
           <div className="text-right">
-            <span className="bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 py-1.5 px-3 rounded-2xl text-xs font-semibold">
+            <span className="bg-brand-500/20 text-brand-400 border border-brand-500/30 py-1.5 px-3 rounded-2xl text-xs font-semibold">
               Módulo de Administración
             </span>
           </div>
@@ -253,7 +253,7 @@ export default function UserManagement() {
 
           <button
             onClick={openCreateModal}
-            className="flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-3 px-5 rounded-2xl shadow-lg shadow-cyan-600/10 active:scale-[0.98] transition-all"
+            className="flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-medium py-3 px-5 rounded-2xl shadow-lg shadow-brand-600/10 active:scale-[0.98] transition-all"
           >
             <UserPlus className="w-4.5 h-4.5" />
             <span>Crear Nuevo Usuario</span>
@@ -293,7 +293,7 @@ export default function UserManagement() {
                     <td className="py-4 px-6 font-mono text-slate-600">@{u.username}</td>
                     <td className="py-4 px-6">
                       <span className={`inline-flex items-center gap-1.5 py-1 px-3 rounded-lg text-xs font-semibold ${
-                        u.role === 'ADMIN' ? 'bg-cyan-50 text-cyan-700 border border-cyan-100' :
+                        u.role === 'ADMIN' ? 'bg-brand-50 text-brand-700 border border-brand-100' :
                         u.role === 'CREATOR' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
                         'bg-slate-100 text-slate-700 border border-slate-200/40'
                       }`}>
@@ -306,7 +306,7 @@ export default function UserManagement() {
                     <td className="py-4 px-6 text-right flex items-center justify-end gap-2.5">
                       <button
                         onClick={() => openEditModal(u)}
-                        className="p-2 rounded-xl text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 transition-colors"
+                        className="p-2 rounded-xl text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
                         title="Editar Usuario"
                       >
                         <Edit3 className="w-4.5 h-4.5" />
@@ -368,7 +368,7 @@ export default function UserManagement() {
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     disabled={modalLoading}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-slate-800 text-sm focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-slate-800 text-sm focus:outline-none focus:border-brand-500"
                     required
                   />
                 </div>
@@ -387,7 +387,7 @@ export default function UserManagement() {
                     value={formUsername}
                     onChange={(e) => setFormUsername(e.target.value)}
                     disabled={modalLoading}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-7 pr-3 text-slate-800 text-sm focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-7 pr-3 text-slate-800 text-sm focus:outline-none focus:border-brand-500"
                     required
                   />
                 </div>
@@ -408,7 +408,7 @@ export default function UserManagement() {
                     value={formPassword}
                     onChange={(e) => setFormPassword(e.target.value)}
                     disabled={modalLoading}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-slate-800 text-sm focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-slate-800 text-sm focus:outline-none focus:border-brand-500"
                     required={modalMode === 'create'}
                   />
                 </div>
@@ -425,7 +425,7 @@ export default function UserManagement() {
                     value={formRole}
                     onChange={(e) => setFormRole(e.target.value)}
                     disabled={modalLoading || (editingUserId === currentUser?.id && formRole !== 'ADMIN')}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-slate-800 text-sm focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-slate-800 text-sm focus:outline-none focus:border-brand-500"
                   >
                     <option value="CREATOR">Técnico / Editor (puede crear y modificar reportes)</option>
                     <option value="VIEWER">Supervisor / Lector (solo puede visualizar y exportar)</option>
@@ -452,7 +452,7 @@ export default function UserManagement() {
                 <button
                   type="submit"
                   disabled={modalLoading}
-                  className="py-2 px-4 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-xl text-sm shadow-md shadow-cyan-600/10 active:scale-98 transition-all flex items-center gap-1.5"
+                  className="py-2 px-4 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl text-sm shadow-md shadow-brand-600/10 active:scale-98 transition-all flex items-center gap-1.5"
                 >
                   {modalLoading && (
                     <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
