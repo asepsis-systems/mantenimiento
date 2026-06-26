@@ -234,8 +234,12 @@ export default function SparePartsPage() {
       <header className="bg-slate-900 text-white shadow-xl shadow-slate-950/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 to-emerald-500 flex items-center justify-center shadow-md">
-              <Wrench className="w-5 h-5 text-white" />
+            <div className="bg-white rounded-xl p-1 shadow-md shrink-0 flex items-center justify-center w-12 h-10">
+              <img 
+                src="/logo2.jpg" 
+                alt="Asepsis Logo" 
+                className="h-8 w-auto object-contain rounded-lg"
+              />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight">ASEPSIS SYSTEMS</h1>
