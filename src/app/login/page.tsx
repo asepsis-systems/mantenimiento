@@ -1,26 +1,43 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, User, Eye, EyeOff, AlertCircle, Wrench } from 'lucide-react';
+import { Lock, User as UserIcon, Eye, EyeOff, ShieldAlert, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const checkAndClearSession = async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+        if (res.ok && data.authenticated) {
+          // If they land on the login page but have an active session, automatically log them out
+          await fetch('/api/auth/logout', { method: 'POST' });
+          router.refresh();
+        }
+      } catch (err) {
+        console.error('Error al comprobar/cerrar sesión:', err);
+      }
+    };
+    checkAndClearSession();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {
-      setError('Por favor complete todos los campos.');
+      setError('Por favor, ingresa tu usuario y contraseña.');
       return;
     }
 
-    setError('');
     setLoading(true);
+    setError(null);
 
     try {
       const response = await fetch('/api/auth/login', {
@@ -45,101 +62,112 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 bg-slate-900 overflow-hidden relative">
-      {/* Background gradients */}
-      <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-cyan-500/20 blur-[120px]" />
-      <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-emerald-500/10 blur-[120px]" />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-slate-950 font-sans selection:bg-brand-500 selection:text-white">
+      {/* Premium background effects */}
+      <div className="absolute top-[-20%] left-[-10%] w-[60%] aspect-square rounded-full bg-gradient-to-tr from-brand-600/35 to-accent-teal/20 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] aspect-square rounded-full bg-gradient-to-br from-indigo-700/30 to-brand-950/40 blur-[100px] pointer-events-none" />
 
-      <div className="w-full max-w-md animate-fade-in relative z-10">
-        {/* Logo and Brand */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 mb-4 animate-pulse">
-            <Wrench className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">ASEPSIS MANTENIMIENTO</h1>
-          <p className="text-slate-400 mt-1 font-light">Control de Reportes de Mantenimiento</p>
+      {/* Decorative floating grids/patterns */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30 pointer-events-none" />
+
+      <div className="w-full max-w-md z-10">
+        {/* Logo and branding */}
+        <div className="flex flex-col items-center mb-8 text-center animate-in fade-in slide-in-from-top-4 duration-500">
+          <img 
+            src="/logo2.jpg" 
+            alt="ASEPSIS logo" 
+            style={{ height: '80px', width: 'auto' }}
+            className="h-20 w-auto mb-4 object-contain rounded-2xl border border-white/15 shadow-xl"
+          />
+          <h1 className="text-2xl font-bold text-white tracking-tight">ASEPSIS MANTENIMIENTO</h1>
+          <p className="text-xs uppercase tracking-[0.24em] text-brand-200 mt-2 mb-2">
+            MANTENIMIENTO
+          </p>
+          <p className="text-xs text-slate-400 mt-1.5 max-w-[280px]">
+            Control de Reportes de Mantenimiento
+          </p>
         </div>
 
-        {/* Login Form Card */}
-        <div className="glass-panel rounded-3xl p-8 border border-white/10 shadow-2xl bg-white/5 backdrop-blur-md">
-          <h2 className="text-xl font-semibold text-white mb-6">Iniciar Sesión</h2>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Login glassmorphism card */}
+        <div className="bg-slate-900/70 border border-white/10 backdrop-blur-xl rounded-3xl p-8 shadow-2xl shadow-black/40 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
+          <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
+            {/* Error display */}
             {error && (
-              <div className="p-4 bg-rose-500/10 border border-rose-500/25 rounded-2xl flex items-start gap-3 text-rose-200 text-sm animate-shake">
-                <AlertCircle className="w-5 h-5 shrink-0 text-rose-400" />
+              <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold flex items-start gap-2.5 animate-in shake duration-300">
+                <ShieldAlert className="w-4 h-4 shrink-0 text-rose-400" />
                 <span>{error}</span>
               </div>
             )}
 
-            {/* Username Input */}
-            <div className="space-y-2">
-              <label htmlFor="username" className="text-xs font-medium text-slate-300 uppercase tracking-wider block">
+            {/* Username field */}
+            <div className="space-y-1.5">
+              <label htmlFor="username" className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                 Usuario
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
-                  <User className="w-5 h-5" />
-                </span>
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <UserIcon className="h-4 w-4 text-slate-500" />
+                </div>
                 <input
                   id="username"
                   type="text"
-                  placeholder="admin"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  disabled={loading}
-                  className="w-full bg-slate-950/45 border border-slate-700/50 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-all disabled:opacity-50"
+                  placeholder="ejemplo_usuario"
+                  className="block w-full pl-10 pr-4 py-3 bg-slate-950/60 border border-white/5 hover:border-white/10 focus:border-brand-500 rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:ring-4 focus:ring-brand-500/10 text-sm transition-all"
+                  autoComplete="one-time-code"
                   required
                 />
               </div>
             </div>
 
-            {/* Password Input */}
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-xs font-medium text-slate-300 uppercase tracking-wider block">
-                Contraseña
-              </label>
+            {/* Password field */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <label htmlFor="password" className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  Contraseña
+                </label>
+              </div>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
-                  <Lock className="w-5 h-5" />
-                </span>
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <Lock className="h-4 w-4 text-slate-500" />
+                </div>
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
-                  className="w-full bg-slate-950/45 border border-slate-700/50 rounded-2xl py-3.5 pl-12 pr-12 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-all disabled:opacity-50"
+                  placeholder="••••••••"
+                  className="block w-full pl-10 pr-11 py-3 bg-slate-950/60 border border-white/5 hover:border-white/10 focus:border-brand-500 rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:ring-4 focus:ring-brand-500/10 text-sm transition-all"
+                  autoComplete="new-password"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  disabled={loading}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-white transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-semibold py-3.5 rounded-2xl shadow-lg shadow-cyan-500/15 focus:outline-none active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2 mt-2"
+              className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-semibold text-sm transition-all duration-300 shadow-lg shadow-brand-500/10 hover:shadow-brand-500/20 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
             >
               {loading ? (
                 <>
-                  <svg className="animate-spin h-5 w-5 text-slate-950" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   <span>Iniciando sesión...</span>
                 </>
               ) : (
-                <span>Ingresar al Sistema</span>
+                <>
+                  <span>Ingresar al Sistema</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
               )}
             </button>
           </form>
@@ -152,6 +180,6 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -1,5 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --color-brand-50: #f0f4ff;
+  --color-brand-100: #e1e9ff;
+  --color-brand-200: #c8d7ff;
+  --color-brand-300: #a1bbff;
+  --color-brand-400: #7093ff;
+  --color-brand-500: #4365ff;
+  --color-brand-600: #263fff;
+  --color-brand-700: #1b2eff;
+  --color-brand-800: #1423d4;
+  --color-brand-900: #1725a3;
+  --color-brand-950: #0c1261;
+  --color-accent-teal: #0ea5e9;
+  --color-accent-amber: #f59e0b;
+  --color-accent-rose: #f43f5e;
+  --color-accent-emerald: #10b981;
+}
 
 
 :root {
