@@ -102,15 +102,30 @@ model SparePart {
 }
 
 model License {
-  id          String   @id @default(uuid())
-  name        String
-  entity      String   // Issuing entity (e.g. SUSALUD, Diresa)
-  code        String?  // License number/code
-  issueDate   String
-  expiryDate  String
-  status      String   // "VIGENTE" | "VENCIDO" | "EN_TRAMITE"
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid())
+  name          String
+  entity        String   // Issuing entity (e.g. SUSALUD, Diresa)
+  code          String?  // License number/code
+  issueDate     String
+  expiryDate    String
+  status        String   // "VIGENTE" | "VENCIDO" | "EN_TRAMITE"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  archivoNombre String?
+  archivoPath   String?
+  carpetaId     String?
+  carpeta       LicenciaCarpeta? @relation("FolderLicenses", fields: [carpetaId], references: [id], onDelete: SetNull)
+
+  @@index([carpetaId])
+}
+
+model LicenciaCarpeta {
+  id        String    @id @default(uuid())
+  nombre    String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  licenses  License[] @relation("FolderLicenses")
 }
 
 // ==========================================

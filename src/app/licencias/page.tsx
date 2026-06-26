@@ -15,7 +15,14 @@ import {
   AlertTriangle,
   Clock,
   Calendar,
-  X
+  X,
+  Folder,
+  FolderPlus,
+  Upload,
+  FileText,
+  Eye,
+  ArrowLeft,
+  ChevronRight
 } from 'lucide-react';
 
 interface License {
@@ -28,6 +35,9 @@ interface License {
   status: string; // "VIGENTE" | "VENCIDO" | "EN_TRAMITE"
   createdAt: string;
   updatedAt: string;
+  archivoNombre: string | null;
+  archivoPath: string | null;
+  carpetaId: string | null;
 }
 
 interface User {
@@ -45,8 +55,15 @@ export default function LicensesPage() {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Folders & Navigation states
+  const [carpetas, setCarpetas] = useState<any[]>([]);
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  
   // Dialog/Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formName, setFormName] = useState('');
   const [formEntity, setFormEntity] = useState('');
@@ -54,6 +71,12 @@ export default function LicensesPage() {
   const [formIssueDate, setFormIssueDate] = useState('');
   const [formExpiryDate, setFormExpiryDate] = useState('');
   const [formStatus, setFormStatus] = useState('VIGENTE');
+  const [formCarpetaId, setFormCarpetaId] = useState('');
+  
+  const [newFolderName, setNewFolderName] = useState('');
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [modalFile, setModalFile] = useState<File | null>(null);
+  
   const [actionLoading, setActionLoading] = useState(false);
 
   // Security: Logout on back navigation
@@ -74,10 +97,24 @@ export default function LicensesPage() {
     };
   }, []);
 
-  // Fetch licenses
-  const fetchLicenses = async () => {
+  // Fetch folders
+  const fetchCarpetas = async () => {
     try {
-      const res = await fetch('/api/licencias');
+      const res = await fetch('/api/licencias/carpetas');
+      const data = await res.json();
+      if (data.success) {
+        setCarpetas(data.carpetas);
+      }
+    } catch (err) {
+      console.error('Error al cargar carpetas:', err);
+    }
+  };
+
+  // Fetch licenses
+  const fetchLicenses = async (folderId: string | null) => {
+    try {
+      const url = `/api/licencias?carpetaId=${folderId || 'null'}`;
+      const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
         setLicenses(data.licenses);
@@ -99,7 +136,8 @@ export default function LicensesPage() {
         }
         const meData = await meRes.json();
         setUser(meData.user);
-        await fetchLicenses();
+        await fetchCarpetas();
+        await fetchLicenses(currentFolderId);
       } catch (err) {
         setError('Error de comunicación con el servidor');
       } finally {
@@ -108,6 +146,13 @@ export default function LicensesPage() {
     };
     fetchData();
   }, [router]);
+
+  // Refetch licenses when active folder changes
+  useEffect(() => {
+    if (user) {
+      fetchLicenses(currentFolderId);
+    }
+  }, [currentFolderId, user]);
 
   const handleLogout = async () => {
     try {
@@ -127,6 +172,8 @@ export default function LicensesPage() {
     setFormIssueDate('');
     setFormExpiryDate('');
     setFormStatus('VIGENTE');
+    setFormCarpetaId(currentFolderId || '');
+    setModalFile(null);
     setError('');
     setIsModalOpen(true);
   };
@@ -139,6 +186,8 @@ export default function LicensesPage() {
     setFormIssueDate(lic.issueDate);
     setFormExpiryDate(lic.expiryDate);
     setFormStatus(lic.status);
+    setFormCarpetaId(lic.carpetaId || '');
+    setModalFile(null);
     setError('');
     setIsModalOpen(true);
   };
@@ -153,18 +202,47 @@ export default function LicensesPage() {
     setActionLoading(true);
     setError('');
 
-    const payload = {
-      name: formName.trim(),
-      entity: formEntity.trim(),
-      code: formCode.trim() || null,
-      issueDate: formIssueDate.trim(),
-      expiryDate: formExpiryDate.trim(),
-      status: formStatus
-    };
+    let finalId = editingId;
 
     try {
-      const url = editingId ? `/api/licencias/${editingId}` : '/api/licencias';
-      const method = editingId ? 'PUT' : 'POST';
+      // Step 1: Upload file if selected in the modal
+      if (modalFile) {
+        const formData = new FormData();
+        formData.append('file', modalFile);
+        if (editingId) {
+          formData.append('id', editingId);
+        } else if (formCarpetaId) {
+          formData.append('carpetaId', formCarpetaId);
+        }
+
+        const uploadRes = await fetch('/api/licencias/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const uploadData = await uploadRes.json();
+        
+        if (!uploadRes.ok || !uploadData.success) {
+          throw new Error(uploadData.error || 'Error al subir el archivo adjunto.');
+        }
+        
+        if (!editingId && uploadData.license) {
+          finalId = uploadData.license.id;
+        }
+      }
+
+      // Step 2: Save the license details
+      const payload = {
+        name: formName.trim(),
+        entity: formEntity.trim(),
+        code: formCode.trim() || null,
+        issueDate: formIssueDate.trim(),
+        expiryDate: formExpiryDate.trim(),
+        status: formStatus,
+        carpetaId: formCarpetaId || null
+      };
+
+      const url = finalId ? `/api/licencias/${finalId}` : '/api/licencias';
+      const method = finalId ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
         method,
@@ -175,12 +253,13 @@ export default function LicensesPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         setIsModalOpen(false);
-        await fetchLicenses();
+        setModalFile(null);
+        await fetchLicenses(currentFolderId);
       } else {
         setError(data.error || 'Error al guardar licencia.');
       }
-    } catch (err) {
-      setError('Error de conexión con el servidor.');
+    } catch (err: any) {
+      setError(err.message || 'Error de conexión con el servidor.');
     } finally {
       setActionLoading(false);
     }
@@ -195,12 +274,97 @@ export default function LicensesPage() {
       const res = await fetch(`/api/licencias/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (res.ok && data.success) {
-        await fetchLicenses();
+        await fetchLicenses(currentFolderId);
       } else {
         alert(data.error || 'Error al eliminar licencia');
       }
     } catch (err) {
       alert('Error de conexión al eliminar licencia');
+    }
+  };
+
+  const handleCreateFolder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFolderName.trim()) return;
+
+    setActionLoading(true);
+    try {
+      const res = await fetch('/api/licencias/carpetas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: newFolderName.trim() })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setNewFolderName('');
+        setIsFolderModalOpen(false);
+        await fetchCarpetas();
+      } else {
+        alert(data.error || 'Error al crear carpeta');
+      }
+    } catch (err) {
+      alert('Error de red al crear carpeta');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteFolder = async (folderId: string, folderName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`¿Está seguro de eliminar la carpeta "${folderName}"? Las licencias dentro de ella se moverán a la raíz.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/licencias/carpetas/${folderId}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (currentFolderId === folderId) {
+          setCurrentFolderId(null);
+        }
+        await fetchCarpetas();
+        await fetchLicenses(currentFolderId);
+      } else {
+        alert(data.error || 'Error al eliminar carpeta');
+      }
+    } catch (err) {
+      alert('Error de red al eliminar carpeta');
+    }
+  };
+
+  const handleQuickUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadFile) return;
+
+    setActionLoading(true);
+    const formData = new FormData();
+    formData.append('file', uploadFile);
+    if (currentFolderId) {
+      formData.append('carpetaId', currentFolderId);
+    }
+
+    try {
+      const res = await fetch('/api/licencias/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsUploadModalOpen(false);
+        setUploadFile(null);
+        await fetchLicenses(currentFolderId);
+        if (data.license) {
+          openEditModal(data.license);
+        }
+      } else {
+        alert(data.error || 'Error al subir archivo');
+      }
+    } catch (err) {
+      alert('Error de red al subir archivo');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -311,13 +475,31 @@ export default function LicensesPage() {
           </div>
 
           {user?.role !== 'VIEWER' && (
-            <button
-              onClick={openCreateModal}
-              className="flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-medium py-3 px-5 rounded-2xl shadow-lg shadow-brand-600/15 hover:shadow-brand-500/20 active:scale-[0.98] transition-all"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Registrar Licencia</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => setIsFolderModalOpen(true)}
+                className="flex items-center justify-center gap-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl shadow-xs active:scale-[0.98] transition-all text-xs cursor-pointer"
+              >
+                <FolderPlus className="w-4.5 h-4.5 text-slate-500" />
+                <span>Nueva Carpeta</span>
+              </button>
+
+              <button
+                onClick={() => setIsUploadModalOpen(true)}
+                className="flex items-center justify-center gap-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl shadow-xs active:scale-[0.98] transition-all text-xs cursor-pointer"
+              >
+                <Upload className="w-4.5 h-4.5 text-slate-500" />
+                <span>Subir Archivo</span>
+              </button>
+
+              <button
+                onClick={openCreateModal}
+                className="flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 px-4 rounded-xl shadow-md shadow-brand-600/10 active:scale-[0.98] transition-all text-xs cursor-pointer"
+              >
+                <Plus className="w-4.5 h-4.5" />
+                <span>Registrar Licencia</span>
+              </button>
+            </div>
           )}
         </div>
 
@@ -354,6 +536,63 @@ export default function LicensesPage() {
           </div>
         </div>
 
+        {/* Breadcrumbs Navigation */}
+        <div className="mb-6 flex items-center gap-2 text-sm font-semibold">
+          {currentFolderId !== null ? (
+            <>
+              <button
+                onClick={() => setCurrentFolderId(null)}
+                className="text-slate-500 hover:text-brand-600 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Volver a Raíz</span>
+              </button>
+              <span className="text-slate-300">|</span>
+              <span className="text-slate-800 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200 flex items-center gap-1.5">
+                <Folder className="w-4 h-4 text-amber-500 fill-amber-100/50" />
+                <span>Carpeta: {carpetas.find(c => c.id === currentFolderId)?.nombre || 'Cargando...'}</span>
+              </span>
+            </>
+          ) : (
+            <span className="text-slate-400 flex items-center gap-1">
+              <span>Ubicación actual:</span>
+              <span className="text-slate-800 font-bold">Raíz</span>
+            </span>
+          )}
+        </div>
+
+        {/* Folders Explorer (Grid) - only show at root directory */}
+        {currentFolderId === null && carpetas.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Carpetas</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+              {carpetas.map((folder) => {
+                return (
+                  <div
+                    key={folder.id}
+                    onClick={() => setCurrentFolderId(folder.id)}
+                    className="group relative flex flex-col p-4 rounded-2xl border bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm text-slate-700 transition-all cursor-pointer select-none"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <Folder className="w-8 h-8 text-amber-500 fill-amber-100/40 group-hover:text-amber-600 transition-colors" />
+                      {user?.role !== 'VIEWER' && (
+                        <button
+                          onClick={(e) => handleDeleteFolder(folder.id, folder.nombre, e)}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+                          title="Eliminar Carpeta"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <span className="text-xs font-semibold truncate leading-tight">{folder.nombre}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Search Bar */}
         <div className="mb-6 relative max-w-md">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -380,14 +619,14 @@ export default function LicensesPage() {
                   <th className="p-4 text-center">F. Emisión</th>
                   <th className="p-4 text-center">F. Vencimiento</th>
                   <th className="p-4 text-center">Estado</th>
-                  {user?.role !== 'VIEWER' && <th className="p-4 text-center w-24">Acciones</th>}
+                  <th className="p-4 text-center w-32">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredLicenses.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="p-12 text-center text-slate-400">
-                      No se encontraron licencias registradas.
+                      No se encontraron licencias en esta carpeta.
                     </td>
                   </tr>
                 ) : (
@@ -399,7 +638,22 @@ export default function LicensesPage() {
                         <td className="p-4 font-mono font-bold text-xs text-slate-500">
                           {lic.code ? lic.code : <span className="text-slate-300">-</span>}
                         </td>
-                        <td className="p-4 font-semibold text-slate-800">{lic.name}</td>
+                        <td className="p-4">
+                          <div>
+                            <div className="font-semibold text-slate-800">{lic.name}</div>
+                            {lic.archivoNombre && (
+                              <a
+                                href={`/api/licencias/archivo?id=${lic.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 mt-1 text-[11px] text-brand-600 hover:text-brand-700 font-medium hover:underline bg-brand-50 px-2 py-0.5 rounded-md border border-brand-100"
+                              >
+                                <FileText className="w-3.5 h-3.5 text-brand-500" />
+                                <span>{lic.archivoNombre}</span>
+                              </a>
+                            )}
+                          </div>
+                        </td>
                         <td className="p-4 text-slate-600 font-medium">{lic.entity}</td>
                         <td className="p-4 text-center text-slate-500 text-xs font-mono">{lic.issueDate}</td>
                         <td className={`p-4 text-center text-xs font-mono font-bold ${isExpired ? 'text-rose-600' : 'text-slate-600'}`}>
@@ -414,24 +668,39 @@ export default function LicensesPage() {
                             {lic.status}
                           </span>
                         </td>
-                        {user?.role !== 'VIEWER' && (
-                          <td className="p-4 flex items-center justify-center gap-1">
-                            <button
-                              onClick={() => openEditModal(lic)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
-                              title="Editar"
-                            >
-                              <Edit3 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(lic.id, lic.name)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                              title="Eliminar"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </td>
-                        )}
+                        <td className="p-4">
+                          <div className="flex items-center justify-center gap-1">
+                            {lic.archivoPath && (
+                              <a
+                                href={`/api/licencias/archivo?id=${lic.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
+                                title="Ver / Descargar Archivo"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </a>
+                            )}
+                            {user?.role !== 'VIEWER' && (
+                              <>
+                                <button
+                                  onClick={() => openEditModal(lic)}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors cursor-pointer"
+                                  title="Editar"
+                                >
+                                  <Edit3 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(lic.id, lic.name)}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                  title="Eliminar"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     );
                   })
@@ -445,14 +714,14 @@ export default function LicensesPage() {
       {/* EDIT/CREATE DIALOG */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-md animate-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-md animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
               <h3 className="font-bold text-slate-800 text-base">
                 {editingId ? 'Editar Registro de Autorización' : 'Registrar Nueva Licencia / Permiso'}
               </h3>
               <button 
                 onClick={() => setIsModalOpen(false)} 
-                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
               >
                 <X className="w-4.5 h-4.5" />
               </button>
@@ -527,33 +796,185 @@ export default function LicensesPage() {
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Estado de Vigencia</label>
-                <select
-                  value={formStatus}
-                  onChange={(e) => setFormStatus(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
-                >
-                  <option value="VIGENTE">VIGENTE</option>
-                  <option value="VENCIDO">VENCIDO</option>
-                  <option value="EN_TRAMITE">EN TRÁMITE</option>
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Estado de Vigencia</label>
+                  <select
+                    value={formStatus}
+                    onChange={(e) => setFormStatus(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
+                  >
+                    <option value="VIGENTE">VIGENTE</option>
+                    <option value="VENCIDO">VENCIDO</option>
+                    <option value="EN_TRAMITE">EN TRÁMITE</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Carpeta</label>
+                  <select
+                    value={formCarpetaId}
+                    onChange={(e) => setFormCarpetaId(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
+                  >
+                    <option value="">Ninguna (Raíz)</option>
+                    {carpetas.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1 border-t border-slate-100 pt-3">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  Archivo Adjunto (PDF, JPG, PNG)
+                </label>
+                {editingId && licenses.find(l => l.id === editingId)?.archivoNombre && (
+                  <div className="text-[11px] text-slate-600 mb-2 flex items-center gap-1.5 bg-slate-100 py-1.5 px-3 rounded-lg border border-slate-200">
+                    <FileText className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="font-semibold truncate">
+                      Actual: {licenses.find(l => l.id === editingId)?.archivoNombre}
+                    </span>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      setModalFile(e.target.files[0]);
+                    } else {
+                      setModalFile(null);
+                    }
+                  }}
+                  className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer"
+                />
               </div>
 
               <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-bold transition-colors"
+                  className="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-bold transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-colors disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {actionLoading ? 'Guardando...' : 'Guardar Autorización'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* NEW FOLDER DIALOG */}
+      {isFolderModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <h3 className="font-bold text-slate-800 text-base">Crear Nueva Carpeta</h3>
+              <button 
+                onClick={() => setIsFolderModalOpen(false)} 
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateFolder} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nombre de la Carpeta</label>
+                <input
+                  type="text"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  placeholder="ej. Autorizaciones Diresa"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsFolderModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {actionLoading ? 'Creando...' : 'Crear Carpeta'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* QUICK UPLOAD DIALOG */}
+      {isUploadModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <h3 className="font-bold text-slate-800 text-base">Subir Documento de Licencia</h3>
+              <button 
+                onClick={() => {
+                  setIsUploadModalOpen(false);
+                  setUploadFile(null);
+                }} 
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleQuickUpload} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  Seleccionar Archivo (PDF, JPG, PNG)
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      setUploadFile(e.target.files[0]);
+                    } else {
+                      setUploadFile(null);
+                    }
+                  }}
+                  className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer"
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsUploadModalOpen(false);
+                    setUploadFile(null);
+                  }}
+                  className="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading || !uploadFile}
+                  className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {actionLoading ? 'Subiendo...' : 'Subir Archivo'}
                 </button>
               </div>
             </form>
