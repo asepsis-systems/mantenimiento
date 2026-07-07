@@ -10,7 +10,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, entity, code, issueDate, expiryDate, status, carpetaId, archivoNombre, archivoPath } = body;
+    const { name, entity, code, issueDate, expiryDate, status, details, carpetaId, archivoNombre, archivoPath, archivoNombreCertificado, archivoPathCertificado, archivoNombreProtocolo, archivoPathProtocolo, archivoNombreInformeTecnico, archivoPathInformeTecnico, archivoNombreFactura, archivoPathFactura, archivoNombrePresupuesto, archivoPathPresupuesto, archivoNombreCheckList, archivoPathCheckList } = body;
 
     if (!name || !entity || !issueDate || !expiryDate) {
       return NextResponse.json({ success: false, error: 'El nombre, entidad, fecha de emisión y vencimiento son obligatorios.' }, { status: 400 });
@@ -26,8 +26,21 @@ export async function PUT(
         expiryDate,
         status: status || 'VIGENTE',
         carpetaId: carpetaId !== undefined ? (carpetaId === '' ? null : carpetaId) : undefined,
+        details: details !== undefined ? details : undefined,
         archivoNombre: archivoNombre !== undefined ? archivoNombre : undefined,
-        archivoPath: archivoPath !== undefined ? archivoPath : undefined
+        archivoPath: archivoPath !== undefined ? archivoPath : undefined,
+        archivoNombreCertificado: archivoNombreCertificado !== undefined ? archivoNombreCertificado : undefined,
+        archivoPathCertificado: archivoPathCertificado !== undefined ? archivoPathCertificado : undefined,
+        archivoNombreProtocolo: archivoNombreProtocolo !== undefined ? archivoNombreProtocolo : undefined,
+        archivoPathProtocolo: archivoPathProtocolo !== undefined ? archivoPathProtocolo : undefined,
+        archivoNombreInformeTecnico: archivoNombreInformeTecnico !== undefined ? archivoNombreInformeTecnico : undefined,
+        archivoPathInformeTecnico: archivoPathInformeTecnico !== undefined ? archivoPathInformeTecnico : undefined,
+        archivoNombreFactura: archivoNombreFactura !== undefined ? archivoNombreFactura : undefined,
+        archivoPathFactura: archivoPathFactura !== undefined ? archivoPathFactura : undefined,
+        archivoNombrePresupuesto: archivoNombrePresupuesto !== undefined ? archivoNombrePresupuesto : undefined,
+        archivoPathPresupuesto: archivoPathPresupuesto !== undefined ? archivoPathPresupuesto : undefined,
+        archivoNombreCheckList: archivoNombreCheckList !== undefined ? archivoNombreCheckList : undefined,
+        archivoPathCheckList: archivoPathCheckList !== undefined ? archivoPathCheckList : undefined
       }
     });
 

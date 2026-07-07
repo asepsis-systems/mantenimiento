@@ -46,3 +46,13 @@ next-env.d.ts
 *.db-shm
 *.db-wal
 
+# temp license text files
+*-licencias.txt
+diff-licencias.txt
+git-diff-licencias.txt
+head-licencias.txt
+
+# user uploads
+/uploads/
+
+

@@ -57,6 +57,8 @@ interface FlatRow {
   machineId: string;
   machineName: string;
   taskId: string;
+  extraColumn1: string;
+  extraColumn2: string;
   falla: string;
   tipo: string;
   descripcion: string;
@@ -170,6 +172,8 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
             machineId: machine.id,
             machineName: machine.name,
             taskId: task.id,
+            extraColumn1: '',
+            extraColumn2: '',
             falla: task.falla,
             tipo: task.tipo,
             descripcion: task.descripcion,
@@ -1022,6 +1026,13 @@ export default function ReportEditor({ params }: { params: Promise<{ id: string 
                                   {row.machineName}
                                 </td>
                               )}
+
+                              <td className="border border-slate-800 text-left align-middle py-2.5 px-2">
+                                {row.extraColumn1 || '-'}
+                              </td>
+                              <td className="border border-slate-800 text-left align-middle py-2.5 px-2">
+                                {row.extraColumn2 || '-'}
+                              </td>
 
                               {row.fallaSpan > 0 && (
                                 <td rowSpan={row.fallaSpan} className="border border-slate-800 text-left align-middle py-2.5 px-2 max-w-[130px] break-words">

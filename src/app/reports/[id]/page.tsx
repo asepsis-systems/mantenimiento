@@ -59,6 +59,8 @@ interface FlatRow {
   machineName: string;
   
   taskId: string;
+  extraColumn1: string;
+  extraColumn2: string;
   falla: string;
   tipo: string;
   descripcion: string;
@@ -131,6 +133,8 @@ export default function ReportViewer({ params }: { params: Promise<{ id: string 
             machineId: machine.id,
             machineName: machine.name,
             taskId: task.id,
+            extraColumn1: '',
+            extraColumn2: '',
             falla: task.falla,
             tipo: task.tipo,
             descripcion: task.descripcion,
@@ -446,6 +450,8 @@ export default function ReportViewer({ params }: { params: Promise<{ id: string 
                     <th className="border border-slate-850 py-3.5 px-3.5 text-center font-bold w-20">Fecha</th>
                     <th className="border border-slate-850 py-3.5 px-4 text-center font-bold w-28">Responsable</th>
                     <th className="border border-slate-850 py-3.5 px-4 text-center font-bold w-36">Equipo/Maquina</th>
+                    <th className="border border-slate-850 py-3.5 px-4 text-center font-bold w-32">Extra 1</th>
+                    <th className="border border-slate-850 py-3.5 px-4 text-center font-bold w-32">Extra 2</th>
                     <th className="border border-slate-850 py-3.5 px-4.5 text-center font-bold w-48">Falla</th>
                     <th className="border border-slate-850 py-3.5 px-3.5 text-center font-bold w-28">Tipo de Mantenimiento</th>
                     <th className="border border-slate-850 py-3.5 px-5 text-center font-bold">Descripcion del trabajo</th>
@@ -497,6 +503,16 @@ export default function ReportViewer({ params }: { params: Promise<{ id: string 
                           {row.machineName}
                         </td>
                       )}
+
+                      {/* Extra 1 */}
+                      <td className="border border-slate-850 text-left align-middle px-3 py-2.5 w-32">
+                        {row.extraColumn1 || '-'}
+                      </td>
+
+                      {/* Extra 2 */}
+                      <td className="border border-slate-850 text-left align-middle px-3 py-2.5 w-32">
+                        {row.extraColumn2 || '-'}
+                      </td>
 
                       {/* Falla */}
                       {row.fallaSpan > 0 && (

@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, entity, code, issueDate, expiryDate, status, carpetaId, archivoNombre, archivoPath } = body;
+    const { name, entity, code, issueDate, expiryDate, status, details, carpetaId, archivoNombre, archivoPath, archivoNombreCertificado, archivoPathCertificado, archivoNombreProtocolo, archivoPathProtocolo, archivoNombreInformeTecnico, archivoPathInformeTecnico, archivoNombreFactura, archivoPathFactura, archivoNombrePresupuesto, archivoPathPresupuesto, archivoNombreCheckList, archivoPathCheckList } = body;
 
     if (!name || !entity || !issueDate || !expiryDate) {
       return NextResponse.json({ success: false, error: 'El nombre, entidad, fecha de emisión y vencimiento son obligatorios.' }, { status: 400 });
@@ -43,9 +43,22 @@ export async function POST(request: NextRequest) {
         issueDate,
         expiryDate,
         status: status || 'VIGENTE',
+        details: details || null,
         carpetaId: carpetaId || null,
         archivoNombre: archivoNombre || null,
-        archivoPath: archivoPath || null
+        archivoPath: archivoPath || null,
+        archivoNombreCertificado: archivoNombreCertificado || null,
+        archivoPathCertificado: archivoPathCertificado || null,
+        archivoNombreProtocolo: archivoNombreProtocolo || null,
+        archivoPathProtocolo: archivoPathProtocolo || null,
+        archivoNombreInformeTecnico: archivoNombreInformeTecnico || null,
+        archivoPathInformeTecnico: archivoPathInformeTecnico || null,
+        archivoNombreFactura: archivoNombreFactura || null,
+        archivoPathFactura: archivoPathFactura || null,
+        archivoNombrePresupuesto: archivoNombrePresupuesto || null,
+        archivoPathPresupuesto: archivoPathPresupuesto || null,
+        archivoNombreCheckList: archivoNombreCheckList || null,
+        archivoPathCheckList: archivoPathCheckList || null
       }
     });
 

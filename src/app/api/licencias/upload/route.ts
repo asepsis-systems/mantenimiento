@@ -9,6 +9,13 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const carpetaId = formData.get('carpetaId') as string | null;
+    const licenseIdFromForm = formData.get('id') as string | null;
+    const docType = (formData.get('docType') as string | null) || 'certificado';
+    const expiryDate = (formData.get('expiryDate') as string | null)?.trim() || null;
+    const entity = (formData.get('entity') as string | null)?.trim() || null;
+    const code = (formData.get('code') as string | null)?.trim() || null;
+    const issueDate = (formData.get('issueDate') as string | null)?.trim() || null;
+    const status = (formData.get('status') as string | null)?.trim() || null;
 
     if (!file) {
       return NextResponse.json(
@@ -17,7 +24,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const licenseIdFromForm = formData.get('id') as string | null;
+    const allowedDocTypes = ['certificado', 'protocolo', 'informeTecnico', 'factura', 'presupuesto', 'checklist'];
+    if (!allowedDocTypes.includes(docType)) {
+      return NextResponse.json(
+        { success: false, error: 'Tipo de documento no válido.' },
+        { status: 400 }
+      );
+    }
+
     const licenseId = licenseIdFromForm || crypto.randomUUID();
     const originalName = file.name;
     const extension = path.extname(originalName);
@@ -29,7 +43,7 @@ export async function POST(request: NextRequest) {
     await fs.mkdir(uploadDir, { recursive: true });
     
     // Unique file name to avoid collisions
-    const fileName = `${licenseId}${extension}`;
+    const fileName = `${licenseId}-${docType}${extension}`;
     const filePath = path.join(uploadDir, fileName);
     
     // Write buffer to disk
@@ -37,16 +51,38 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     await fs.writeFile(filePath, buffer);
 
+    const fieldMap: Record<string, { nameField: string; pathField: string; expiryField: string }> = {
+      certificado: { nameField: 'archivoNombreCertificado', pathField: 'archivoPathCertificado', expiryField: 'vencimientoCertificado' },
+      protocolo: { nameField: 'archivoNombreProtocolo', pathField: 'archivoPathProtocolo', expiryField: 'vencimientoProtocolo' },
+      informeTecnico: { nameField: 'archivoNombreInformeTecnico', pathField: 'archivoPathInformeTecnico', expiryField: 'vencimientoInformeTecnico' },
+      factura: { nameField: 'archivoNombreFactura', pathField: 'archivoPathFactura', expiryField: 'vencimientoFactura' },
+      presupuesto: { nameField: 'archivoNombrePresupuesto', pathField: 'archivoPathPresupuesto', expiryField: 'vencimientoPresupuesto' },
+      checklist: { nameField: 'archivoNombreCheckList', pathField: 'archivoPathCheckList', expiryField: 'vencimientoCheckList' }
+    };
+
+    const selectedFields = fieldMap[docType];
+    const fileData = {
+      [selectedFields.nameField]: originalName,
+      [selectedFields.pathField]: `uploads/licencias/${fileName}`
+    } as any;
+
+    if (expiryDate) {
+      fileData[selectedFields.expiryField] = expiryDate;
+    }
+
     let license;
 
     if (licenseIdFromForm) {
       // Update existing license
+      const updateData: any = { ...fileData };
+      if (entity !== null) updateData.entity = entity;
+      if (code !== null) updateData.code = code;
+      if (issueDate !== null) updateData.issueDate = issueDate;
+      if (status !== null) updateData.status = status;
+
       license = await db.license.update({
         where: { id: licenseIdFromForm },
-        data: {
-          archivoNombre: originalName,
-          archivoPath: `uploads/licencias/${fileName}`
-        }
+        data: updateData
       });
     } else {
       // Format current date as default DD/MM/YYYY
@@ -61,14 +97,13 @@ export async function POST(request: NextRequest) {
         data: {
           id: licenseId,
           name: originalName,
-          entity: 'POR ESPECIFICAR',
-          code: 'S/N',
-          issueDate: todayStr,
-          expiryDate: todayStr,
-          status: 'EN_TRAMITE',
-          archivoNombre: originalName,
-          archivoPath: `uploads/licencias/${fileName}`,
-          carpetaId: carpetaId && carpetaId !== 'null' && carpetaId !== '' ? carpetaId : null
+          entity: entity || 'POR ESPECIFICAR',
+          code: code || 'S/N',
+          issueDate: issueDate || todayStr,
+          expiryDate: expiryDate || todayStr,
+          status: status || 'EN_TRAMITE',
+          carpetaId: carpetaId && carpetaId !== 'null' && carpetaId !== '' ? carpetaId : null,
+          ...fileData
         }
       });
     }

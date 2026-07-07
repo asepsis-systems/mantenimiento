@@ -46,6 +46,8 @@ export function exportReportToExcel(report: ExcelReport) {
     'Fecha',
     'Responsable',
     'Equipo/Maquina',
+    'Extra 1',
+    'Extra 2',
     'Falla',
     'Tipo de Mantenimiento',
     'Descripcion del trabajo',
@@ -92,12 +94,8 @@ export function exportReportToExcel(report: ExcelReport) {
           item.date,
           item.responsable,
           machine.name,
-          task.falla || '',
-          task.tipo || '',
-          task.descripcion || '',
-          task.repuestos || '',
-          task.cantidad || '',
-          task.estado || ''
+          '',
+          '',
         ]);
         currentRowIndex++;
       });

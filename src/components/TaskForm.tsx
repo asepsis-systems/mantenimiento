@@ -10,6 +10,16 @@ interface FormValues {
   responsable: string;
   descripcion: string;
   estado: string;
+  itemNumber?: number | string;
+  fecha?: string;
+  equipo?: string;
+  sede?: string;
+  falla?: string;
+  tipo?: string;
+  repuestos?: string;
+  cantidad?: string;
+  frecuenciaMeses?: number | null;
+  esRecurrente?: boolean;
 }
 
 interface TaskFormProps {
@@ -18,6 +28,7 @@ interface TaskFormProps {
   onSubmit: (values: FormValues) => void;
   onCancel: () => void;
   isSubmitting: boolean;
+  existingEquipos?: string[];
 }
 
 export const TaskForm: React.FC<TaskFormProps> = ({
@@ -25,18 +36,121 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   initialValues = { responsable: '', descripcion: '', estado: 'PENDIENTE' },
   onSubmit,
   onCancel,
-  isSubmitting
+  isSubmitting,
+  existingEquipos = []
 }) => {
   const [responsable, setResponsable] = useState(initialValues.responsable);
   const [descripcion, setDescripcion] = useState(initialValues.descripcion);
-  const [estado, setEstado] = useState(initialValues.estado);
+  const [estado, setEstado] = useState(initialValues.estado === 'HECHO' ? 'CULMINADO' : initialValues.estado || 'PENDIENTE');
+  const [itemNumber, setItemNumber] = useState<number | ''>((initialValues as any).itemNumber ?? '');
+  const [fecha, setFecha] = useState((initialValues as any).fecha ?? '');
+  const [equipo, setEquipo] = useState((initialValues as any).equipo ?? '');
+  const [sede, setSede] = useState((initialValues as any).sede ?? '');
+  const [falla, setFalla] = useState((originalVal => {
+    // Si la falla tiene un valor, lo dejamos como está, si no, vacío
+    return (initialValues as any).falla ?? '';
+  })());
+  const [tipo, setTipo] = useState((initialValues as any).tipo ?? '');
+  const [repuestos, setRepuestos] = useState((initialValues as any).repuestos ?? '');
+  const [cantidad, setCantidad] = useState((initialValues as any).cantidad ?? '');
+  const [customEquipo, setCustomEquipo] = useState('');
+  const [customResponsable, setCustomResponsable] = useState('');
+  const [customTipo, setCustomTipo] = useState('');
   
+  // Estados para Mantenimiento Preventivo (CMMS)
+  const [frecuenciaType, setFrecuenciaType] = useState<string>(() => {
+    if (initialValues.frecuenciaMeses === undefined || initialValues.frecuenciaMeses === null) {
+      return 'unica';
+    }
+    const fm = Number(initialValues.frecuenciaMeses);
+    if ([1, 2, 3, 4, 6, 12].includes(fm)) {
+      return String(fm);
+    }
+    return 'personalizada';
+  });
+  const [customFrecuenciaMeses, setCustomFrecuenciaMeses] = useState<number | ''>(() => {
+    if (initialValues.frecuenciaMeses !== undefined && initialValues.frecuenciaMeses !== null) {
+      const fm = Number(initialValues.frecuenciaMeses);
+      if (![1, 2, 3, 4, 6, 12].includes(fm)) {
+        return fm;
+      }
+    }
+    return '';
+  });
+
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Lista base ampliada de Equipos/Máquinas estándar en planta
+  const defaultEquipoOptions = [
+    // Serie OE 4XL (1 al 12)
+    'OE 4XL 1', 'OE 4XL 2', 'OE 4XL 3', 'OE 4XL 4', 'OE 4XL 5', 'OE 4XL 6',
+    'OE 4XL 7', 'OE 4XL 8', 'OE 4XL 9', 'OE 4XL 10', 'OE 4XL 11', 'OE 4XL 12',
+    // Serie OE 5XL (1 al 12)
+    'OE 5XL 1', 'OE 5XL 2', 'OE 5XL 3', 'OE 5XL 4', 'OE 5XL 5', 'OE 5XL 6',
+    'OE 5XL 7', 'OE 5XL 8', 'OE 5XL 9', 'OE 5XL 10', 'OE 5XL 11', 'OE 5XL 12',
+    // Serie OE 8XL (1 al 12)
+    'OE 8XL 1', 'OE 8XL 2', 'OE 8XL 3', 'OE 8XL 4', 'OE 8XL 5', 'OE 8XL 6',
+    'OE 8XL 7', 'OE 8XL 8', 'OE 8XL 9', 'OE 8XL 10', 'OE 8XL 11', 'OE 8XL 12',
+    // Serie Autoclaves (V1 al V12)
+    'AUTOCLAVE V1', 'AUTOCLAVE V2', 'AUTOCLAVE V3', 'AUTOCLAVE V4', 'AUTOCLAVE V5',
+    'AUTOCLAVE V6', 'AUTOCLAVE V7', 'AUTOCLAVE V8', 'AUTOCLAVE V9', 'AUTOCLAVE V10',
+    'AUTOCLAVE V11', 'AUTOCLAVE V12',
+    // Serie Plasma (P1 al P6)
+    'PLASMA P1', 'PLASMA P2', 'PLASMA P3', 'PLASMA P4', 'PLASMA P5', 'PLASMA P6',
+    // Formaldehído (F01 y F02)
+    'FORMALDEHIDO F01', 'FORMALDEHIDO F02',
+    // Sucursales/Sedes específicas
+    'OE 4 XL Truj.', 'OE 5 XL Truj.', 'AUTOCLAVE V-2 Truj.', 'AUTOCLAVE V-5 Truj.',
+    // Selladoras (Sealing Machines)
+    'SELLADORA ROTATIVA 1', 'SELLADORA ROTATIVA 2', 'SELLADORA ROTATIVA 3',
+    'SELLADORA ROTATIVA HAWO 1', 'SELLADORA ROTATIVA HAWO 2',
+    'SELLADORA DE MESA 1', 'SELLADORA DE MESA 2',
+    // Lavadoras Termodesinfectadoras & Lavadoras Ultrasónicas (Washers)
+    'LAVADORA', 'LAVADORA TERMODESINFECTADORA 1', 'LAVADORA TERMODESINFECTADORA 2', 'LAVADORA TERMODESINFECTADORA 3',
+    'LAVADORA ULTRASONICA 1', 'LAVADORA ULTRASONICA 2', 'LAVADORA ULTRASONICA 3',
+    'LAVADORA DE CHATAS 1', 'LAVADORA DE CHATAS 2',
+    // Incubadoras / Lectores Biológicos
+    'INCUBADORA 3M ATTEST 1', 'INCUBADORA 3M ATTEST 2',
+    'INCUBADORA DE BIOLOGICOS 1', 'INCUBADORA DE BIOLOGICOS 2',
+    'INCUBADORA DE LECTURA RAPIDA 1', 'INCUBADORA DE LECTURA RAPIDA 2',
+    // Equipos e Infraestructura de Soporte (Utilities)
+    'CALDERA', 'CALDERA DE VAPOR 1', 'CALDERA DE VAPOR 2',
+    'COMPRESOR', 'COMPRESOR DE AIRE 1', 'COMPRESOR DE AIRE 2', 'SECADOR DE AIRE COMPRIMIDO',
+    'ABLANDADOR', 'ABLANDADOR DE AGUA 1', 'ABLANDADOR DE AGUA 2',
+    'SISTEMA DE AGUA OSMOSIS', 'SISTEMA DE AGUA OSMOSIS 1', 'SISTEMA DE AGUA OSMOSIS 2',
+    'DESTILADOR DE AGUA 1', 'DESTILADOR DE AGUA 2',
+    'BOMBA DE VACIO 1', 'BOMBA DE VACIO 2', 'BOMBA DE AGUA DE ALIMENTACION',
+    'TANQUE DE RETORNO DE CONDENSADO', 'SISTEMA DE FRIO (CHILLER)',
+    'SISTEMA DE AIRE TRATADO / HVAC', 'MANEJADORA DE AIRE (UMA)',
+    'GRUPO ELECTROGENO', 'ESTERILIZADOR DRY HEAT (ESTUFA)',
+    // Pistolas de presión
+    'PISTOLA DE AIRE A PRESION 1', 'PISTOLA DE AIRE A PRESION 2',
+    'PISTOLA DE AGUA A PRESION 1', 'PISTOLA DE AGUA A PRESION 2'
+  ];
+
+  // Combinación inteligente de la lista base y los equipos dinámicos provenientes de la base de datos
+  const mergedEquipos = Array.from(
+    new Set([
+      ...defaultEquipoOptions,
+      ...existingEquipos
+    ])
+  )
+    .filter((e): e is string => typeof e === 'string' && e.trim() !== '')
+    .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base', numeric: true }));
+
+  const equipoOptions = ['', ...mergedEquipos, 'Otro'];
+
+  const sedeOptions = ['', 'Lima', 'Trujillo'];
+
+  const tipoOptions = ['', 'Preventivo', 'Correctivo', 'Predictivo', 'Otro'];
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!responsable.trim()) {
       newErrors.responsable = 'Debe seleccionar o escribir un responsable.';
+    }
+    if (responsable === 'Otro' && !customResponsable.trim()) {
+      newErrors.responsable = 'Debe ingresar el nombre del responsable.';
     }
     if (!descripcion.trim()) {
       newErrors.descripcion = 'La descripción es obligatoria.';
@@ -48,12 +162,63 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      onSubmit({ responsable, descripcion, estado });
+      // Determinar frecuencia y recurrencia
+      let finalFrecuenciaMeses: number | null = null;
+      let finalEsRecurrente = false;
+
+      if (frecuenciaType === 'personalizada') {
+        finalFrecuenciaMeses = customFrecuenciaMeses === '' ? null : Number(customFrecuenciaMeses);
+        finalEsRecurrente = finalFrecuenciaMeses !== null && finalFrecuenciaMeses > 0;
+      } else if (frecuenciaType !== 'unica') {
+        finalFrecuenciaMeses = Number(frecuenciaType);
+        finalEsRecurrente = true;
+      }
+
+      onSubmit({
+        responsable: responsable === 'Otro' ? customResponsable || '' : responsable,
+        descripcion,
+        estado,
+        itemNumber: itemNumber === '' ? undefined : Number(itemNumber),
+        fecha: fecha || undefined,
+        equipo: equipo === 'Otro' ? customEquipo || undefined : equipo || undefined,
+        sede: sede || undefined,
+        falla: falla || undefined,
+        tipo: tipo === 'Otro' ? customTipo || undefined : tipo || undefined,
+        repuestos: repuestos || undefined,
+        cantidad: cantidad || undefined,
+        frecuenciaMeses: finalFrecuenciaMeses,
+        esRecurrente: finalEsRecurrente
+      });
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 text-slate-200">
+    <form onSubmit={handleSubmit} className="space-y-5 text-slate-200">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <div className="flex justify-between items-center mb-1">
+            <label className="text-xs font-semibold text-slate-400 block">Item</label>
+            <span className="text-[10px] text-slate-500 font-light">(Autocorrelativo diario si queda vacío)</span>
+          </div>
+          <input
+            type="number"
+            value={itemNumber as any}
+            onChange={(e) => setItemNumber(e.target.value === '' ? '' : Number(e.target.value))}
+            placeholder="Automático"
+            className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Fecha</label>
+          <input
+            type="date"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
+          />
+        </div>
+      </div>
+
       {/* Responsable */}
       <div>
         <label className="text-xs font-semibold text-slate-400 block mb-1">Responsable</label>
@@ -70,7 +235,17 @@ export const TaskForm: React.FC<TaskFormProps> = ({
               {r.nombre}
             </option>
           ))}
+          <option value="Otro">Otro</option>
         </select>
+        {responsable === 'Otro' && (
+          <input
+            type="text"
+            value={customResponsable}
+            onChange={(e) => setCustomResponsable(e.target.value)}
+            placeholder="Nombre del responsable"
+            className="mt-3 w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
+          />
+        )}
         {errors.responsable && (
           <p className="text-rose-450 text-[10px] mt-1 flex items-center gap-1">
             <AlertCircle className="w-3 h-3" />
@@ -99,15 +274,70 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         )}
       </div>
 
+      {/* Equipo / Máquina, Sede, Falla */}
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Equipo / Máquina</label>
+          <select
+            value={equipo}
+            onChange={(e) => {
+              setEquipo(e.target.value);
+              if (e.target.value !== 'Otro') setCustomEquipo('');
+            }}
+            className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
+          >
+            {equipoOptions.map((option) => (
+              <option key={option} value={option} className="uppercase">
+                {option || '-- Seleccionar equipo --'}
+              </option>
+            ))}
+          </select>
+          {equipo === 'Otro' && (
+            <input
+              type="text"
+              value={customEquipo}
+              onChange={(e) => setCustomEquipo(e.target.value)}
+              placeholder="Ingresa equipo personalizado"
+              className="mt-3 w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
+            />
+          )}
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Sede</label>
+          <select
+            value={sede}
+            onChange={(e) => setSede(e.target.value)}
+            className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
+          >
+            {sedeOptions.map((option) => (
+              <option key={option} value={option} className="uppercase">
+                {option || '-- Seleccionar sede --'}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Falla</label>
+        <textarea
+          rows={3}
+          value={falla}
+          onChange={(e) => setFalla(e.target.value)}
+          placeholder="Describe la falla..."
+          className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm resize-none"
+        />
+        </div>
+      </div>
+
       {/* Estado */}
       <div>
-        <label className="text-xs font-semibold text-slate-400 block mb-1">Estado Inicial</label>
-        <div className="grid grid-cols-2 gap-3">
+        <label className="text-xs font-semibold text-slate-400 block mb-1.5">Estado</label>
+        <div className="grid grid-cols-3 gap-3">
+          {/* PENDIENTE */}
           <label
-            className={`flex items-center justify-center py-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-all ${
+            className={`flex items-center justify-center gap-1.5 py-3 rounded-2xl border text-xs font-bold cursor-pointer transition-all duration-200 shadow-sm ${
               estado === 'PENDIENTE'
-                ? 'bg-amber-600/20 border-amber-500/40 text-amber-400 font-bold'
-                : 'bg-slate-900 border-white/10 text-slate-500 hover:text-slate-300'
+                ? 'bg-rose-500/10 border-rose-500/40 text-rose-400 font-bold scale-[1.02] shadow-rose-500/5'
+                : 'bg-slate-900 border-white/10 text-slate-400 hover:text-slate-300 hover:border-white/20'
             }`}
           >
             <input
@@ -118,26 +348,142 @@ export const TaskForm: React.FC<TaskFormProps> = ({
               onChange={() => setEstado('PENDIENTE')}
               className="sr-only"
             />
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
             <span>PENDIENTE</span>
           </label>
-          
+
+          {/* EN_PROCESO */}
           <label
-            className={`flex items-center justify-center py-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-all ${
-              estado === 'HECHO'
-                ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400 font-bold'
-                : 'bg-slate-900 border-white/10 text-slate-500 hover:text-slate-300'
+            className={`flex items-center justify-center gap-1.5 py-3 rounded-2xl border text-xs font-bold cursor-pointer transition-all duration-200 shadow-sm ${
+              estado === 'EN_PROCESO'
+                ? 'bg-amber-500/10 border-amber-500/40 text-amber-400 font-bold scale-[1.02] shadow-amber-500/5'
+                : 'bg-slate-900 border-white/10 text-slate-400 hover:text-slate-300 hover:border-white/20'
             }`}
           >
             <input
               type="radio"
               name="estado"
-              value="HECHO"
-              checked={estado === 'HECHO'}
-              onChange={() => setEstado('HECHO')}
+              value="EN_PROCESO"
+              checked={estado === 'EN_PROCESO'}
+              onChange={() => setEstado('EN_PROCESO')}
               className="sr-only"
             />
-            <span>HECHO</span>
+            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span>EN PROCESO</span>
           </label>
+          
+          {/* CULMINADO */}
+          <label
+            className={`flex items-center justify-center gap-1.5 py-3 rounded-2xl border text-xs font-bold cursor-pointer transition-all duration-200 shadow-sm ${
+              estado === 'CULMINADO'
+                ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400 font-bold scale-[1.02] shadow-emerald-500/5'
+                : 'bg-slate-900 border-white/10 text-slate-400 hover:text-slate-300 hover:border-white/20'
+            }`}
+          >
+            <input
+              type="radio"
+              name="estado"
+              value="CULMINADO"
+              checked={estado === 'CULMINADO'}
+              onChange={() => setEstado('CULMINADO')}
+              className="sr-only"
+            />
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>CULMINADO</span>
+          </label>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Tipo de Mantenimiento</label>
+          <select
+            value={tipo}
+            onChange={(e) => {
+              setTipo(e.target.value);
+              if (e.target.value !== 'Otro') setCustomTipo('');
+            }}
+            className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm focus:outline-none focus:border-brand-500"
+          >
+            {tipoOptions.map((option) => (
+              <option key={option} value={option} className="uppercase">
+                {option || '-- Seleccionar tipo --'}
+              </option>
+            ))}
+          </select>
+          {tipo === 'Otro' && (
+            <input
+              type="text"
+              value={customTipo}
+              onChange={(e) => setCustomTipo(e.target.value)}
+              placeholder="Ingresa tipo personalizado"
+              className="mt-3 w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
+            />
+          )}
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Repuestos / Insumos</label>
+        <textarea
+          rows={3}
+          value={repuestos}
+          onChange={(e) => setRepuestos(e.target.value)}
+          placeholder="Describe los repuestos o insumos..."
+          className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm resize-none"
+        />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Cantidad</label>
+          <input
+            type="number"
+            value={cantidad}
+            min={0}
+            onChange={(e) => setCantidad(e.target.value)}
+            placeholder="ej. 1"
+            className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
+          />
+        </div>
+      </div>
+
+      {/* Programación de Mantenimiento Preventivo (CMMS) */}
+      <div className="border-t border-white/5 pt-4 space-y-4">
+        <h4 className="text-xs font-bold text-brand-400 uppercase tracking-wider flex items-center gap-1.5">
+          <span>🔄 Programación Preventiva (CMMS)</span>
+        </h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-semibold text-slate-400 block mb-1">🔄 Frecuencia de Mantenimiento</label>
+            <select
+              value={frecuenciaType}
+              onChange={(e) => {
+                setFrecuenciaType(e.target.value);
+                if (e.target.value !== 'personalizada') setCustomFrecuenciaMeses('');
+              }}
+              className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm focus:outline-none focus:border-brand-500 font-medium"
+            >
+              <option value="unica">Única (No recurrente)</option>
+              <option value="1">1 Mes</option>
+              <option value="2">2 Meses</option>
+              <option value="3">3 Meses</option>
+              <option value="4">4 Meses</option>
+              <option value="6">6 Meses</option>
+              <option value="12">12 Meses</option>
+              <option value="personalizada">Personalizada...</option>
+            </select>
+          </div>
+
+          {frecuenciaType === 'personalizada' && (
+            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+              <label className="text-xs font-semibold text-slate-400 block mb-1">📅 Número de Meses</label>
+              <input
+                type="number"
+                min={1}
+                value={customFrecuenciaMeses}
+                onChange={(e) => setCustomFrecuenciaMeses(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="ej. 5"
+                className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm focus:outline-none focus:border-brand-500"
+              />
+            </div>
+          )}
         </div>
       </div>
 

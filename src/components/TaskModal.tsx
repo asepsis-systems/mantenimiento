@@ -20,7 +20,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, title, onClose, ch
       />
 
       {/* Modal Dialog Content */}
-      <div className="bg-slate-900 border border-white/10 rounded-3xl w-full max-w-md p-6 shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-slate-900 border border-white/10 rounded-3xl w-full max-w-3xl p-8 shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200 max-h-[calc(100vh-4rem)] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-white/5">
           <h3 className="font-bold text-white text-base tracking-wide uppercase">{title}</h3>

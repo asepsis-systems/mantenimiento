@@ -19,14 +19,41 @@ export async function GET(request: NextRequest) {
       where: { id }
     });
 
-    if (!license || !license.archivoPath) {
+    if (!license) {
       return NextResponse.json(
-        { success: false, error: 'Licencia o archivo no encontrado.' },
+        { success: false, error: 'Licencia no encontrada.' },
         { status: 404 }
       );
     }
 
-    const filePath = path.join(process.cwd(), license.archivoPath);
+    const docType = searchParams.get('type') || 'certificado';
+    const fieldMap: Record<string, { nameField: string; pathField: string }> = {
+      certificado: { nameField: 'archivoNombreCertificado', pathField: 'archivoPathCertificado' },
+      protocolo: { nameField: 'archivoNombreProtocolo', pathField: 'archivoPathProtocolo' },
+      informeTecnico: { nameField: 'archivoNombreInformeTecnico', pathField: 'archivoPathInformeTecnico' },
+      factura: { nameField: 'archivoNombreFactura', pathField: 'archivoPathFactura' },
+      presupuesto: { nameField: 'archivoNombrePresupuesto', pathField: 'archivoPathPresupuesto' },
+      checklist: { nameField: 'archivoNombreCheckList', pathField: 'archivoPathCheckList' }
+    };
+
+    const docFields = fieldMap[docType];
+    if (!docFields) {
+      return NextResponse.json(
+        { success: false, error: 'Tipo de documento no válido.' },
+        { status: 400 }
+      );
+    }
+
+    const originalName = (license as any)[docFields.nameField] as string | undefined;
+    const relativePath = (license as any)[docFields.pathField] as string | undefined;
+    if (!originalName || !relativePath) {
+      return NextResponse.json(
+        { success: false, error: 'Documento no encontrado para este tipo.' },
+        { status: 404 }
+      );
+    }
+
+    const filePath = path.join(process.cwd(), relativePath);
 
     try {
       await fs.access(filePath);
@@ -38,7 +65,6 @@ export async function GET(request: NextRequest) {
     }
 
     const fileBuffer = await fs.readFile(filePath);
-    const originalName = license.archivoNombre || 'archivo';
     const extension = path.extname(originalName).toLowerCase();
 
     // Map common extensions to their MIME types

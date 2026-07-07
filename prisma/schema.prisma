@@ -69,9 +69,29 @@ model Tarea {
   id                  String   @id @default(uuid())
   responsable         String
   descripcion         String   @db.Text
+  itemNumber          Int?
+  fecha               String?
+  equipo              String?
+  sede                String?
+  falla               String?  @db.Text
+  tipo                String?
+  repuestos           String?
+  cantidad            String?
   estado              String   @default("PENDIENTE") // "HECHO" | "PENDIENTE"
   fecha_creacion      DateTime @default(now())
   fecha_actualizacion DateTime @updatedAt
+
+  // Campos para Programación de Mantenimiento Preventivo (CMMS)
+  frecuenciaMeses     Int?     // Frecuencia en meses (null si es única)
+  fechaUltimaEjecucion String?  // Fecha del último mantenimiento completado (YYYY-MM-DD)
+  proximaEjecucion     String?  // Fecha programada para el siguiente mantenimiento (YYYY-MM-DD)
+  esRecurrente         Boolean  @default(true) // Indica si se autogenera la siguiente orden
+  tareaPadreId         String?  // Enlace al historial de la tarea padre
+
+  // Certificados y Culminación (Fase 2)
+  certificadoNombre   String?  // Nombre original del archivo subido
+  certificadoPath     String?  // Ruta en el servidor (uploads/certificados/...)
+  fechaCulminado      String?  // Fecha en formato YYYY-MM-DD seleccionada por el usuario
 
   @@map("Tarea")
 }
@@ -97,8 +117,29 @@ model SparePart {
   minStock    Int      @default(0)
   price       Float?
   location    String?  // Storage shelf/bin
+  isMatachana Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Campos comunes y específicos de Inventario
+  metodo          String?   @default("")
+  metodo2         String?   @default("")
+  repuesto        String?   @default("")
+  codigoMarca     String?   @default("")
+  marca1          String?   @default("")
+  comentario      String?   @default("")
+  fotoNombre      String?   @default("")
+  fotoPath        String?   @default("")
+  almacenado      String?   @default("")
+  seccion         String?   @default("")
+  
+  // Campos específicos de Repuestos Matachana
+  correlativo     String?   @default("")
+  descripcion     String?   @default("")
+  codigoMatachana String?   @default("")
+  kit1            String?   @default("")
+  kit2            String?   @default("")
+  usados          Int       @default(0)
 }
 
 model License {
@@ -109,11 +150,30 @@ model License {
   issueDate     String
   expiryDate    String
   status        String   // "VIGENTE" | "VENCIDO" | "EN_TRAMITE"
+  details       String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   archivoNombre String?
   archivoPath   String?
+  archivoNombreCertificado String?
+  archivoPathCertificado   String?
+  vencimientoCertificado   String?
+  archivoNombreProtocolo String?
+  archivoPathProtocolo   String?
+  vencimientoProtocolo   String?
+  archivoNombreInformeTecnico String?
+  archivoPathInformeTecnico   String?
+  vencimientoInformeTecnico   String?
+  archivoNombreFactura String?
+  archivoPathFactura   String?
+  vencimientoFactura   String?
+  archivoNombrePresupuesto String?
+  archivoPathPresupuesto   String?
+  vencimientoPresupuesto   String?
+  archivoNombreCheckList String?
+  archivoPathCheckList   String?
+  vencimientoCheckList   String?
   carpetaId     String?
   carpeta       LicenciaCarpeta? @relation("FolderLicenses", fields: [carpetaId], references: [id], onDelete: SetNull)
 

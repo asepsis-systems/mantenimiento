@@ -92,7 +92,7 @@ export const TaskResponsible: React.FC<TaskResponsibleProps> = ({
               e.stopPropagation();
               onRename(responsable.id, responsable.nombre);
             }}
-            className="p-1 rounded hover:bg-white/5 text-slate-450 hover:text-brand-400 transition-colors"
+            className="p-1 rounded hover:bg-white/5 text-white hover:text-brand-400 transition-colors"
             title="Renombrar responsable"
           >
             <Edit2 className="w-3 h-3" />
@@ -103,7 +103,7 @@ export const TaskResponsible: React.FC<TaskResponsibleProps> = ({
               e.stopPropagation();
               onDelete(responsable.id);
             }}
-            className="p-1 rounded hover:bg-rose-500/10 text-slate-455 hover:text-rose-400 transition-colors"
+            className="p-1 rounded hover:bg-rose-500/10 text-white hover:text-rose-400 transition-colors"
             title="Eliminar responsable"
           >
             <Trash2 className="w-3 h-3" />

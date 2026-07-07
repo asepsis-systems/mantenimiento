@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock, User as UserIcon, Eye, EyeOff, ShieldAlert, ArrowRight } from 'lucide-react';
 
@@ -11,23 +11,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const checkAndClearSession = async () => {
-      try {
-        const res = await fetch('/api/auth/me');
-        const data = await res.json();
-        if (res.ok && data.authenticated) {
-          // If they land on the login page but have an active session, automatically log them out
-          await fetch('/api/auth/logout', { method: 'POST' });
-          router.refresh();
-        }
-      } catch (err) {
-        console.error('Error al comprobar/cerrar sesión:', err);
-      }
-    };
-    checkAndClearSession();
-  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,7 +159,7 @@ export default function LoginPage() {
         {/* Credentials reminder */}
         <div className="mt-6 text-center">
           <p className="text-xs text-slate-500">
-            Credenciales de prueba: <span className="text-slate-400">admin / admin123</span>
+            Credenciales de prueba: <span className="text-slate-400">a</span>
           </p>
         </div>
       </div>
