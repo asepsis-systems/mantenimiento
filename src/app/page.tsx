@@ -102,6 +102,7 @@ export default function Dashboard() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [isPremiumDarkMode, setIsPremiumDarkMode] = useState(false);
 
   // Modal control states
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -539,22 +540,30 @@ export default function Dashboard() {
           const absDiff = Math.abs(diff);
           return (
             <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-extrabold rounded-full shadow-xs animate-pulse">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
+              <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-extrabold rounded-full shadow-xs animate-pulse ${
+                isPremiumDarkMode
+                  ? 'bg-rose-500/10 border border-rose-500/25 text-rose-400'
+                  : 'bg-rose-50 border border-rose-200 text-rose-700'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
                 <span>⚠️ Vencido hace {absDiff} d</span>
               </span>
             </div>
           );
         } else {
           return (
-            <span className="text-slate-500 font-semibold text-xs select-none" title={tooltipText}>
+            <span className={`font-semibold text-xs select-none transition-colors duration-300 ${
+              isPremiumDarkMode ? 'text-slate-300' : 'text-slate-500'
+            }`} title={tooltipText}>
               {formatSmallDate(targetDate)}
             </span>
           );
         }
       } else {
         // Tareas con fecha de culminación pero sin recurrencia ("Única")
-        return <span className="text-slate-400 font-semibold text-xs select-none">Sin recurrencia</span>;
+        return <span className={`font-semibold text-xs select-none transition-colors duration-300 ${
+          isPremiumDarkMode ? 'text-slate-500' : 'text-slate-400'
+        }`}>Sin recurrencia</span>;
       }
     }
 
@@ -562,11 +571,15 @@ export default function Dashboard() {
     const isCompleted = t.estado === 'CULMINADO' || t.estado === 'HECHO';
     if (isCompleted) {
       if (!t.frecuenciaMeses || !t.esRecurrente) {
-        return <span className="text-slate-400 font-semibold text-xs select-none">Sin recurrencia</span>;
+        return <span className={`font-semibold text-xs select-none transition-colors duration-300 ${
+          isPremiumDarkMode ? 'text-slate-500' : 'text-slate-400'
+        }`}>Sin recurrencia</span>;
       }
       const targetDate = t.proximaEjecucion;
       if (!targetDate) {
-        return <span className="text-slate-400 font-light text-xs">-</span>;
+        return <span className={`font-light text-xs transition-colors duration-300 ${
+          isPremiumDarkMode ? 'text-slate-500' : 'text-slate-400'
+        }`}>-</span>;
       }
       const diff = getDaysDiff(todayStr, targetDate);
       const tooltipText = `Próximo mantenimiento: ${formatSmallDate(targetDate)}`;
@@ -575,15 +588,21 @@ export default function Dashboard() {
         const absDiff = Math.abs(diff);
         return (
           <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-extrabold rounded-full shadow-xs animate-pulse">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
+            <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-extrabold rounded-full shadow-xs animate-pulse ${
+              isPremiumDarkMode
+                ? 'bg-rose-500/10 border border-rose-500/25 text-rose-400'
+                : 'bg-rose-50 border border-rose-200 text-rose-700'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
               <span>⚠️ Vencido hace {absDiff} d</span>
             </span>
           </div>
         );
       } else {
         return (
-          <span className="text-slate-500 font-semibold text-xs select-none" title={tooltipText}>
+          <span className={`font-semibold text-xs select-none transition-colors duration-300 ${
+            isPremiumDarkMode ? 'text-slate-300' : 'text-slate-500'
+          }`} title={tooltipText}>
             {formatSmallDate(targetDate)}
           </span>
         );
@@ -593,7 +612,9 @@ export default function Dashboard() {
     // 3. Tareas pendientes o en proceso sin fecha de culminación (usa fecha de planificación t.fecha)
     const targetDate = t.fecha;
     if (!targetDate) {
-      return <span className="text-slate-400 font-light text-xs">-</span>;
+      return <span className={`font-light text-xs transition-colors duration-300 ${
+        isPremiumDarkMode ? 'text-slate-500' : 'text-slate-400'
+      }`}>-</span>;
     }
 
     const diff = getDaysDiff(todayStr, targetDate);
@@ -603,15 +624,21 @@ export default function Dashboard() {
       const absDiff = Math.abs(diff);
       return (
         <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-extrabold rounded-full shadow-xs animate-pulse">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
+          <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-extrabold rounded-full shadow-xs animate-pulse ${
+            isPremiumDarkMode
+              ? 'bg-rose-500/10 border border-rose-500/25 text-rose-400'
+              : 'bg-rose-50 border border-rose-200 text-rose-700'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
             <span>⚠️ Vencido hace {absDiff} d</span>
           </span>
         </div>
       );
     } else {
       return (
-        <span className="text-slate-500 font-semibold text-xs select-none" title={tooltipText}>
+        <span className={`font-semibold text-xs select-none transition-colors duration-300 ${
+          isPremiumDarkMode ? 'text-slate-300' : 'text-slate-500'
+        }`} title={tooltipText}>
           {formatSmallDate(targetDate)}
         </span>
       );
@@ -1359,16 +1386,41 @@ export default function Dashboard() {
         </section>
 
         {/* --- MAIN MODERN DATA GRID CONTAINER --- */}
-        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
+        <section className={`rounded-2xl border transition-all duration-300 overflow-hidden relative shadow-sm ${
+          isPremiumDarkMode 
+            ? 'bg-[#0b0f19] border-[#1e293b]' 
+            : 'bg-white border-slate-200'
+        }`}>
           
           {/* Table list header status info */}
-          <div className="px-6 py-4.5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+          <div className={`px-6 py-4.5 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors duration-300 ${
+            isPremiumDarkMode 
+              ? 'border-[#1e293b] bg-[#0d1324]/60' 
+              : 'border-slate-100 bg-slate-50/50'
+          }`}>
             <div className="flex items-center gap-2">
-              <h3 className="font-extrabold text-slate-900 text-base">Listado de Tareas de Planta</h3>
+              <h3 className={`font-extrabold text-base transition-colors duration-300 ${
+                isPremiumDarkMode ? 'text-slate-100' : 'text-slate-900'
+              }`}>Listado de Tareas de Planta</h3>
+              
+              <button
+                type="button"
+                onClick={() => setIsPremiumDarkMode(!isPremiumDarkMode)}
+                className={`ml-2 px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide uppercase transition-all duration-200 flex items-center gap-1.5 cursor-pointer ${
+                  isPremiumDarkMode 
+                    ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30' 
+                    : 'bg-slate-900/10 hover:bg-slate-900/20 text-slate-700 border border-slate-900/10'
+                }`}
+              >
+                {isPremiumDarkMode ? '☀️ Modo Claro' : '🌙 Premium Dark'}
+              </button>
+
               {isTableLoading && <Loader2 className="animate-spin h-4 w-4 text-brand-500 shrink-0" />}
             </div>
-            <div className="text-xs text-slate-500 font-semibold">
-              Mostrando <span className="text-slate-800">{totalCount > 0 ? startIndex + 1 : 0}</span> al <span className="text-slate-800">{endIndex}</span> de <span className="text-brand-600 font-bold">{totalCount}</span> registros
+            <div className={`text-xs font-semibold transition-colors duration-300 ${
+              isPremiumDarkMode ? 'text-slate-400' : 'text-slate-500'
+            }`}>
+              Mostrando <span className={isPremiumDarkMode ? 'text-slate-200' : 'text-slate-800'}>{totalCount > 0 ? startIndex + 1 : 0}</span> al <span className={isPremiumDarkMode ? 'text-slate-200' : 'text-slate-800'}>{endIndex}</span> de <span className={`${isPremiumDarkMode ? 'text-sky-400' : 'text-brand-600'} font-bold`}>{totalCount}</span> registros
             </div>
           </div>
 
@@ -1376,42 +1428,66 @@ export default function Dashboard() {
           <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-sm table-auto border-collapse">
               <thead>
-                <tr className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[11px] font-bold border-b border-slate-100 sticky top-0 bg-white/95 backdrop-blur-md z-15">
-                  <th className="p-3 pl-6 text-center border-b border-slate-100 w-16">Item</th>
-                  <th onClick={() => handleSort('responsable')} className="p-3 text-left border-b border-slate-100 cursor-pointer hover:bg-slate-100/50 select-none">
+                <tr className={`uppercase tracking-wider text-[11px] font-bold border-b sticky top-0 transition-colors duration-300 z-15 ${
+                  isPremiumDarkMode 
+                    ? 'bg-[#0f172a] text-slate-400 border-[#1e293b]' 
+                    : 'bg-slate-50 text-slate-500 border-slate-100 bg-white/95 backdrop-blur-md'
+                }`}>
+                  <th className={`p-3 pl-6 text-center border-b w-16 transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Item</th>
+                  <th 
+                    onClick={() => handleSort('responsable')} 
+                    className={`p-3 text-left border-b cursor-pointer select-none transition-colors ${
+                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-100/50'
+                    }`}
+                  >
                     <div className="flex items-center gap-1">
                       <span>Responsable</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400" />
                     </div>
                   </th>
-                  <th onClick={() => handleSort('equipo')} className="p-3 text-left border-b border-slate-100 cursor-pointer hover:bg-slate-100/50 select-none">
+                  <th 
+                    onClick={() => handleSort('equipo')} 
+                    className={`p-3 text-left border-b cursor-pointer select-none transition-colors ${
+                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-100/50'
+                    }`}
+                  >
                     <div className="flex items-center gap-1">
                       <span>Equipo / Máquina</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400" />
                     </div>
                   </th>
-                  <th className="p-3 text-left border-b border-slate-100">Sede</th>
-                  <th className="p-3 text-left border-b border-slate-100 w-48">Falla Reportada</th>
-                  <th className="p-3 text-left border-b border-slate-100">Tipo Mant.</th>
-                  <th className="p-3 text-left border-b border-slate-100 w-64">Descripción de Actividad</th>
-                  <th className="p-3 text-left border-b border-slate-100">Repuestos</th>
-                  <th onClick={() => handleSort('cantidad')} className="p-3 text-center border-b border-slate-100 cursor-pointer hover:bg-slate-100/50 select-none w-20">
+                  <th className={`p-3 text-left border-b transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Sede</th>
+                  <th className={`p-3 text-left border-b w-48 transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Falla Reportada</th>
+                  <th className={`p-3 text-left border-b transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Tipo Mant.</th>
+                  <th className={`p-3 text-left border-b w-64 transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Descripción de Actividad</th>
+                  <th className={`p-3 text-left border-b transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Repuestos</th>
+                  <th 
+                    onClick={() => handleSort('cantidad')} 
+                    className={`p-3 text-center border-b cursor-pointer select-none w-20 transition-colors ${
+                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-100/50'
+                    }`}
+                  >
                     <div className="flex items-center justify-center gap-1">
                       <span>Cant</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400" />
                     </div>
                   </th>
-                  <th className="p-3 text-center border-b border-slate-100 w-32 select-none">Certif. Operatividad</th>
-                  <th className="p-3 text-center border-b border-slate-100 w-36 select-none">Fecha Culminado</th>
-                  <th onClick={() => handleSort('estado')} className="p-3 text-center border-b border-slate-100 cursor-pointer hover:bg-slate-100/50 select-none w-32">
+                  <th className={`p-3 text-center border-b w-32 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Certif. Operatividad</th>
+                  <th className={`p-3 text-center border-b w-36 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Fecha Culminado</th>
+                  <th 
+                    onClick={() => handleSort('estado')} 
+                    className={`p-3 text-center border-b cursor-pointer select-none w-32 transition-colors ${
+                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-100/50'
+                    }`}
+                  >
                     <div className="flex items-center justify-center gap-1">
                       <span>Estado</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400" />
                     </div>
                   </th>
-                  <th className="p-3 text-center border-b border-slate-100 w-28 select-none">Frecuencia</th>
-                  <th className="p-3 text-center border-b border-slate-100 w-32 select-none">Prox. Mant.</th>
-                  <th className="p-3 text-center border-b border-slate-100 w-28 pl-4 pr-6">Acciones</th>
+                  <th className={`p-3 text-center border-b w-28 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Frecuencia</th>
+                  <th className={`p-3 text-center border-b w-32 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Prox. Mant.</th>
+                  <th className={`p-3 text-center border-b w-28 pl-4 pr-6 transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -1429,12 +1505,24 @@ export default function Dashboard() {
                       <>
                         {/* Interactive Group Date Sub-header Dividers */}
                         {isNewGroup && (
-                          <tr key={`group-${taskDate}`} className="bg-slate-100/40 select-none">
-                            <td colSpan={13} className="p-2.5 pl-6 border-b border-slate-200">
-                              <div className="flex items-center gap-2">
-                                <Calendar className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                                <span className="text-xs font-bold text-slate-700">{formatFriendlyDate(taskDate)}</span>
-                                <span className="bg-slate-200 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          <tr key={`group-${taskDate}`} className="select-none">
+                            <td colSpan={15} className={`p-3 pl-6 border-b transition-all duration-300 ${
+                              isPremiumDarkMode 
+                                ? 'bg-[#0f172a]/70 border-[#1e293b]' 
+                                : 'bg-slate-100/40 border-slate-200'
+                            }`}>
+                              <div className="flex items-center gap-2.5">
+                                <Calendar className={`w-3.5 h-3.5 shrink-0 ${
+                                  isPremiumDarkMode ? 'text-sky-400' : 'text-slate-500'
+                                }`} />
+                                <span className={`text-xs font-extrabold transition-colors duration-300 ${
+                                  isPremiumDarkMode ? 'text-slate-200' : 'text-slate-700'
+                                }`}>{formatFriendlyDate(taskDate)}</span>
+                                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-xs transition-all duration-300 ${
+                                  isPremiumDarkMode 
+                                    ? 'bg-sky-500/10 border border-sky-500/25 text-sky-400' 
+                                    : 'bg-slate-200 text-slate-700'
+                                }`}>
                                   {sortedTareas.filter(x => getTaskDate(x) === taskDate).length} Tareas
                                 </span>
                               </div>
@@ -1444,50 +1532,84 @@ export default function Dashboard() {
 
                         <tr 
                           key={t.id} 
-                          className={`hover:bg-slate-50/65 border-b border-slate-100 transition-colors duration-150 group/row ${
-                            isOverdue 
-                              ? 'bg-rose-500/[0.03] border-l-4 border-l-rose-500' 
-                              : delayed 
-                              ? 'bg-rose-50/20 border-l-4 border-l-rose-500' 
-                              : ''
+                          className={`border-b transition-colors duration-150 group/row ${
+                            isPremiumDarkMode 
+                              ? `border-[#1e293b] hover:bg-[#162035] ${
+                                  isOverdue 
+                                    ? 'bg-rose-500/[0.02] border-l-4 border-l-rose-500' 
+                                    : delayed 
+                                    ? 'bg-rose-500/[0.01] border-l-4 border-l-rose-500' 
+                                    : 'bg-[#0f172a]'
+                                }`
+                              : `border-slate-100 hover:bg-slate-50/65 ${
+                                  isOverdue 
+                                    ? 'bg-rose-500/[0.03] border-l-4 border-l-rose-500' 
+                                    : delayed 
+                                    ? 'bg-rose-50/20 border-l-4 border-l-rose-500' 
+                                    : 'bg-white'
+                                }`
                           }`}
                         >
                           {/* Item correlative inside day */}
-                          <td className="p-3 text-center font-bold text-slate-700 border-b border-slate-100 select-none">
+                          <td className={`p-3 text-center font-bold border-b select-none transition-colors ${
+                            isPremiumDarkMode ? 'text-slate-400 border-[#1e293b]' : 'text-slate-700 border-slate-100'
+                          }`}>
                             <div className="flex items-center justify-center gap-1">
                               {isOverdue && <span className="text-rose-500 text-xs animate-bounce" title="¡Mantenimiento Vencido!">⚠️</span>}
                               <span>{itemIndex}</span>
                             </div>
                           </td>
-                          <td className="p-3 border-b border-slate-100 font-semibold text-slate-900 uppercase text-xs">
+                          <td className={`p-3 border-b font-semibold uppercase text-xs transition-colors ${
+                            isPremiumDarkMode ? 'text-slate-200 border-[#1e293b]' : 'text-slate-900 border-slate-100'
+                          }`}>
                             {t.responsable}
                           </td>
-                          <td className="p-3 border-b border-slate-100 font-extrabold text-slate-800 uppercase text-xs">
+                          <td className={`p-3 border-b font-extrabold uppercase text-xs transition-colors ${
+                            isPremiumDarkMode ? 'text-sky-400 border-[#1e293b]' : 'text-slate-800 border-slate-100'
+                          }`}>
                             {t.equipo || '-'}
                           </td>
-                          <td className="p-3 border-b border-slate-100">
-                            <span className="px-2 py-1 bg-slate-100 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 uppercase">
+                          <td className={`p-3 border-b transition-colors ${
+                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'
+                          }`}>
+                            <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase transition-colors ${
+                              isPremiumDarkMode 
+                                ? 'bg-indigo-950/45 border border-indigo-500/25 text-indigo-300' 
+                                : 'bg-slate-100 border border-slate-200 text-slate-600'
+                            }`}>
                               {t.sede || '-'}
                             </span>
                           </td>
-                          <td className="p-3 border-b border-slate-100 text-xs text-rose-750 font-medium truncate-2-lines line-clamp-2 max-w-[200px]" title={t.falla || ''}>
+                          <td className={`p-3 border-b text-xs font-medium truncate-2-lines line-clamp-2 max-w-[200px] transition-colors ${
+                            isPremiumDarkMode ? 'text-slate-300 border-[#1e293b]' : 'text-rose-750 border-slate-100'
+                          }`} title={t.falla || ''}>
                             {t.falla || '-'}
                           </td>
-                          <td className="p-3 border-b border-slate-100 text-xs font-semibold text-slate-600 uppercase">
+                          <td className={`p-3 border-b text-xs font-semibold uppercase transition-colors ${
+                            isPremiumDarkMode ? 'text-amber-400/90 border-[#1e293b]' : 'text-slate-600 border-slate-100'
+                          }`}>
                             {t.tipo || '-'}
                           </td>
-                          <td className="p-3 border-b border-slate-100 text-xs text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">
+                          <td className={`p-3 border-b text-xs font-medium whitespace-pre-wrap leading-relaxed transition-colors ${
+                            isPremiumDarkMode ? 'text-slate-300 border-[#1e293b]' : 'text-slate-700 border-slate-100'
+                          }`}>
                             {t.descripcion}
                           </td>
-                          <td className="p-3 border-b border-slate-100 text-xs text-slate-600 italic">
+                          <td className={`p-3 border-b text-xs italic transition-colors ${
+                            isPremiumDarkMode ? 'text-slate-400 border-[#1e293b]' : 'text-slate-600 border-slate-100'
+                          }`}>
                             {t.repuestos || '-'}
                           </td>
-                          <td className="p-3 text-center border-b border-slate-100 font-semibold text-slate-700">
+                          <td className={`p-3 text-center border-b font-semibold transition-colors ${
+                            isPremiumDarkMode ? 'text-slate-200 border-[#1e293b]' : 'text-slate-750 border-slate-100'
+                          }`}>
                             {t.cantidad || '-'}
                           </td>
 
                           {/* Certificado de Operatividad Column */}
-                          <td className="p-3 text-center border-b border-slate-100 select-none">
+                          <td className={`p-3 text-center border-b select-none transition-colors ${
+                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'
+                          }`}>
                             <div className="flex items-center justify-center">
                               {uploadingTaskId === t.id ? (
                                 <Loader2 className="w-4 h-4 text-brand-500 animate-spin" />
@@ -1496,7 +1618,11 @@ export default function Dashboard() {
                                   href={`/api/tareas/archivo?id=${t.id}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-sky-50 border border-sky-200 hover:bg-sky-100 hover:border-sky-300 text-sky-700 text-[10px] font-bold rounded-full shadow-xs transition-colors cursor-pointer"
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold rounded-full shadow-xs transition-colors cursor-pointer ${
+                                    isPremiumDarkMode
+                                      ? 'bg-sky-500/10 border border-sky-400/30 text-sky-400 hover:bg-sky-500/20'
+                                      : 'bg-sky-50 border border-sky-200 hover:bg-sky-100 hover:border-sky-300 text-sky-700'
+                                  }`}
                                 >
                                   <span>👁️ Ver archivo</span>
                                 </a>
@@ -1514,7 +1640,11 @@ export default function Dashboard() {
                                   />
                                   <label
                                     htmlFor={`file-input-${t.id}`}
-                                    className="inline-flex items-center justify-center p-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 text-slate-600 transition-all duration-150 active:scale-90 cursor-pointer"
+                                    className={`inline-flex items-center justify-center p-1.5 rounded-xl transition-all duration-150 active:scale-90 cursor-pointer ${
+                                      isPremiumDarkMode
+                                        ? 'border border-slate-700 bg-slate-850/80 hover:bg-slate-750 hover:border-slate-650 text-slate-300'
+                                        : 'border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 text-slate-600'
+                                    }`}
                                     title="Subir Certificado (PDF/JPG/PNG)"
                                   >
                                     <span className="text-sm font-semibold">📎</span>
@@ -1525,7 +1655,9 @@ export default function Dashboard() {
                           </td>
 
                           {/* Fecha Culminado (Inline Datepicker) Column */}
-                          <td className="p-3 text-center border-b border-slate-100">
+                          <td className={`p-3 text-center border-b transition-colors ${
+                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'
+                          }`}>
                             <div className="flex items-center justify-center">
                               {editingDateId === t.id ? (
                                 <input
@@ -1538,13 +1670,21 @@ export default function Dashboard() {
                                       handleUpdateFechaCulminado(t.id, e.target.value);
                                     }
                                   }}
-                                  className="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-700 focus:outline-none focus:border-brand-500 font-semibold"
+                                  className={`border rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-brand-500 font-semibold ${
+                                    isPremiumDarkMode 
+                                      ? 'bg-slate-800 border-slate-700 text-slate-100' 
+                                      : 'bg-slate-50 border border-slate-300 text-slate-700'
+                                  }`}
                                 />
                               ) : (
                                 <span
                                   onClick={() => !isViewer && setEditingDateId(t.id)}
-                                  className={`px-2 py-1 border border-transparent rounded-lg text-xs font-semibold text-slate-700 cursor-pointer transition-all duration-150 ${
-                                    isViewer ? '' : 'hover:border-slate-200 hover:bg-slate-50'
+                                  className={`px-2 py-1 border border-transparent rounded-lg text-xs font-semibold cursor-pointer transition-all duration-150 ${
+                                    isViewer 
+                                      ? '' 
+                                      : isPremiumDarkMode
+                                      ? 'text-slate-300 hover:border-slate-700 hover:bg-slate-800'
+                                      : 'text-slate-700 hover:border-slate-200 hover:bg-slate-50'
                                   }`}
                                 >
                                   {t.fechaCulminado ? formatSmallDate(t.fechaCulminado) : '--/--/----'}
@@ -1554,30 +1694,48 @@ export default function Dashboard() {
                           </td>
 
                           {/* Modern Badge State Column */}
-                          <td className="p-3 text-center border-b border-slate-100 select-none">
+                          <td className={`p-3 text-center border-b select-none transition-colors ${
+                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'
+                          }`}>
                             <div className="flex flex-col items-center gap-1.5 justify-center">
                               {t.estado === 'PENDIENTE' && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-bold rounded-full shadow-xs">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-full shadow-xs transition-colors ${
+                                  isPremiumDarkMode
+                                    ? 'bg-rose-500/10 border border-rose-500/25 text-rose-400'
+                                    : 'bg-rose-50 border border-rose-200 text-rose-700'
+                                }`}>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0"></span>
                                   <span>PENDIENTE</span>
                                 </span>
                               )}
                               {t.estado === 'EN_PROCESO' && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-55 text-amber-800 border border-amber-200 text-[10px] font-bold rounded-full shadow-xs">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-full shadow-xs transition-colors ${
+                                  isPremiumDarkMode
+                                    ? 'bg-amber-500/10 border border-amber-500/25 text-amber-400'
+                                    : 'bg-amber-50 border border-amber-200 text-amber-800'
+                                }`}>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
                                   <span>EN PROCESO</span>
                                 </span>
                               )}
                               {(t.estado === 'CULMINADO' || t.estado === 'HECHO') && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold rounded-full shadow-xs">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-full shadow-xs transition-colors ${
+                                  isPremiumDarkMode
+                                    ? 'bg-emerald-500/10 border border-emerald-500/25 text-emerald-400'
+                                    : 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+                                }`}>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                                   <span>CULMINADO</span>
                                 </span>
                               )}
 
                               {/* Task aging indicator alert */}
                               {delayed && (
-                                <span className="inline-flex items-center gap-1 text-[9px] font-extrabold text-rose-600 bg-rose-100/40 px-1.5 py-0.5 rounded-md border border-rose-200 animate-pulse" title="Esta tarea ha estado pendiente por más de 7 días. Requiere atención prioritaria.">
+                                <span className={`inline-flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md border animate-pulse transition-colors ${
+                                  isPremiumDarkMode
+                                    ? 'text-rose-400 bg-rose-500/5 border-rose-500/20'
+                                    : 'text-rose-600 bg-rose-100/40 border-rose-200'
+                                }`} title="Esta tarea ha estado pendiente por más de 7 días. Requiere atención prioritaria.">
                                   <AlertTriangle className="w-2.5 h-2.5 text-rose-500" />
                                   <span>ENVEJECIDO &gt;7d</span>
                                 </span>
@@ -1586,31 +1744,49 @@ export default function Dashboard() {
                           </td>
 
                           {/* Frecuencia badge */}
-                          <td className="p-3 text-center border-b border-slate-100 select-none">
+                          <td className={`p-3 text-center border-b select-none transition-colors ${
+                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'
+                          }`}>
                             {t.frecuenciaMeses ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full shadow-xs">
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold rounded-full shadow-xs transition-colors ${
+                                isPremiumDarkMode
+                                  ? 'bg-[#1e1b4b] border border-indigo-500/30 text-indigo-400'
+                                  : 'bg-indigo-50 border border-indigo-100 text-indigo-700'
+                              }`}>
                                 🔄 {t.frecuenciaMeses} {t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-500 text-[10px] font-semibold rounded-full">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full transition-colors ${
+                                isPremiumDarkMode
+                                  ? 'bg-slate-800 border border-slate-700 text-slate-400'
+                                  : 'bg-slate-100 border border-slate-200 text-slate-500'
+                              }`}>
                                 Única
                               </span>
                             )}
                           </td>
 
                           {/* Próximo Mantenimiento Badge */}
-                          <td className="p-3 text-center border-b border-slate-100 select-none">
+                          <td className={`p-3 text-center border-b select-none transition-colors ${
+                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'
+                          }`}>
                             {renderProximoBadge(t)}
                           </td>
 
                           {/* Action Icon buttons with Tooltips */}
-                          <td className="p-3 text-center border-b border-slate-100 pr-6 pl-4 select-none">
+                          <td className={`p-3 text-center border-b pr-6 pl-4 select-none transition-colors ${
+                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'
+                          }`}>
                             <div className="flex items-center justify-center gap-1.5">
                               {!isViewer && (
                                 <div className="relative group/tooltip">
                                   <button
                                     onClick={() => { setEditingTask(t); setIsTaskModalOpen(true); }}
-                                    className="p-1.5 rounded-xl border border-sky-100 bg-sky-50 text-sky-600 hover:bg-sky-100 hover:text-sky-700 transition-all duration-150 active:scale-90 cursor-pointer"
+                                    className={`p-1.5 rounded-xl border transition-all duration-150 active:scale-90 cursor-pointer ${
+                                      isPremiumDarkMode
+                                        ? 'border-sky-500/20 bg-sky-500/10 text-sky-400 hover:bg-sky-500/20'
+                                        : 'border-sky-100 bg-sky-50 text-sky-600 hover:bg-sky-100 hover:text-sky-700'
+                                    }`}
                                     title="Editar Tarea"
                                   >
                                     <Edit2 className="w-3.5 h-3.5" />
@@ -1624,7 +1800,11 @@ export default function Dashboard() {
                                 <div className="relative group/tooltip">
                                   <button
                                     onClick={() => setConfirmDeleteId(t.id)}
-                                    className="p-1.5 rounded-xl border border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 transition-all duration-150 active:scale-90 cursor-pointer"
+                                    className={`p-1.5 rounded-xl border transition-all duration-150 active:scale-90 cursor-pointer ${
+                                      isPremiumDarkMode
+                                        ? 'border-rose-500/20 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20'
+                                        : 'border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700'
+                                    }`}
                                     title="Eliminar Tarea"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -1655,7 +1835,9 @@ export default function Dashboard() {
           </div>
 
           {/* TABLET / MOBILE RESPONSIVE CARDS VIEW */}
-          <div className="block lg:hidden divide-y divide-slate-100">
+          <div className={`block lg:hidden divide-y transition-colors duration-300 ${
+            isPremiumDarkMode ? 'divide-slate-800 bg-[#0b0f19]' : 'divide-slate-100 bg-white'
+          }`}>
             {paginatedTareas.length > 0 ? (
               paginatedTareas.map((t) => {
                 const itemIndex = computedItemNumbers[t.id] || t.itemNumber || 1;
@@ -1665,21 +1847,37 @@ export default function Dashboard() {
                 return (
                   <div 
                     key={`mobile-${t.id}`} 
-                    className={`p-4 hover:bg-slate-50/50 transition-colors ${
-                      isOverdue 
-                        ? 'bg-rose-500/[0.02] border-l-4 border-l-rose-500' 
-                        : delayed 
-                        ? 'bg-rose-50/10 border-l-4 border-l-rose-500' 
-                        : ''
+                    className={`p-4 transition-colors duration-150 ${
+                      isPremiumDarkMode 
+                        ? `hover:bg-[#162035] ${
+                            isOverdue 
+                              ? 'bg-rose-500/[0.02] border-l-4 border-l-rose-500' 
+                              : delayed 
+                              ? 'bg-rose-500/[0.01] border-l-4 border-l-rose-500' 
+                              : 'bg-[#0f172a]'
+                          }`
+                        : `hover:bg-slate-50/50 ${
+                            isOverdue 
+                              ? 'bg-rose-500/[0.03] border-l-4 border-l-rose-500' 
+                              : delayed 
+                              ? 'bg-rose-50/10 border-l-4 border-l-rose-500' 
+                              : 'bg-white'
+                          }`
                     }`}
                   >
                     {/* Header: Date and Item badge */}
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <div className="flex items-center gap-1.5">
-                        <span className="px-2 py-1 bg-slate-100 border border-slate-200 rounded-lg text-[10px] font-extrabold text-slate-700">
+                        <span className={`px-2 py-1 border rounded-lg text-[10px] font-extrabold transition-colors duration-300 ${
+                          isPremiumDarkMode
+                            ? 'bg-slate-800 border-slate-700 text-slate-300'
+                            : 'bg-slate-100 border border-slate-200 text-slate-700'
+                        }`}>
                           #{itemIndex}
                         </span>
-                        <span className="text-[11px] font-bold text-slate-500">
+                        <span className={`text-[11px] font-bold transition-colors ${
+                          isPremiumDarkMode ? 'text-slate-400' : 'text-slate-500'
+                        }`}>
                           {formatSmallDate(getTaskDate(t))}
                         </span>
                       </div>
@@ -1687,19 +1885,31 @@ export default function Dashboard() {
                       {/* State badge */}
                       <div className="shrink-0">
                         {t.estado === 'PENDIENTE' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-bold rounded-full">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-full transition-colors ${
+                            isPremiumDarkMode
+                              ? 'bg-rose-500/10 border border-rose-500/25 text-rose-400'
+                              : 'bg-rose-50 border border-rose-200 text-rose-700'
+                          }`}>
                             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
                             <span>PENDIENTE</span>
                           </span>
                         )}
                         {t.estado === 'EN_PROCESO' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-55 border border-amber-200 text-amber-800 text-[10px] font-bold rounded-full">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-full transition-colors ${
+                            isPremiumDarkMode
+                              ? 'bg-amber-500/10 border border-amber-500/25 text-amber-400'
+                              : 'bg-amber-50 border border-amber-200 text-amber-850'
+                          }`}>
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                             <span>EN PROCESO</span>
                           </span>
                         )}
                         {(t.estado === 'CULMINADO' || t.estado === 'HECHO') && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold rounded-full">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-full transition-colors ${
+                            isPremiumDarkMode
+                              ? 'bg-emerald-500/10 border border-emerald-500/25 text-emerald-400'
+                              : 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+                          }`}>
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                             <span>CULMINADO</span>
                           </span>
@@ -1708,35 +1918,51 @@ export default function Dashboard() {
                     </div>
 
                     {/* Responsable & Team */}
-                    <p className="text-xs font-bold text-slate-900 uppercase">
-                      {t.responsable} • <span className="text-brand-600 font-extrabold">{t.equipo || 'Sin Equipo'}</span>
+                    <p className={`text-xs font-bold uppercase transition-colors ${
+                      isPremiumDarkMode ? 'text-slate-200' : 'text-slate-900'
+                    }`}>
+                      {t.responsable} • <span className={`font-extrabold transition-colors ${
+                        isPremiumDarkMode ? 'text-sky-400' : 'text-brand-600'
+                      }`}>{t.equipo || 'Sin Equipo'}</span>
                     </p>
 
                     {/* Work description */}
-                    <p className="text-xs text-slate-700 mt-2 font-medium leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                    <p className={`text-xs mt-2 font-medium leading-relaxed p-2.5 rounded-xl border transition-all ${
+                      isPremiumDarkMode 
+                        ? 'bg-slate-950/40 border-slate-800 text-slate-300' 
+                        : 'bg-slate-50 border border-slate-100 text-slate-700'
+                    }`}>
                       {t.descripcion}
                     </p>
 
                     {/* Secondary details */}
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2.5 text-[11px]">
                       {t.falla && (
-                        <div className="col-span-2 text-rose-700">
+                        <div className={`col-span-2 font-semibold ${
+                          isPremiumDarkMode ? 'text-rose-400/90' : 'text-rose-750'
+                        }`}>
                           <span className="font-bold">Falla:</span> {t.falla}
                         </div>
                       )}
                       {t.tipo && (
                         <div>
-                          <span className="text-slate-400">Tipo:</span> <span className="font-semibold text-slate-700">{t.tipo}</span>
+                          <span className="text-slate-400">Tipo:</span>{' '}
+                          <span className={`font-semibold ${isPremiumDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                            {t.tipo}
+                          </span>
                         </div>
                       )}
                       {t.sede && (
                         <div>
-                          <span className="text-slate-400">Sede:</span> <span className="font-semibold text-slate-700 uppercase">{t.sede}</span>
+                          <span className="text-slate-400">Sede:</span>{' '}
+                          <span className={`font-semibold uppercase ${isPremiumDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                            {t.sede}
+                          </span>
                         </div>
                       )}
                       <div>
                         <span className="text-slate-400">Frecuencia:</span>{' '}
-                        <span className="font-semibold text-slate-700">
+                        <span className={`font-semibold ${isPremiumDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                           {t.frecuenciaMeses ? `🔄 ${t.frecuenciaMeses} M` : 'Única'}
                         </span>
                       </div>
@@ -1745,17 +1971,23 @@ export default function Dashboard() {
                         {renderProximoBadge(t)}
                       </div>
                       {t.repuestos && (
-                        <div className="col-span-2 text-slate-600 italic mt-1">
+                        <div className={`col-span-2 italic mt-1 ${isPremiumDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                           <span className="text-slate-400 font-normal">Repuestos:</span> {t.repuestos} (Cant: {t.cantidad || '0'})
                         </div>
                       )}
                     </div>
 
                     {/* Action buttons footer */}
-                    <div className="flex items-center justify-between border-t border-slate-100/70 mt-3 pt-3">
+                    <div className={`flex items-center justify-between border-t mt-3 pt-3 transition-colors ${
+                      isPremiumDarkMode ? 'border-slate-800' : 'border-slate-100/70'
+                    }`}>
                       <div>
                         {delayed && (
-                          <span className="inline-flex items-center gap-1 text-[9px] font-extrabold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md animate-pulse">
+                          <span className={`inline-flex items-center gap-1 text-[9px] font-extrabold px-2 py-0.5 rounded-md border animate-pulse transition-colors ${
+                            isPremiumDarkMode
+                              ? 'text-rose-400 bg-rose-500/5 border-rose-500/20'
+                              : 'text-rose-600 bg-rose-50 border border-rose-200'
+                          }`}>
                             <AlertTriangle className="w-2.5 h-2.5 text-rose-500" />
                             <span>ENVEJECIDO &gt;7d</span>
                           </span>
@@ -1765,7 +1997,11 @@ export default function Dashboard() {
                         {!isViewer && (
                           <button
                             onClick={() => { setEditingTask(t); setIsTaskModalOpen(true); }}
-                            className="inline-flex items-center gap-1 text-[11px] font-bold text-sky-600 p-1 px-2.5 rounded-lg hover:bg-sky-50 active:scale-95 cursor-pointer"
+                            className={`inline-flex items-center gap-1 text-[11px] font-bold p-1 px-2.5 rounded-lg active:scale-95 cursor-pointer transition-all ${
+                              isPremiumDarkMode
+                                ? 'text-sky-400 hover:bg-sky-500/10'
+                                : 'text-sky-600 hover:bg-sky-50'
+                            }`}
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                             <span>Editar</span>
@@ -1774,7 +2010,11 @@ export default function Dashboard() {
                         {!isViewer && (
                           <button
                             onClick={() => setConfirmDeleteId(t.id)}
-                            className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 p-1 px-2.5 rounded-lg hover:bg-rose-50 active:scale-95 cursor-pointer"
+                            className={`inline-flex items-center gap-1 text-[11px] font-bold p-1 px-2.5 rounded-lg active:scale-95 cursor-pointer transition-all ${
+                              isPremiumDarkMode
+                                ? 'text-rose-400 hover:bg-rose-500/10'
+                                : 'text-rose-600 hover:bg-rose-50'
+                            }`}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             <span>Eliminar</span>
@@ -1786,30 +2026,44 @@ export default function Dashboard() {
                 );
               })
             ) : (
-              <div className="p-8 text-center text-slate-400 font-semibold">
-                <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-xs">No se encontraron tareas registradas con los filtros seleccionados.</p>
+              <div className="p-8 text-center">
+                <AlertCircle className="w-8 h-8 text-slate-500 mx-auto mb-2" />
+                <p className={`text-xs font-semibold ${isPremiumDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  No se encontraron tareas registradas con los filtros seleccionados.
+                </p>
               </div>
             )}
           </div>
 
           {/* --- MODERN PAGINATION CONTROLS BAR --- */}
-          <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
+          <div className={`px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 select-none transition-colors duration-300 ${
+            isPremiumDarkMode 
+              ? 'bg-[#0f172a] border-[#1e293b]' 
+              : 'bg-slate-50/50 border-slate-100'
+          }`}>
             
             {/* Page Size Selector */}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 font-medium">Mostrar</span>
+              <span className={`text-xs font-medium transition-colors ${
+                isPremiumDarkMode ? 'text-slate-400' : 'text-slate-500'
+              }`}>Mostrar</span>
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className="bg-white border border-slate-200 text-xs font-bold text-slate-700 rounded-lg p-1 px-2 focus:outline-none focus:border-brand-500"
+                className={`text-xs font-bold rounded-lg p-1 px-2 focus:outline-none focus:border-brand-500 transition-colors ${
+                  isPremiumDarkMode
+                    ? 'bg-[#0b0f19] border-[#1e293b] text-slate-200'
+                    : 'bg-white border-slate-200 text-slate-700'
+                }`}
               >
                 <option value={10}>10</option>
                 <option value={25}>25</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
               </select>
-              <span className="text-xs text-slate-500 font-medium">registros</span>
+              <span className={`text-xs font-medium transition-colors ${
+                isPremiumDarkMode ? 'text-slate-400' : 'text-slate-500'
+              }`}>registros</span>
             </div>
 
             {/* Pagination Controls */}
@@ -1820,7 +2074,11 @@ export default function Dashboard() {
                 <button
                   onClick={() => setCurrentPage(1)}
                   disabled={currentPage === 1}
-                  className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                  className={`p-1.5 rounded-lg border disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer ${
+                    isPremiumDarkMode
+                      ? 'border-[#1e293b] bg-[#0b0f19] hover:bg-slate-800/60 text-slate-400 hover:text-slate-200'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800'
+                  }`}
                   title="Primera página"
                 >
                   <ChevronsLeft className="w-4 h-4" />
@@ -1830,7 +2088,11 @@ export default function Dashboard() {
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                  className={`p-1.5 rounded-lg border disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer ${
+                    isPremiumDarkMode
+                      ? 'border-[#1e293b] bg-[#0b0f19] hover:bg-slate-800/60 text-slate-400 hover:text-slate-200'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800'
+                  }`}
                   title="Página anterior"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -1842,7 +2104,7 @@ export default function Dashboard() {
                   const show = idx === 1 || idx === totalPages || Math.abs(idx - currentPage) <= 1;
                   if (!show) {
                     if (idx === 2 || idx === totalPages - 1) {
-                      return <span key={`ellipsis-${idx}`} className="px-1.5 text-xs text-slate-400">...</span>;
+                      return <span key={`ellipsis-${idx}`} className={`px-1.5 text-xs ${isPremiumDarkMode ? 'text-slate-650' : 'text-slate-400'}`}>...</span>;
                     }
                     return null;
                   }
@@ -1853,7 +2115,11 @@ export default function Dashboard() {
                       onClick={() => setCurrentPage(idx)}
                       className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
                         idx === currentPage
-                          ? 'bg-brand-600 text-white border-brand-500 shadow-md shadow-brand-500/10'
+                          ? isPremiumDarkMode
+                            ? 'bg-sky-500 text-white border-sky-400 shadow-md shadow-sky-500/20'
+                            : 'bg-brand-600 text-white border-brand-500 shadow-md shadow-brand-500/10'
+                          : isPremiumDarkMode
+                          ? 'bg-[#0b0f19] hover:bg-slate-800/50 text-slate-300 border-[#1e293b] hover:text-slate-100'
                           : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 hover:text-slate-800'
                       }`}
                     >
@@ -1866,7 +2132,11 @@ export default function Dashboard() {
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                  className={`p-1.5 rounded-lg border disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer ${
+                    isPremiumDarkMode
+                      ? 'border-[#1e293b] bg-[#0b0f19] hover:bg-slate-800/60 text-slate-400 hover:text-slate-200'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800'
+                  }`}
                   title="Página siguiente"
                 >
                   <ChevronRight className="w-4 h-4" />
@@ -1876,7 +2146,11 @@ export default function Dashboard() {
                 <button
                   onClick={() => setCurrentPage(totalPages)}
                   disabled={currentPage === totalPages}
-                  className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                  className={`p-1.5 rounded-lg border disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer ${
+                    isPremiumDarkMode
+                      ? 'border-[#1e293b] bg-[#0b0f19] hover:bg-slate-800/60 text-slate-400 hover:text-slate-200'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800'
+                  }`}
                   title="Última página"
                 >
                   <ChevronsRight className="w-4 h-4" />
