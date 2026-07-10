@@ -85,7 +85,15 @@ export default function Dashboard() {
   const [success, setSuccess] = useState('');
 
   // Filters & Inputs
-  const [selectedRespFilter, setSelectedRespFilter] = useState<string | null>(null);
+  const [selectedEquipoFilter, setSelectedEquipoFilter] = useState<string | null>(null);
+  const [selectedSedeFilter, setSelectedSedeFilter] = useState<'Lima' | 'Trujillo' | null>(null);
+  const equipoOptions = Array.from(
+    new Set(
+      tareas
+        .map((t) => t.equipo)
+        .filter((e): e is string => typeof e === 'string' && e.trim() !== '')
+    )
+  ).sort((a, b) => a.localeCompare(b));
   const [searchRespQuery, setSearchRespQuery] = useState('');
   const [newRespName, setNewRespName] = useState('');
 
@@ -112,6 +120,15 @@ export default function Dashboard() {
   
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmDeleteRespId, setConfirmDeleteRespId] = useState<string | null>(null);
+
+  // Files modal (historial)
+  const [filesModalOpen, setFilesModalOpen] = useState(false);
+  const [modalFiles, setModalFiles] = useState<any[]>([]);
+  const [modalLoadingFiles, setModalLoadingFiles] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState<string | null>(null);
+  const [previewExt, setPreviewExt] = useState<string | null>(null);
 
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [renamingResp, setRenamingResp] = useState<Responsable | null>(null);
@@ -190,6 +207,42 @@ export default function Dashboard() {
     }
   };
 
+  // Open files modal and fetch history
+  const openFilesModal = async (tareaId: string) => {
+    setModalLoadingFiles(true);
+    try {
+      const res = await fetch(`/api/tareas/archivo?id=${encodeURIComponent(tareaId)}&list=true`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setModalFiles(data.files || []);
+        setFilesModalOpen(true);
+      } else {
+        showFeedback('error', data.error || 'No se pudo obtener historial de archivos');
+      }
+    } catch (err) {
+      showFeedback('error', 'Error de red al solicitar historial');
+    } finally {
+      setModalLoadingFiles(false);
+    }
+  };
+
+  const openPreview = (fileName: string | undefined, originalName?: string) => {
+    if (!fileName) return;
+    const url = `/api/tareas/archivo?file=${encodeURIComponent(fileName)}`;
+    const ext = (originalName || fileName).split('.').pop()?.toLowerCase() || '';
+    setPreviewUrl(url);
+    setPreviewName(originalName || fileName);
+    setPreviewExt(ext);
+    setIsPreviewOpen(true);
+  };
+
+  const closePreview = () => {
+    setIsPreviewOpen(false);
+    setPreviewUrl(null);
+    setPreviewName(null);
+    setPreviewExt(null);
+  };
+
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
@@ -247,10 +300,6 @@ export default function Dashboard() {
           prev.map(t => t.responsable === renamingResp.nombre ? { ...t, responsable: data.responsable.nombre } : t)
         );
 
-        if (selectedRespFilter === renamingResp.nombre) {
-          setSelectedRespFilter(data.responsable.nombre);
-        }
-
         setIsRenameModalOpen(false);
         setRenamingResp(null);
         showFeedback('success', 'Responsable renombrado con éxito.');
@@ -272,11 +321,6 @@ export default function Dashboard() {
       if (res.ok && data.success) {
         setResponsables(prev => prev.filter(r => r.id !== confirmDeleteRespId));
         
-        // Clear filter if selected
-        if (respToDelete && selectedRespFilter === respToDelete.nombre) {
-          setSelectedRespFilter(null);
-        }
-
         setConfirmDeleteRespId(null);
         showFeedback('success', 'Responsable eliminado con éxito.');
       } else {
@@ -436,7 +480,7 @@ export default function Dashboard() {
   // Reset pagination to page 1 whenever any filter parameter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [fromDate, toDate, searchTerm, selectedRespFilter, pageSize]);
+  }, [fromDate, toDate, searchTerm, selectedEquipoFilter, pageSize]);
 
   // Extract task date in YYYY-MM-DD format
   const getTaskDate = (t: Tarea) => {
@@ -540,20 +584,20 @@ export default function Dashboard() {
           const absDiff = Math.abs(diff);
           return (
             <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-              <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-extrabold rounded-full shadow-xs animate-pulse ${
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
                 isPremiumDarkMode
-                  ? 'bg-rose-500/10 border border-rose-500/25 text-rose-400'
-                  : 'bg-rose-50 border border-rose-200 text-rose-700'
+                  ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
+                  : 'bg-rose-50 border-rose-200 text-rose-700'
               }`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
-                <span>⚠️ Vencido hace {absDiff} d</span>
+                <span>Vence hace {absDiff} d</span>
               </span>
             </div>
           );
         } else {
           return (
-            <span className={`font-semibold text-xs select-none transition-colors duration-300 ${
-              isPremiumDarkMode ? 'text-slate-300' : 'text-slate-500'
+            <span className={`font-medium text-xs select-none transition-colors duration-300 ${
+              isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
             }`} title={tooltipText}>
               {formatSmallDate(targetDate)}
             </span>
@@ -561,7 +605,7 @@ export default function Dashboard() {
         }
       } else {
         // Tareas con fecha de culminación pero sin recurrencia ("Única")
-        return <span className={`font-semibold text-xs select-none transition-colors duration-300 ${
+        return <span className={`font-medium text-xs select-none transition-colors duration-300 ${
           isPremiumDarkMode ? 'text-slate-500' : 'text-slate-400'
         }`}>Sin recurrencia</span>;
       }
@@ -571,7 +615,7 @@ export default function Dashboard() {
     const isCompleted = t.estado === 'CULMINADO' || t.estado === 'HECHO';
     if (isCompleted) {
       if (!t.frecuenciaMeses || !t.esRecurrente) {
-        return <span className={`font-semibold text-xs select-none transition-colors duration-300 ${
+        return <span className={`font-medium text-xs select-none transition-colors duration-300 ${
           isPremiumDarkMode ? 'text-slate-500' : 'text-slate-400'
         }`}>Sin recurrencia</span>;
       }
@@ -588,20 +632,20 @@ export default function Dashboard() {
         const absDiff = Math.abs(diff);
         return (
           <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-            <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-extrabold rounded-full shadow-xs animate-pulse ${
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
               isPremiumDarkMode
-                ? 'bg-rose-500/10 border border-rose-500/25 text-rose-400'
-                : 'bg-rose-50 border border-rose-200 text-rose-700'
+                ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
+                : 'bg-rose-50 border-rose-200 text-rose-700'
             }`}>
               <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
-              <span>⚠️ Vencido hace {absDiff} d</span>
+              <span>Vence hace {absDiff} d</span>
             </span>
           </div>
         );
       } else {
         return (
-          <span className={`font-semibold text-xs select-none transition-colors duration-300 ${
-            isPremiumDarkMode ? 'text-slate-300' : 'text-slate-500'
+          <span className={`font-medium text-xs select-none transition-colors duration-300 ${
+            isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
           }`} title={tooltipText}>
             {formatSmallDate(targetDate)}
           </span>
@@ -624,20 +668,20 @@ export default function Dashboard() {
       const absDiff = Math.abs(diff);
       return (
         <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-          <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-extrabold rounded-full shadow-xs animate-pulse ${
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
             isPremiumDarkMode
-              ? 'bg-rose-500/10 border border-rose-500/25 text-rose-400'
-              : 'bg-rose-50 border border-rose-200 text-rose-700'
+              ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
+              : 'bg-rose-50 border-rose-200 text-rose-700'
           }`}>
             <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
-            <span>⚠️ Vencido hace {absDiff} d</span>
+            <span>Vence hace {absDiff} d</span>
           </span>
         </div>
       );
     } else {
       return (
-        <span className={`font-semibold text-xs select-none transition-colors duration-300 ${
-          isPremiumDarkMode ? 'text-slate-300' : 'text-slate-500'
+        <span className={`font-medium text-xs select-none transition-colors duration-300 ${
+          isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
         }`} title={tooltipText}>
           {formatSmallDate(targetDate)}
         </span>
@@ -647,8 +691,13 @@ export default function Dashboard() {
 
   // Filter computation
   const filteredTareas = tareas.filter(t => {
-    // Responsable filter
-    if (selectedRespFilter && t.responsable.toLowerCase() !== selectedRespFilter.toLowerCase()) {
+    // Equipo/Máquina filter
+    if (selectedEquipoFilter && (t.equipo || '').toLowerCase() !== selectedEquipoFilter.toLowerCase()) {
+      return false;
+    }
+
+    // Sede filter
+    if (selectedSedeFilter && (t.sede || '').toLowerCase() !== selectedSedeFilter.toLowerCase()) {
       return false;
     }
 
@@ -790,7 +839,8 @@ export default function Dashboard() {
     setFromDate('');
     setToDate('');
     setSearchTerm('');
-    setSelectedRespFilter(null);
+    setSelectedEquipoFilter(null);
+    setSelectedSedeFilter(null);
     setTimeout(() => setIsTableLoading(false), 300);
     showFeedback('success', 'Filtros restaurados con éxito.');
   };
@@ -819,45 +869,42 @@ export default function Dashboard() {
       
       const headerRow = isHeaderNeeded ? `
         <tr style="background-color:#f1f5f9; font-weight:bold;">
-          <td colspan="12" style="padding:10px; border:1px solid #cbd5e1; font-size:12px; color:#1e293b;">
+          <td colspan="9" style="padding:8px; border:1px solid #cbd5e1; font-size:10px; color:#1e293b;">
             📅 ${formatFriendlyDate(currDate)} (${sortedTareas.filter(x => getTaskDate(x) === currDate).length} tareas)
           </td>
         </tr>
       ` : '';
 
-      const stateBadge = t.estado === 'PENDIENTE' ? '<span style="background-color:#ffe4e6;color:#9f1239;padding:2px 8px;border-radius:12px;font-weight:bold;font-size:11px;">🔴 Pendiente</span>' :
-                         t.estado === 'EN_PROCESO' ? '<span style="background-color:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-weight:bold;font-size:11px;">🟡 En Proceso</span>' :
-                         '<span style="background-color:#d1fae5;color:#065f46;padding:2px 8px;border-radius:12px;font-weight:bold;font-size:11px;">🟢 Culminado</span>';
+      const stateBadge = t.estado === 'PENDIENTE' ? '<span style="background-color:#ffe4e6;color:#9f1239;padding:2px 6px;border-radius:10px;font-weight:bold;font-size:10px;">Pendiente</span>' :
+                         t.estado === 'EN_PROCESO' ? '<span style="background-color:#fef3c7;color:#92400e;padding:2px 6px;border-radius:10px;font-weight:bold;font-size:10px;">En Proceso</span>' :
+                         '<span style="background-color:#d1fae5;color:#065f46;padding:2px 6px;border-radius:10px;font-weight:bold;font-size:10px;">Culminado</span>';
 
       const targetDate = (t.estado === 'CULMINADO' || t.estado === 'HECHO') ? t.proximaEjecucion : t.fecha;
       const proximoText = targetDate ? formatSmallDate(targetDate) : '-';
-      const frecuenciaText = t.frecuenciaMeses ? `🔄 ${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
+      const frecuenciaText = t.frecuenciaMeses ? `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
 
       return `
         ${headerRow}
         <tr>
-          <td style="padding:8px;border:1px solid #e2e8f0;font-size:12px;text-align:center;font-weight:bold;">${itemNum}</td>
-          <td style="padding:8px;border:1px solid #e2e8f0;font-size:12px;font-weight:600;">${escapeHtml(t.responsable)}</td>
-          <td style="padding:8px;border:1px solid #e2e8f0;font-size:12px;"><strong>${escapeHtml(t.equipo || '')}</strong> <br/><small style="color:#64748b">${escapeHtml(t.sede || '')}</small></td>
-          <td style="padding:8px;border:1px solid #e2e8f0;font-size:12px;color:#b91c1c;">${escapeHtml(t.falla || '-')}</td>
-          <td style="padding:8px;border:1px solid #e2e8f0;font-size:12px;"><strong>${escapeHtml(t.tipo || '')}</strong><br/>${escapeHtml(t.descripcion)}</td>
-          <td style="padding:8px;border:1px solid #e2e8f0;font-size:12px;">${escapeHtml(t.repuestos || '-')}</td>
-          <td style="padding:8px;border:1px solid #e2e8f0;font-size:12px;text-align:center;">${escapeHtml(t.cantidad || '-')}</td>
-          <td style="padding:8px;border:1px solid #e2e8f0;font-size:12px;text-align:center;color:#0369a1;font-weight:600;">${t.certificadoPath ? '📎 Sí' : '-'}</td>
-          <td style="padding:8px;border:1px solid #e2e8f0;font-size:12px;text-align:center;">${t.fechaCulminado ? formatSmallDate(t.fechaCulminado) : '-'}</td>
-          <td style="padding:8px;border:1px solid #e2e8f0;font-size:12px;text-align:center;">${stateBadge}</td>
-          <td style="padding:8px;border:1px solid #e2e8f0;font-size:12px;text-align:center;">${escapeHtml(frecuenciaText)}</td>
-          <td style="padding:8px;border:1px solid #e2e8f0;font-size:12px;text-align:center;font-weight:500;">${escapeHtml(proximoText)}</td>
+          <td style="padding:6px;border:1px solid #e2e8f0;font-size:9px;text-align:center;font-weight:bold;">${itemNum}</td>
+          <td style="padding:6px;border:1px solid #e2e8f0;font-size:9px;font-weight:600;">${escapeHtml(t.responsable)}</td>
+          <td style="padding:6px;border:1px solid #e2e8f0;font-size:9px;"><strong>${escapeHtml(t.equipo || '')}</strong></td>
+          <td style="padding:6px;border:1px solid #e2e8f0;font-size:9px;color:#b91c1c;">${escapeHtml(t.falla || '-')}</td>
+          <td style="padding:6px;border:1px solid #e2e8f0;font-size:9px;"><strong>${escapeHtml(t.tipo || '')}</strong><br/>${escapeHtml(t.descripcion)}</td>
+          <td style="padding:6px;border:1px solid #e2e8f0;font-size:9px;text-align:center;">${t.fechaCulminado ? formatSmallDate(t.fechaCulminado) : '-'}</td>
+          <td style="padding:6px;border:1px solid #e2e8f0;font-size:9px;text-align:center;">${stateBadge}</td>
+          <td style="padding:6px;border:1px solid #e2e8f0;font-size:9px;text-align:center;">${escapeHtml(frecuenciaText)}</td>
+          <td style="padding:6px;border:1px solid #e2e8f0;font-size:9px;text-align:center;font-weight:500;">${escapeHtml(proximoText)}</td>
         </tr>
       `;
     }).join('\n');
 
     const activeRangeText = fromDate || toDate 
       ? `Período: ${fromDate ? formatSmallDate(fromDate) : 'Inicio'} hasta ${toDate ? formatSmallDate(toDate) : 'Fin'}`
-      : 'Todos los registros registrados';
+      : '';
 
     const activeSearchText = searchTerm.trim() ? `Búsqueda: "${escapeHtml(searchTerm)}"` : '';
-    const activeRespText = selectedRespFilter ? `Filtrado por responsable: ${escapeHtml(selectedRespFilter)}` : '';
+    const activeEquipoText = selectedEquipoFilter ? `Filtrado por equipo/máquina: ${escapeHtml(selectedEquipoFilter)}` : '';
 
     const html = `<!doctype html>
       <html>
@@ -866,37 +913,58 @@ export default function Dashboard() {
           <title>Control de Reportes de Mantenimiento - Export PDF</title>
           <style>
             @media print {
-              @page { size: landscape; margin: 15mm; }
+              @page { size: 29cm 21cm; margin: 2mm; }
+              body { margin: 0; }
+              /* KPI boxes: destacar un poco más para legibilidad en el header */
+              .kpi-row { gap: 4px; }
+              .kpi-box { min-width: 72px; padding: 4px 6px; }
+              .kpi-title { font-size: 7px; }
+              .kpi-num { font-size: 12px; font-weight: 700; }
+
+              /* Tabla: reducir ligeramente la fuente y el padding para ganar espacio */
+              th { padding: 2px 4px; font-size: 8px; }
+              td { padding: 2px 4px; font-size: 6.5px; }
+              th, td { line-height: 1.02; }
+
+              .report-title { font-size: 13px; }
+              .report-subtitle, .report-meta, .print-note { font-size: 6px; }
+              .print-note { margin-top: 12px; padding-top: 5px; }
             }
-            body{font-family:'Segoe UI',Inter,sans-serif;color:#0f172a;padding:20px;background-color:#fff;}
-            table{border-collapse:collapse;width:100%;margin-top:20px;}
-            th{background-color:#0f172a;color:#ffffff;padding:10px;border:1px solid #475569;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;}
-            td{vertical-align:top;line-height:1.4;}
-            .kpi-row{display:flex;gap:15px;margin-bottom:15px;}
-            .kpi-box{border:1px solid #e2e8f0;border-radius:12px;padding:10px;text-align:center;flex:1;}
-            .kpi-title{font-size:9px;text-transform:uppercase;color:#64748b;font-weight:bold;margin-bottom:4px;}
-            .kpi-num{font-size:16px;font-weight:bold;}
+            body{font-family:'Segoe UI',Inter,sans-serif;color:#0f172a;padding:6px 8px;background-color:#fff;font-size:9px;}
+            table{border-collapse:collapse;width:100%;max-width:100%;margin-top:8px;table-layout:fixed;}
+            th{background-color:#0f172a;color:#ffffff;padding:6px 7px;border:1px solid #475569;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:0.25px;}
+            td{vertical-align:top;line-height:1.1;padding:4px 6px;font-size:8px;word-break:break-word;}
+            .kpi-row{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+            .kpi-box{border:1px solid #e2e8f0;border-radius:10px;padding:6px 8px;text-align:center;flex:1;min-width:90px;}
+            .kpi-title{font-size:8px;text-transform:uppercase;color:#64748b;font-weight:bold;margin-bottom:2px;letter-spacing:0.14em;}
+            .kpi-num{font-size:14px;font-weight:bold;}
+            .report-header{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1.5px solid #0f172a;padding-bottom:8px;margin-bottom:12px;}
+            .report-title{margin:0;font-size:16px;letter-spacing:-0.4px;color:#0f172a;}
+            .report-subtitle{font-size:10px;color:#64748b;font-weight:500;line-height:1.2;}
+            .report-meta{font-size:9px;color:#64748b;text-align:right;line-height:1.2;}
+            .print-note{margin-top:24px;display:flex;justify-content:space-between;font-size:8px;color:#64748b;border-top:1px dashed #cbd5e1;padding-top:8px;}
           </style>
         </head>
         <body>
-          <div style="display:flex;align-items:center;justify-content:between;border-bottom:2px solid #0f172a;padding-bottom:15px;margin-bottom:20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #0f172a;padding-bottom:15px;margin-bottom:20px;">
             <div style="display:flex;align-items:center;gap:15px;">
               <img src="${origin}/logo2.jpg" alt="Logo" style="height:48px;object-fit:contain;border-radius:8px;" />
               <div>
                 <h1 style="margin:0;font-size:22px;letter-spacing:-0.5px;color:#0f172a;">Control de Reportes de Mantenimiento</h1>
-                <div style="font-size:12px;color:#64748b;font-weight:500;">Módulo CMMS Empresarial • ASEPSIS S.A.C.</div>
+                <div style="font-size:12px;color:#64748b;font-weight:500;">Módulo CMMS Empresarial • T&CH ASEPSIS S.A.C.</div>
               </div>
             </div>
-            <div style="text-align:right;font-size:11px;color:#64748b;">
+            <div style="margin-left:auto;text-align:right;font-size:11px;color:#64748b;min-width:200px;">
               <strong>Generado por:</strong> ${escapeHtml(user?.name || 'Administrador')}<br/>
               <strong>Fecha:</strong> ${new Date().toLocaleString('es-PE')}
             </div>
           </div>
 
+          ${activeRangeText || activeSearchText || activeEquipoText ? `
           <div style="font-size:12px;background-color:#f8fafc;padding:10px 15px;border-radius:8px;border-left:4px solid #263fff;margin-bottom:20px;">
-            <strong>Filtros Activos:</strong> ${activeRangeText} ${activeSearchText ? ` | ${activeSearchText}` : ''} ${activeRespText ? ` | ${activeRespText}` : ''}
+            ${activeRangeText}${activeRangeText && activeSearchText ? ' | ' : ''}${activeSearchText}${(activeRangeText || activeSearchText) && activeEquipoText ? ' | ' : ''}${activeEquipoText}
           </div>
-
+          ` : ''}
           <div class="kpi-row">
             <div class="kpi-box" style="border-left:4px solid #2563eb;">
               <div class="kpi-title">Total Tareas</div>
@@ -914,48 +982,29 @@ export default function Dashboard() {
               <div class="kpi-title">Culminadas</div>
               <div class="kpi-num" style="color:#16a34a;">${culminadasCount}</div>
             </div>
-            <div class="kpi-box" style="border-left:4px solid #7c3aed;">
-              <div class="kpi-title">Vencidos</div>
-              <div class="kpi-num" style="color:#7c3aed;">${vencidosCount}</div>
-            </div>
-            <div class="kpi-box" style="border-left:4px solid #06b6d4;">
-              <div class="kpi-title">Próximos 30d</div>
-              <div class="kpi-num" style="color:#06b6d4;">${proximosCount}</div>
-            </div>
-            <div class="kpi-box" style="border-left:4px solid #ec4899;">
-              <div class="kpi-title">Esta Semana</div>
-              <div class="kpi-num" style="color:#ec4899;">${estaSemanaCount}</div>
-            </div>
-            <div class="kpi-box" style="border-left:4px solid #14b8a6;">
-              <div class="kpi-title">Este Mes</div>
-              <div class="kpi-num" style="color:#14b8a6;">${esteMesCount}</div>
-            </div>
           </div>
 
           <table>
             <thead>
               <tr>
                 <th style="width:4%;text-align:center;">Item</th>
-                <th style="width:11%;">Responsable</th>
-                <th style="width:12%;">Equipo / Máquina</th>
-                <th style="width:10%;">Falla</th>
-                <th style="width:16%;">Tipo y Descripción</th>
-                <th style="width:9%;">Repuestos</th>
-                <th style="width:4%;text-align:center;">Cant</th>
-                <th style="width:10%;text-align:center;">Certificado</th>
-                <th style="width:8%;text-align:center;">Fecha Culm.</th>
+                <th style="width:14%;">Responsable</th>
+                <th style="width:16%;">Equipo / Máquina</th>
+                <th style="width:14%;">Falla</th>
+                <th style="width:26%;">Tipo y Descripción</th>
+                <th style="width:9%;text-align:center;">Fecha Culm.</th>
                 <th style="width:8%;text-align:center;">Estado</th>
-                <th style="width:8%;text-align:center;">Frecuencia</th>
-                <th style="width:10%;text-align:center;">Próximo Mant.</th>
+                <th style="width:7%;text-align:center;">Frecuencia</th>
+                <th style="width:8%;text-align:center;">Próximo Mant.</th>
               </tr>
             </thead>
             <tbody>
-              ${rowsHtml || '<tr><td colspan="12" style="text-align:center;padding:20px;color:#94a3b8;">No se encontraron registros para los filtros seleccionados.</td></tr>'}
+              ${rowsHtml || '<tr><td colspan="9" style="text-align:center;padding:20px;color:#94a3b8;">No se encontraron registros para los filtros seleccionados.</td></tr>'}
             </tbody>
           </table>
           
           <div style="margin-top:40px;display:flex;justify-content:space-between;font-size:11px;color:#64748b;border-top:1px dashed #cbd5e1;padding-top:15px;">
-            <span>ASEPSIS S.A.C. - Sistema de Mantenimiento Preventivo Programado (CMMS)</span>
+            <span>T&CH ASEPSIS S.A.C. - Sistema de Mantenimiento Preventivo Programado (CMMS)</span>
             <span>Página 1 de 1</span>
           </div>
         </body>
@@ -1031,7 +1080,7 @@ export default function Dashboard() {
             <div className="bg-white rounded-xl p-1 shadow-md shrink-0 flex items-center justify-center w-11 h-10 transition-transform hover:scale-105 duration-200">
               <img 
                 src="/logo2.jpg" 
-                alt="Asepsis Logo" 
+                alt="T&CH Asepsis Logo" 
                 className="h-8 w-auto object-contain rounded-lg"
               />
             </div>
@@ -1356,32 +1405,44 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Quick Responsable Filter Selector Row */}
-          <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-2">Filtrar por Responsable:</span>
-            <button
-              onClick={() => { setSelectedRespFilter(null); handleSearchTrigger(); }}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all ${
-                selectedRespFilter === null 
-                  ? 'bg-brand-50 text-brand-600 border border-brand-200 font-bold' 
-                  : 'bg-slate-50 hover:bg-slate-100 border border-slate-100 text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              Todos
-            </button>
-            {responsables.slice(0, 10).map((r) => (
-              <button
-                key={r.id}
-                onClick={() => { setSelectedRespFilter(r.nombre); handleSearchTrigger(); }}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold uppercase cursor-pointer transition-all ${
-                  selectedRespFilter === r.nombre 
-                    ? 'bg-brand-50 text-brand-600 border border-brand-200 font-bold' 
-                    : 'bg-slate-50 hover:bg-slate-100 border border-slate-100 text-slate-500 hover:text-slate-800'
-                }`}
+          {/* Quick Equipo/Máquina + Sede Filter Row */}
+          <div className="mt-4 pt-4 border-t border-slate-100 grid gap-2 sm:grid-cols-2 items-center">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="equipoFilter" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Filtrar por Equipo/Máquina:</label>
+              <select
+                id="equipoFilter"
+                value={selectedEquipoFilter ?? ''}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedEquipoFilter(value === '' ? null : value);
+                  handleSearchTrigger();
+                }}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition-all"
               >
-                {r.nombre}
-              </button>
-            ))}
+                <option value="">Todos</option>
+                {equipoOptions.map((equipo) => (
+                  <option key={equipo} value={equipo}>{equipo}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="sedeFilter" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Filtrar por Sede:</label>
+              <select
+                id="sedeFilter"
+                value={selectedSedeFilter ?? ''}
+                onChange={(e) => {
+                  const value = e.target.value as '' | 'Lima' | 'Trujillo';
+                  setSelectedSedeFilter(value === '' ? null : value);
+                  handleSearchTrigger();
+                }}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition-all"
+              >
+                <option value="">Todos</option>
+                <option value="Lima">Lima</option>
+                <option value="Trujillo">Trujillo</option>
+              </select>
+            </div>
           </div>
         </section>
 
@@ -1403,18 +1464,6 @@ export default function Dashboard() {
                 isPremiumDarkMode ? 'text-slate-100' : 'text-slate-900'
               }`}>Listado de Tareas de Planta</h3>
               
-              <button
-                type="button"
-                onClick={() => setIsPremiumDarkMode(!isPremiumDarkMode)}
-                className={`ml-2 px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide uppercase transition-all duration-200 flex items-center gap-1.5 cursor-pointer ${
-                  isPremiumDarkMode 
-                    ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30' 
-                    : 'bg-slate-900/10 hover:bg-slate-900/20 text-slate-700 border border-slate-900/10'
-                }`}
-              >
-                {isPremiumDarkMode ? '☀️ Modo Claro' : '🌙 Premium Dark'}
-              </button>
-
               {isTableLoading && <Loader2 className="animate-spin h-4 w-4 text-brand-500 shrink-0" />}
             </div>
             <div className={`text-xs font-semibold transition-colors duration-300 ${
@@ -1425,69 +1474,69 @@ export default function Dashboard() {
           </div>
 
           {/* DESKTOP TABLE VIEW */}
-          <div className="hidden lg:block overflow-x-auto">
-            <table className="w-full text-sm table-auto border-collapse">
+          <div className="hidden lg:block overflow-x-auto bg-slate-50/40">
+            <table className="w-full min-w-[1400px] text-sm table-auto border-collapse">
               <thead>
-                <tr className={`uppercase tracking-wider text-[11px] font-bold border-b sticky top-0 transition-colors duration-300 z-15 ${
+                <tr className={`text-[10px] tracking-[0.24em] uppercase font-semibold border-b sticky top-0 transition-colors duration-300 z-15 ${
                   isPremiumDarkMode 
                     ? 'bg-[#0f172a] text-slate-400 border-[#1e293b]' 
-                    : 'bg-slate-50 text-slate-500 border-slate-100 bg-white/95 backdrop-blur-md'
+                    : 'bg-slate-50/95 text-slate-500 border-slate-200 backdrop-blur-md'
                 }`}>
-                  <th className={`p-3 pl-6 text-center border-b w-16 transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Item</th>
+                  <th className={`px-4 py-3.5 text-center border-b w-14 align-middle transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Item</th>
                   <th 
                     onClick={() => handleSort('responsable')} 
-                    className={`p-3 text-left border-b cursor-pointer select-none transition-colors ${
-                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-100/50'
+                    className={`px-4 py-3.5 text-left border-b cursor-pointer select-none transition-colors ${
+                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-200 hover:bg-slate-100/60'
                     }`}
                   >
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       <span>Responsable</span>
-                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                      <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
                     </div>
                   </th>
                   <th 
                     onClick={() => handleSort('equipo')} 
-                    className={`p-3 text-left border-b cursor-pointer select-none transition-colors ${
-                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-100/50'
+                    className={`px-4 py-3.5 text-left border-b cursor-pointer select-none transition-colors ${
+                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-200 hover:bg-slate-100/60'
                     }`}
                   >
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       <span>Equipo / Máquina</span>
-                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                      <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
                     </div>
                   </th>
-                  <th className={`p-3 text-left border-b transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Sede</th>
-                  <th className={`p-3 text-left border-b w-48 transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Falla Reportada</th>
-                  <th className={`p-3 text-left border-b transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Tipo Mant.</th>
-                  <th className={`p-3 text-left border-b w-64 transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Descripción de Actividad</th>
-                  <th className={`p-3 text-left border-b transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Repuestos</th>
+                  <th className={`px-4 py-3.5 text-left border-b transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Sede</th>
+                  <th className={`px-4 py-3.5 text-left border-b w-48 transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Falla Reportada</th>
+                  <th className={`px-4 py-3.5 text-left border-b transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Tipo Mant.</th>
+                  <th className={`px-4 py-3.5 text-left border-b w-64 transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Descripción de Actividad</th>
+                  <th className={`px-4 py-3.5 text-left border-b transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Repuestos</th>
                   <th 
                     onClick={() => handleSort('cantidad')} 
-                    className={`p-3 text-center border-b cursor-pointer select-none w-20 transition-colors ${
-                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-100/50'
+                    className={`px-4 py-3.5 text-center border-b cursor-pointer select-none w-20 transition-colors ${
+                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-200 hover:bg-slate-100/60'
                     }`}
                   >
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex items-center justify-center gap-1.5">
                       <span>Cant</span>
-                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                      <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
                     </div>
                   </th>
-                  <th className={`p-3 text-center border-b w-32 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Certif. Operatividad</th>
-                  <th className={`p-3 text-center border-b w-36 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Fecha Culminado</th>
+                  <th className={`px-4 py-3.5 text-center border-b w-32 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Certif. Operatividad</th>
+                  <th className={`px-4 py-3.5 text-center border-b w-36 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Fecha Culminado</th>
                   <th 
                     onClick={() => handleSort('estado')} 
-                    className={`p-3 text-center border-b cursor-pointer select-none w-32 transition-colors ${
-                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-100 hover:bg-slate-100/50'
+                    className={`px-4 py-3.5 text-center border-b cursor-pointer select-none w-32 transition-colors ${
+                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-200 hover:bg-slate-100/60'
                     }`}
                   >
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex items-center justify-center gap-1.5">
                       <span>Estado</span>
-                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                      <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
                     </div>
                   </th>
-                  <th className={`p-3 text-center border-b w-28 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Frecuencia</th>
-                  <th className={`p-3 text-center border-b w-32 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Prox. Mant.</th>
-                  <th className={`p-3 text-center border-b w-28 pl-4 pr-6 transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'}`}>Acciones</th>
+                  <th className={`px-4 py-3.5 text-center border-b w-28 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Frecuencia</th>
+                  <th className={`px-4 py-3.5 text-center border-b w-32 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Prox. Mant.</th>
+                  <th className={`px-4 py-3.5 text-center border-b w-28 pl-5 pr-6 transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -1506,22 +1555,22 @@ export default function Dashboard() {
                         {/* Interactive Group Date Sub-header Dividers */}
                         {isNewGroup && (
                           <tr key={`group-${taskDate}`} className="select-none">
-                            <td colSpan={15} className={`p-3 pl-6 border-b transition-all duration-300 ${
+                            <td colSpan={15} className={`px-5 py-4 border-b transition-all duration-300 ${
                               isPremiumDarkMode 
-                                ? 'bg-[#0f172a]/70 border-[#1e293b]' 
-                                : 'bg-slate-100/40 border-slate-200'
+                                ? 'bg-[#0f172a]/75 border-[#1e293b]' 
+                                : 'bg-slate-100/80 border-slate-200'
                             }`}>
                               <div className="flex items-center gap-2.5">
                                 <Calendar className={`w-3.5 h-3.5 shrink-0 ${
                                   isPremiumDarkMode ? 'text-sky-400' : 'text-slate-500'
                                 }`} />
-                                <span className={`text-xs font-extrabold transition-colors duration-300 ${
+                                <span className={`text-[11px] font-bold tracking-[0.16em] uppercase transition-colors duration-300 ${
                                   isPremiumDarkMode ? 'text-slate-200' : 'text-slate-700'
                                 }`}>{formatFriendlyDate(taskDate)}</span>
-                                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-xs transition-all duration-300 ${
+                                <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full transition-all duration-300 ${
                                   isPremiumDarkMode 
                                     ? 'bg-sky-500/10 border border-sky-500/25 text-sky-400' 
-                                    : 'bg-slate-200 text-slate-700'
+                                    : 'bg-white border border-slate-200 text-slate-600'
                                 }`}>
                                   {sortedTareas.filter(x => getTaskDate(x) === taskDate).length} Tareas
                                 </span>
@@ -1532,100 +1581,112 @@ export default function Dashboard() {
 
                         <tr 
                           key={t.id} 
-                          className={`border-b transition-colors duration-150 group/row ${
+                          className={`border-b transition-all duration-200 group/row ${
                             isPremiumDarkMode 
                               ? `border-[#1e293b] hover:bg-[#162035] ${
                                   isOverdue 
-                                    ? 'bg-rose-500/[0.02] border-l-4 border-l-rose-500' 
+                                    ? 'bg-rose-500/[0.025] border-l-2 border-l-rose-500' 
                                     : delayed 
-                                    ? 'bg-rose-500/[0.01] border-l-4 border-l-rose-500' 
+                                    ? 'bg-rose-500/[0.01] border-l-2 border-l-rose-500/70' 
                                     : 'bg-[#0f172a]'
                                 }`
-                              : `border-slate-100 hover:bg-slate-50/65 ${
+                              : `border-slate-200/80 hover:bg-slate-50/80 ${
                                   isOverdue 
-                                    ? 'bg-rose-500/[0.03] border-l-4 border-l-rose-500' 
+                                    ? 'bg-rose-50/40 border-l-2 border-l-rose-500' 
                                     : delayed 
-                                    ? 'bg-rose-50/20 border-l-4 border-l-rose-500' 
+                                    ? 'bg-slate-50/70 border-l-2 border-l-rose-500/70' 
                                     : 'bg-white'
                                 }`
                           }`}
                         >
                           {/* Item correlative inside day */}
-                          <td className={`p-3 text-center font-bold border-b select-none transition-colors ${
-                            isPremiumDarkMode ? 'text-slate-400 border-[#1e293b]' : 'text-slate-700 border-slate-100'
+                          <td className={`px-3.5 py-3.5 text-center font-semibold text-[11px] border-b align-middle select-none transition-colors ${
+                            isPremiumDarkMode ? 'text-slate-400 border-[#1e293b]' : 'text-slate-600 border-slate-200'
                           }`}>
                             <div className="flex items-center justify-center gap-1">
-                              {isOverdue && <span className="text-rose-500 text-xs animate-bounce" title="¡Mantenimiento Vencido!">⚠️</span>}
+                              {isOverdue && <span className="text-rose-500 text-xs animate-pulse" title="¡Mantenimiento Vencido!">⚠️</span>}
                               <span>{itemIndex}</span>
                             </div>
                           </td>
-                          <td className={`p-3 border-b font-semibold uppercase text-xs transition-colors ${
-                            isPremiumDarkMode ? 'text-slate-200 border-[#1e293b]' : 'text-slate-900 border-slate-100'
+                          <td className={`px-3.5 py-3.5 border-b text-[12px] font-semibold tracking-[0.01em] transition-colors ${
+                            isPremiumDarkMode ? 'text-slate-200 border-[#1e293b]' : 'text-slate-800 border-slate-200'
                           }`}>
                             {t.responsable}
                           </td>
-                          <td className={`p-3 border-b font-extrabold uppercase text-xs transition-colors ${
-                            isPremiumDarkMode ? 'text-sky-400 border-[#1e293b]' : 'text-slate-800 border-slate-100'
+                          <td className={`px-3.5 py-3.5 border-b text-[12px] font-semibold tracking-[0.01em] transition-colors ${
+                            isPremiumDarkMode ? 'text-sky-400 border-[#1e293b]' : 'text-slate-900 border-slate-200'
                           }`}>
                             {t.equipo || '-'}
                           </td>
-                          <td className={`p-3 border-b transition-colors ${
-                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'
+                          <td className={`px-3.5 py-3.5 border-b transition-colors ${
+                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'
                           }`}>
-                            <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase transition-colors ${
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors ${
                               isPremiumDarkMode 
-                                ? 'bg-indigo-950/45 border border-indigo-500/25 text-indigo-300' 
+                                ? 'bg-slate-800/80 border border-slate-700 text-slate-300' 
                                 : 'bg-slate-100 border border-slate-200 text-slate-600'
                             }`}>
                               {t.sede || '-'}
                             </span>
                           </td>
-                          <td className={`p-3 border-b text-xs font-medium truncate-2-lines line-clamp-2 max-w-[200px] transition-colors ${
-                            isPremiumDarkMode ? 'text-slate-300 border-[#1e293b]' : 'text-rose-750 border-slate-100'
+                          <td className={`px-3.5 py-3.5 border-b text-[12px] font-medium leading-5 max-w-[220px] transition-colors ${
+                            isPremiumDarkMode ? 'text-slate-300 border-[#1e293b]' : 'text-slate-700 border-slate-200'
                           }`} title={t.falla || ''}>
                             {t.falla || '-'}
                           </td>
-                          <td className={`p-3 border-b text-xs font-semibold uppercase transition-colors ${
-                            isPremiumDarkMode ? 'text-amber-400/90 border-[#1e293b]' : 'text-slate-600 border-slate-100'
+                          <td className={`px-3.5 py-3.5 border-b text-[12px] font-semibold uppercase tracking-[0.12em] transition-colors ${
+                            isPremiumDarkMode ? 'text-amber-400/90 border-[#1e293b]' : 'text-slate-600 border-slate-200'
                           }`}>
                             {t.tipo || '-'}
                           </td>
-                          <td className={`p-3 border-b text-xs font-medium whitespace-pre-wrap leading-relaxed transition-colors ${
-                            isPremiumDarkMode ? 'text-slate-300 border-[#1e293b]' : 'text-slate-700 border-slate-100'
+                          <td className={`px-3.5 py-3.5 border-b text-[12px] font-medium whitespace-pre-wrap leading-6 transition-colors ${
+                            isPremiumDarkMode ? 'text-slate-300 border-[#1e293b]' : 'text-slate-700 border-slate-200'
                           }`}>
                             {t.descripcion}
                           </td>
-                          <td className={`p-3 border-b text-xs italic transition-colors ${
-                            isPremiumDarkMode ? 'text-slate-400 border-[#1e293b]' : 'text-slate-600 border-slate-100'
+                          <td className={`px-3.5 py-3.5 border-b text-[12px] font-medium transition-colors ${
+                            isPremiumDarkMode ? 'text-slate-400 border-[#1e293b]' : 'text-slate-600 border-slate-200'
                           }`}>
                             {t.repuestos || '-'}
                           </td>
-                          <td className={`p-3 text-center border-b font-semibold transition-colors ${
-                            isPremiumDarkMode ? 'text-slate-200 border-[#1e293b]' : 'text-slate-750 border-slate-100'
+                          <td className={`px-3.5 py-3.5 text-center border-b font-semibold text-[12px] transition-colors ${
+                            isPremiumDarkMode ? 'text-slate-200 border-[#1e293b]' : 'text-slate-800 border-slate-200'
                           }`}>
                             {t.cantidad || '-'}
                           </td>
 
                           {/* Certificado de Operatividad Column */}
-                          <td className={`p-3 text-center border-b select-none transition-colors ${
-                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'
+                          <td className={`px-3.5 py-3.5 text-center border-b select-none transition-colors ${
+                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'
                           }`}>
                             <div className="flex items-center justify-center">
                               {uploadingTaskId === t.id ? (
                                 <Loader2 className="w-4 h-4 text-brand-500 animate-spin" />
                               ) : t.certificadoPath ? (
-                                <a
-                                  href={`/api/tareas/archivo?id=${t.id}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold rounded-full shadow-xs transition-colors cursor-pointer ${
-                                    isPremiumDarkMode
-                                      ? 'bg-sky-500/10 border border-sky-400/30 text-sky-400 hover:bg-sky-500/20'
-                                      : 'bg-sky-50 border border-sky-200 hover:bg-sky-100 hover:border-sky-300 text-sky-700'
-                                  }`}
-                                >
-                                  <span>👁️ Ver archivo</span>
-                                </a>
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          // Open the current certificado in a new tab
+                                          const fileName = (t.certificadoPath || '').split('/').pop();
+                                          if (fileName) window.open(`/api/tareas/archivo?file=${encodeURIComponent(fileName)}`, '_blank');
+                                        }}
+                                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold rounded-full transition-colors cursor-pointer ${
+                                          isPremiumDarkMode
+                                            ? 'bg-sky-500/10 border border-sky-400/30 text-sky-400 hover:bg-sky-500/20'
+                                            : 'bg-sky-50 border border-sky-200 hover:bg-sky-100 hover:border-sky-300 text-sky-700'
+                                        }`}
+                                      >
+                                        <span>👁️ Ver archivo</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => openFilesModal(t.id)}
+                                        className="ml-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-50 border border-slate-100 text-slate-700"
+                                      >
+                                        Historial
+                                      </button>
+                                    </>
                               ) : (
                                 <div>
                                   <input
@@ -1649,14 +1710,15 @@ export default function Dashboard() {
                                   >
                                     <span className="text-sm font-semibold">📎</span>
                                   </label>
+                                  {/* empty placeholder for layout */}
                                 </div>
                               )}
                             </div>
                           </td>
 
                           {/* Fecha Culminado (Inline Datepicker) Column */}
-                          <td className={`p-3 text-center border-b transition-colors ${
-                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'
+                          <td className={`px-3.5 py-3.5 text-center border-b transition-colors ${
+                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'
                           }`}>
                             <div className="flex items-center justify-center">
                               {editingDateId === t.id ? (
@@ -1679,7 +1741,7 @@ export default function Dashboard() {
                               ) : (
                                 <span
                                   onClick={() => !isViewer && setEditingDateId(t.id)}
-                                  className={`px-2 py-1 border border-transparent rounded-lg text-xs font-semibold cursor-pointer transition-all duration-150 ${
+                                  className={`px-2.5 py-1 border border-transparent rounded-lg text-[11px] font-semibold cursor-pointer transition-all duration-150 ${
                                     isViewer 
                                       ? '' 
                                       : isPremiumDarkMode
@@ -1694,44 +1756,41 @@ export default function Dashboard() {
                           </td>
 
                           {/* Modern Badge State Column */}
-                          <td className={`p-3 text-center border-b select-none transition-colors ${
-                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'
+                          <td className={`px-3.5 py-3.5 text-center border-b select-none transition-colors ${
+                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'
                           }`}>
                             <div className="flex flex-col items-center gap-1.5 justify-center">
                               {t.estado === 'PENDIENTE' && (
-                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-full shadow-xs transition-colors ${
+                                <span className={`inline-flex px-3 py-1.5 text-[10px] font-semibold rounded-full border transition-colors ${
                                   isPremiumDarkMode
-                                    ? 'bg-rose-500/10 border border-rose-500/25 text-rose-400'
-                                    : 'bg-rose-50 border border-rose-200 text-rose-700'
+                                    ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
+                                    : 'bg-rose-50 border-rose-200 text-rose-700'
                                 }`}>
-                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0"></span>
                                   <span>PENDIENTE</span>
                                 </span>
                               )}
                               {t.estado === 'EN_PROCESO' && (
-                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-full shadow-xs transition-colors ${
+                                <span className={`inline-flex px-3 py-1.5 text-[10px] font-semibold rounded-full border transition-colors ${
                                   isPremiumDarkMode
-                                    ? 'bg-amber-500/10 border border-amber-500/25 text-amber-400'
-                                    : 'bg-amber-50 border border-amber-200 text-amber-800'
+                                    ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
+                                    : 'bg-amber-50 border-amber-200 text-amber-800'
                                 }`}>
-                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
                                   <span>EN PROCESO</span>
                                 </span>
                               )}
                               {(t.estado === 'CULMINADO' || t.estado === 'HECHO') && (
-                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-full shadow-xs transition-colors ${
+                                <span className={`inline-flex px-3 py-1.5 text-[10px] font-semibold rounded-full border transition-colors ${
                                   isPremiumDarkMode
-                                    ? 'bg-emerald-500/10 border border-emerald-500/25 text-emerald-400'
-                                    : 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+                                    ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400'
+                                    : 'bg-emerald-50 border-emerald-200 text-emerald-700'
                                 }`}>
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                                   <span>CULMINADO</span>
                                 </span>
                               )}
 
                               {/* Task aging indicator alert */}
                               {delayed && (
-                                <span className={`inline-flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md border animate-pulse transition-colors ${
+                                <span className={`inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-md border transition-colors ${
                                   isPremiumDarkMode
                                     ? 'text-rose-400 bg-rose-500/5 border-rose-500/20'
                                     : 'text-rose-600 bg-rose-100/40 border-rose-200'
@@ -1744,22 +1803,22 @@ export default function Dashboard() {
                           </td>
 
                           {/* Frecuencia badge */}
-                          <td className={`p-3 text-center border-b select-none transition-colors ${
-                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'
+                          <td className={`px-3.5 py-3.5 text-center border-b select-none transition-colors ${
+                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'
                           }`}>
                             {t.frecuenciaMeses ? (
-                              <span className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold rounded-full shadow-xs transition-colors ${
+                              <span className={`inline-flex px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
                                 isPremiumDarkMode
-                                  ? 'bg-[#1e1b4b] border border-indigo-500/30 text-indigo-400'
-                                  : 'bg-indigo-50 border border-indigo-100 text-indigo-700'
+                                  ? 'bg-[#1e1b4b] border-indigo-500/30 text-indigo-400'
+                                  : 'bg-indigo-50 border-indigo-100 text-indigo-700'
                               }`}>
-                                🔄 {t.frecuenciaMeses} {t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}
+                                {t.frecuenciaMeses} {t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}
                               </span>
                             ) : (
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full transition-colors ${
+                              <span className={`inline-flex px-2.5 py-1 text-[10px] font-medium rounded-full border transition-colors ${
                                 isPremiumDarkMode
-                                  ? 'bg-slate-800 border border-slate-700 text-slate-400'
-                                  : 'bg-slate-100 border border-slate-200 text-slate-500'
+                                  ? 'bg-slate-800 border-slate-700 text-slate-400'
+                                  : 'bg-slate-100 border-slate-200 text-slate-500'
                               }`}>
                                 Única
                               </span>
@@ -1767,8 +1826,8 @@ export default function Dashboard() {
                           </td>
 
                           {/* Próximo Mantenimiento Badge */}
-                          <td className={`p-3 text-center border-b select-none transition-colors ${
-                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'
+                          <td className={`px-3.5 py-3.5 text-center border-b select-none transition-colors ${
+                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'
                           }`}>
                             {renderProximoBadge(t)}
                           </td>
@@ -2202,14 +2261,14 @@ export default function Dashboard() {
                   frecuenciaMeses: editingTask.frecuenciaMeses,
                   esRecurrente: editingTask.esRecurrente ?? true
                 }
-              : selectedRespFilter
+              : selectedEquipoFilter
               ? {
-                  responsable: selectedRespFilter,
+                  responsable: '',
                   descripcion: '',
                   estado: 'PENDIENTE',
                   itemNumber: '',
                   fecha: '',
-                  equipo: '',
+                  equipo: selectedEquipoFilter,
                   sede: '',
                   falla: '',
                   tipo: '',
@@ -2269,6 +2328,76 @@ export default function Dashboard() {
             </button>
           </div>
         </form>
+      </TaskModal>
+
+      {/* Files History Modal */}
+      <TaskModal
+        isOpen={filesModalOpen}
+        title="Historial de Archivos"
+        onClose={() => {
+          setFilesModalOpen(false);
+          setModalFiles([]);
+          closePreview();
+        }}
+      >
+        <div className="space-y-3">
+          {modalLoadingFiles ? (
+            <div className="flex items-center justify-center p-6">
+              <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
+            </div>
+          ) : (
+            <>
+              {isPreviewOpen && previewUrl ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="font-semibold">{previewName}</div>
+                    <div>
+                      <button onClick={closePreview} className="px-3 py-1 rounded-lg bg-white border text-xs">Cerrar</button>
+                      <a href={previewUrl} download={previewName || undefined} className="ml-2 px-3 py-1 rounded-lg bg-white border text-xs">Descargar</a>
+                    </div>
+                  </div>
+                  <div className="border rounded-md overflow-hidden bg-white">
+                    {previewExt === 'pdf' ? (
+                      <iframe src={previewUrl} className="w-full h-[60vh]" />
+                    ) : (
+                      <img src={previewUrl || undefined} alt={previewName || 'Archivo'} className="w-full h-[60vh] object-contain bg-slate-900" />
+                    )}
+                  </div>
+                </div>
+              ) : modalFiles.length === 0 ? (
+                <p className="text-sm text-slate-500">No hay archivos en el historial.</p>
+              ) : (
+                modalFiles.map((f: any) => {
+                  const fileName = (f.path || '').split('/').pop();
+                  return (
+                    <div key={f.id} className="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-lg p-3">
+                      <div>
+                        <div className="font-semibold text-sm">{f.originalName}</div>
+                        <div className="text-xs text-slate-500">{new Date(f.createdAt).toLocaleString()}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openPreview(fileName, f.originalName)}
+                          className="px-3 py-1 rounded-lg bg-sky-50 border border-sky-100 text-sky-700 text-xs font-semibold"
+                        >
+                          Ver
+                        </button>
+                        <a
+                          href={`/api/tareas/archivo?file=${encodeURIComponent(fileName)}`}
+                          download={f.originalName}
+                          className="px-3 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-semibold"
+                        >
+                          Descargar
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </>
+          )}
+        </div>
       </TaskModal>
 
       {/* PREMIUM CUSTOM CONFIRMATION MODALS (SWEETALERT2-STYLE) */}

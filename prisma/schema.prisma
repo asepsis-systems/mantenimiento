@@ -92,8 +92,20 @@ model Tarea {
   certificadoNombre   String?  // Nombre original del archivo subido
   certificadoPath     String?  // Ruta en el servidor (uploads/certificados/...)
   fechaCulminado      String?  // Fecha en formato YYYY-MM-DD seleccionada por el usuario
+  archivos             TareaArchivo[]
 
   @@map("Tarea")
+}
+
+model TareaArchivo {
+  id           String   @id @default(uuid())
+  tareaId      String
+  tarea        Tarea    @relation(fields: [tareaId], references: [id], onDelete: Cascade)
+  originalName String
+  path         String
+  createdAt    DateTime @default(now())
+
+  @@index([tareaId])
 }
 
 model Responsable {

@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
     // Ensure the directory exists
     await fs.mkdir(uploadDir, { recursive: true });
     
-    // Unique file name based on task id to avoid collisions
-    const fileName = `${id}-certificado${extension}`;
+    // Unique file name based on task id + timestamp to keep history
+    const fileName = `${id}-certificado-${Date.now()}${extension}`;
     const filePath = path.join(uploadDir, fileName);
     
     // Write buffer to disk
@@ -90,6 +90,19 @@ export async function POST(request: NextRequest) {
         proximaEjecucion
       }
     });
+
+    // Create a record for the uploaded file so we keep history
+    try {
+      await db.tareaArchivo.create({
+        data: {
+          tareaId: id,
+          originalName,
+          path: certificateRelativePath
+        }
+      });
+    } catch (err) {
+      console.error('No se pudo crear el registro de archivo en la BD:', err);
+    }
 
     return NextResponse.json({ success: true, tarea: updatedTarea });
   } catch (error: any) {

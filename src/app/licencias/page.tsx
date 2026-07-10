@@ -101,34 +101,34 @@ type SectionName = (typeof sectionNames)[number];
 
 const sectionMachines: Record<SectionName, string[]> = {
   EQUIPOS: [
+    '4XL 1',
+    '5XL 2',
+    '4XL 3',
+    '5XL 4',
+    '5XL 5',
+    '5XL 6',
+    '8XL 7',
+    '8XL 8',
+    '4XL 9',
+    '5XL 10',
+    '4 XL',
+    '5 XL',
     'AUTOCLAVE V1',
     'AUTOCLAVE V2',
     'AUTOCLAVE V3',
     'AUTOCLAVE V4',
     'AUTOCLAVE V5',
     'AUTOCLAVE V6',
-    'OE 4XL 1',
-    'OE 5XL 2',
-    'OE 4XL 3',
-    'OE 5XL 4',
-    'OE 5XL 5',
-    'OE 5XL 6',
-    'OE 8XL 7',
-    'OE 8XL 8',
-    'OE 4XL 9',
-    'OE 5XL 10',
-    'OE 4 XL  Trujillo',
-    'OE 5 XL  Trujillo',
     'PLASMA P1',
     'PLASMA P2',
     'PLASMA P3',
     'FORMALDEHIDO F01',
+    'AUTOCLAVE V-2',
+    'AUTOCLAVE V-5',
     'LAVADORA',
     'CALDERA',
-    'COMPRESOR 10 HP',
-    'COMPRESOR 25 HP',
-    'AUTOCLAVE V-2   Trujillo',
-    'AUTOCLAVE V-5   Trujillo'
+    'COMPRESOR 25HP',
+    'COMPRESOR 10HP'
   ],
   COMPLEMENTARIO1: [],
   COMPLEMENTARIO2: []
@@ -194,6 +194,10 @@ export default function LicensesPage() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [detailsModalLicense, setDetailsModalLicense] = useState<License | null>(null);
   const [isDetailsEditMode, setIsDetailsEditMode] = useState(false);
+
+  // Files history for license details
+  const [licenseFiles, setLicenseFiles] = useState<any[]>([]);
+  const [licenseFilesLoading, setLicenseFilesLoading] = useState(false);
 
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -391,6 +395,8 @@ export default function LicensesPage() {
   const openDetailsModalForMachine = (machineName: string, lic?: License) => {
     if (lic) {
       setDetailsModalLicense(lic);
+      // fetch files for this license
+      if (lic.id) fetchLicenseFiles(lic.id);
     } else {
       const dummyLicense: License = {
         id: '',
@@ -433,8 +439,27 @@ export default function LicensesPage() {
 
   const openDetailsModal = (lic: License) => {
     setDetailsModalLicense(lic);
+    if (lic.id) fetchLicenseFiles(lic.id);
     setIsDetailsModalOpen(true);
     setIsDetailsEditMode(false);
+  };
+
+  const fetchLicenseFiles = async (licenseId: string) => {
+    setLicenseFilesLoading(true);
+    try {
+      const res = await fetch(`/api/licencias/archivo?id=${encodeURIComponent(licenseId)}&list=true`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setLicenseFiles(data.files || []);
+      } else {
+        setLicenseFiles([]);
+      }
+    } catch (err) {
+      console.error('Error fetching license files:', err);
+      setLicenseFiles([]);
+    } finally {
+      setLicenseFilesLoading(false);
+    }
   };
 
   const openEditModal = (lic: License) => {
@@ -858,20 +883,37 @@ export default function LicensesPage() {
           <div className="flex flex-wrap items-center gap-3">
             {sectionNames.map((section) => {
               const isActive = currentSection === section;
-              const style = section === 'EQUIPOS'
-                ? 'bg-slate-900 text-white border-slate-900'
+
+              // inactive styles per section
+              const inactiveStyle = section === 'EQUIPOS'
+                ? 'bg-slate-100 border-slate-200 text-slate-900'
                 : section === 'COMPLEMENTARIO1'
                   ? 'bg-pink-50 border-pink-200 text-pink-700'
                   : 'bg-amber-50 border-amber-200 text-amber-700';
+
+              // active styles per section (keep distinct colors instead of always dark)
+              const activeStyle = section === 'EQUIPOS'
+                ? 'bg-blue-600 text-white shadow-sm border-blue-600'
+                : section === 'COMPLEMENTARIO1'
+                  ? 'bg-pink-600 text-white shadow-sm border-pink-600'
+                  : 'bg-amber-600 text-white shadow-sm border-amber-600';
+
+              const iconColor = isActive
+                ? 'text-white'
+                : section === 'EQUIPOS'
+                  ? 'text-slate-900'
+                  : section === 'COMPLEMENTARIO1'
+                    ? 'text-pink-500'
+                    : 'text-amber-500';
 
               return (
                 <button
                   key={section}
                   type="button"
                   onClick={() => setCurrentSection(section)}
-                  className={`flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${isActive ? 'bg-slate-900 text-white shadow-sm border-slate-900' : `${style} hover:bg-opacity-90`}`}
+                  className={`flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${isActive ? activeStyle : `${inactiveStyle} hover:bg-opacity-90`}`}
                 >
-                  <Folder className={`w-5 h-5 ${isActive ? 'text-white' : section === 'EQUIPOS' ? 'text-slate-900' : section === 'COMPLEMENTARIO1' ? 'text-pink-500' : 'text-amber-500'}`} />
+                  <Folder className={`w-5 h-5 ${iconColor}`} />
                   <span>{section}</span>
                 </button>
               );
@@ -1474,6 +1516,52 @@ export default function LicensesPage() {
                   </div>
                 ));
               })()}
+            </div>
+
+            {/* Document history section */}
+            <div className="mt-4">
+              <h4 className="font-semibold text-sm text-slate-700 mb-2">Historial de Documentos</h4>
+              {licenseFilesLoading ? (
+                <div className="text-sm text-slate-500">Cargando archivos...</div>
+              ) : licenseFiles.length === 0 ? (
+                <div className="text-sm text-slate-500">No se encontraron archivos para esta máquina.</div>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                  {licenseFiles.map((f) => {
+                    const fileName = f.fileName || f.fileName;
+                    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+                    const previewable = ['pdf', 'jpg', 'jpeg', 'png', 'gif'];
+                    return (
+                      <div key={fileName} className="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-lg p-3">
+                        <div>
+                          <div className="font-semibold text-sm">{fileName}</div>
+                          <div className="text-xs text-slate-500">{new Date(f.mtime).toLocaleString()}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {previewable.includes(ext) ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const url = `/api/licencias/archivo?file=${encodeURIComponent(fileName)}`;
+                                setPreviewUrl(url);
+                                setPreviewName(fileName);
+                                setPreviewExt(ext);
+                                setIsPreviewOpen(true);
+                              }}
+                              className="px-3 py-1 rounded-lg bg-sky-50 border border-sky-100 text-sky-700 text-xs font-semibold"
+                            >
+                              Ver
+                            </button>
+                          ) : (
+                            <a href={`/api/licencias/archivo?file=${encodeURIComponent(fileName)}`} target="_blank" rel="noreferrer" className="px-3 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-semibold">Abrir</a>
+                          )}
+                          <a href={`/api/licencias/archivo?file=${encodeURIComponent(fileName)}`} download className="px-3 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-semibold">Descargar</a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">

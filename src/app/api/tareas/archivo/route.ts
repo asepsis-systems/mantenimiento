@@ -7,12 +7,52 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+    const file = searchParams.get('file');
+
+    // If file query is provided, serve that physical file from uploads/certificados
+    if (file) {
+      const safeName = path.basename(file);
+      const filePath = path.join(process.cwd(), 'uploads', 'certificados', safeName);
+      try {
+        await fs.access(filePath);
+      } catch {
+        return NextResponse.json({ success: false, error: 'El archivo no se encuentra en el servidor.' }, { status: 404 });
+      }
+      const fileBuffer = await fs.readFile(filePath);
+      const extension = path.extname(safeName).toLowerCase();
+      const mimeTypes: Record<string, string> = {
+        '.pdf': 'application/pdf',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+      };
+      const contentType = mimeTypes[extension] || 'application/octet-stream';
+      const isViewable = ['.pdf', '.jpg', '.jpeg', '.png', '.gif'].includes(extension);
+      const disposition = isViewable ? 'inline' : 'attachment';
+      return new Response(fileBuffer, {
+        headers: {
+          'Content-Type': contentType,
+          'Content-Disposition': `${disposition}; filename="${encodeURIComponent(safeName)}"`,
+        },
+      });
+    }
 
     if (!id) {
       return NextResponse.json(
         { success: false, error: 'Falta especificar el ID de la tarea.' },
         { status: 400 }
       );
+    }
+
+    // If list=true, return JSON list of files associated to the task
+    const list = searchParams.get('list');
+    if (list === 'true') {
+      const files = await db.tareaArchivo.findMany({
+        where: { tareaId: id },
+        orderBy: { createdAt: 'desc' }
+      });
+      return NextResponse.json({ success: true, files });
     }
 
     const tarea = await db.tarea.findUnique({

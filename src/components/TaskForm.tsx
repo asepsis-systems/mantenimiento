@@ -54,6 +54,13 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [repuestos, setRepuestos] = useState((initialValues as any).repuestos ?? '');
   const [cantidad, setCantidad] = useState((initialValues as any).cantidad ?? '');
   const [customEquipo, setCustomEquipo] = useState('');
+  const [selectedEquipos, setSelectedEquipos] = useState<string[]>(() => {
+    // Si initialValues.equipo contiene separador ' | ' asumimos lista
+    const initEq = (initialValues as any).equipo ?? '';
+    if (typeof initEq === 'string' && initEq.includes(' | ')) return initEq.split(' | ').map(s => s.trim()).filter(Boolean);
+    if (typeof initEq === 'string' && initEq.trim() !== '') return [initEq.trim()];
+    return [];
+  });
   const [customResponsable, setCustomResponsable] = useState('');
   const [customTipo, setCustomTipo] = useState('');
   
@@ -82,50 +89,16 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   // Lista base ampliada de Equipos/Máquinas estándar en planta
   const defaultEquipoOptions = [
-    // Serie OE 4XL (1 al 12)
-    'OE 4XL 1', 'OE 4XL 2', 'OE 4XL 3', 'OE 4XL 4', 'OE 4XL 5', 'OE 4XL 6',
-    'OE 4XL 7', 'OE 4XL 8', 'OE 4XL 9', 'OE 4XL 10', 'OE 4XL 11', 'OE 4XL 12',
-    // Serie OE 5XL (1 al 12)
-    'OE 5XL 1', 'OE 5XL 2', 'OE 5XL 3', 'OE 5XL 4', 'OE 5XL 5', 'OE 5XL 6',
-    'OE 5XL 7', 'OE 5XL 8', 'OE 5XL 9', 'OE 5XL 10', 'OE 5XL 11', 'OE 5XL 12',
-    // Serie OE 8XL (1 al 12)
-    'OE 8XL 1', 'OE 8XL 2', 'OE 8XL 3', 'OE 8XL 4', 'OE 8XL 5', 'OE 8XL 6',
-    'OE 8XL 7', 'OE 8XL 8', 'OE 8XL 9', 'OE 8XL 10', 'OE 8XL 11', 'OE 8XL 12',
-    // Serie Autoclaves (V1 al V12)
+    '4XL 1', '5XL 2', '4XL 3', '5XL 4', '5XL 5', '5XL 6',
+    '8XL 7', '8XL 8', '4XL 9', '5XL 10', '4 XL', '5 XL',
     'AUTOCLAVE V1', 'AUTOCLAVE V2', 'AUTOCLAVE V3', 'AUTOCLAVE V4', 'AUTOCLAVE V5',
-    'AUTOCLAVE V6', 'AUTOCLAVE V7', 'AUTOCLAVE V8', 'AUTOCLAVE V9', 'AUTOCLAVE V10',
-    'AUTOCLAVE V11', 'AUTOCLAVE V12',
-    // Serie Plasma (P1 al P6)
-    'PLASMA P1', 'PLASMA P2', 'PLASMA P3', 'PLASMA P4', 'PLASMA P5', 'PLASMA P6',
-    // Formaldehído (F01 y F02)
-    'FORMALDEHIDO F01', 'FORMALDEHIDO F02',
-    // Sucursales/Sedes específicas
-    'OE 4 XL Truj.', 'OE 5 XL Truj.', 'AUTOCLAVE V-2 Truj.', 'AUTOCLAVE V-5 Truj.',
-    // Selladoras (Sealing Machines)
-    'SELLADORA ROTATIVA 1', 'SELLADORA ROTATIVA 2', 'SELLADORA ROTATIVA 3',
-    'SELLADORA ROTATIVA HAWO 1', 'SELLADORA ROTATIVA HAWO 2',
-    'SELLADORA DE MESA 1', 'SELLADORA DE MESA 2',
-    // Lavadoras Termodesinfectadoras & Lavadoras Ultrasónicas (Washers)
-    'LAVADORA', 'LAVADORA TERMODESINFECTADORA 1', 'LAVADORA TERMODESINFECTADORA 2', 'LAVADORA TERMODESINFECTADORA 3',
-    'LAVADORA ULTRASONICA 1', 'LAVADORA ULTRASONICA 2', 'LAVADORA ULTRASONICA 3',
-    'LAVADORA DE CHATAS 1', 'LAVADORA DE CHATAS 2',
-    // Incubadoras / Lectores Biológicos
-    'INCUBADORA 3M ATTEST 1', 'INCUBADORA 3M ATTEST 2',
-    'INCUBADORA DE BIOLOGICOS 1', 'INCUBADORA DE BIOLOGICOS 2',
-    'INCUBADORA DE LECTURA RAPIDA 1', 'INCUBADORA DE LECTURA RAPIDA 2',
-    // Equipos e Infraestructura de Soporte (Utilities)
-    'CALDERA', 'CALDERA DE VAPOR 1', 'CALDERA DE VAPOR 2',
-    'COMPRESOR', 'COMPRESOR DE AIRE 1', 'COMPRESOR DE AIRE 2', 'SECADOR DE AIRE COMPRIMIDO',
-    'ABLANDADOR', 'ABLANDADOR DE AGUA 1', 'ABLANDADOR DE AGUA 2',
-    'SISTEMA DE AGUA OSMOSIS', 'SISTEMA DE AGUA OSMOSIS 1', 'SISTEMA DE AGUA OSMOSIS 2',
-    'DESTILADOR DE AGUA 1', 'DESTILADOR DE AGUA 2',
-    'BOMBA DE VACIO 1', 'BOMBA DE VACIO 2', 'BOMBA DE AGUA DE ALIMENTACION',
-    'TANQUE DE RETORNO DE CONDENSADO', 'SISTEMA DE FRIO (CHILLER)',
-    'SISTEMA DE AIRE TRATADO / HVAC', 'MANEJADORA DE AIRE (UMA)',
-    'GRUPO ELECTROGENO', 'ESTERILIZADOR DRY HEAT (ESTUFA)',
-    // Pistolas de presión
-    'PISTOLA DE AIRE A PRESION 1', 'PISTOLA DE AIRE A PRESION 2',
-    'PISTOLA DE AGUA A PRESION 1', 'PISTOLA DE AGUA A PRESION 2'
+    'AUTOCLAVE V6',
+    'PLASMA P1', 'PLASMA P2', 'PLASMA P3',
+    'FORMALDEHIDO F01',
+    'AUTOCLAVE V-2', 'AUTOCLAVE V-5',
+    'LAVADORA',
+    'CALDERA',
+    'COMPRESOR 25HP', 'COMPRESOR 10HP'
   ];
 
   // Combinación inteligente de la lista base y los equipos dinámicos provenientes de la base de datos
@@ -180,7 +153,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         estado,
         itemNumber: itemNumber === '' ? undefined : Number(itemNumber),
         fecha: fecha || undefined,
-        equipo: equipo === 'Otro' ? customEquipo || undefined : equipo || undefined,
+        equipo: selectedEquipos.length > 0 ? selectedEquipos.join(' | ') : (equipo === 'Otro' ? customEquipo || undefined : equipo || undefined),
         sede: sede || undefined,
         falla: falla || undefined,
         tipo: tipo === 'Otro' ? customTipo || undefined : tipo || undefined,
@@ -301,6 +274,29 @@ export const TaskForm: React.FC<TaskFormProps> = ({
               className="mt-3 w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
             />
           )}
+          {/* Multi-equipos: agregar y mostrar tags */}
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const toAdd = equipo === 'Otro' ? customEquipo.trim() : equipo;
+                if (!toAdd || toAdd === '') return;
+                if (!selectedEquipos.includes(toAdd)) setSelectedEquipos(prev => [...prev, toAdd]);
+                // reset selection
+                setEquipo('');
+                setCustomEquipo('');
+              }}
+              className="px-3 py-1.5 rounded-full bg-brand-600 text-white text-xs font-semibold"
+            >Agregar equipo</button>
+            <div className="flex flex-wrap gap-2">
+              {selectedEquipos.map((eq) => (
+                <div key={eq} className="bg-slate-800 text-slate-200 px-2 py-1 rounded-full text-xs flex items-center gap-2">
+                  <span className="capitalize">{eq}</span>
+                  <button type="button" onClick={() => setSelectedEquipos(prev => prev.filter(x => x !== eq))} className="ml-1 text-rose-400">✕</button>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
         <div>
           <label className="text-xs font-semibold text-slate-400 block mb-1">Sede</label>
