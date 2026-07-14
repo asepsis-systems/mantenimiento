@@ -392,6 +392,57 @@ export default function LicensesPage() {
     }
   };
 
+  const handleUploadForPlaceholder = async (machineName: string, docType: LicenseDocType) => {
+    setActionLoading(true);
+    try {
+      const carpetaId = await ensureSectionFolderId();
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = now.getFullYear();
+      const todayStr = `${dd}/${mm}/${yyyy}`;
+
+      const payload = {
+        name: machineName,
+        entity: 'POR ESPECIFICAR',
+        code: 'S/N',
+        issueDate: todayStr,
+        expiryDate: todayStr,
+        status: 'EN_TRAMITE',
+        details: JSON.stringify({
+          equipo: machineName,
+          marca: '',
+          modelo: '',
+          serie: '',
+          capacidad: '',
+          estado: '',
+          sede: '',
+          procesos: '',
+          garantia: ''
+        }),
+        carpetaId
+      };
+
+      const res = await fetch('/api/licencias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success && data.data) {
+        await fetchLicenses();
+        openDocUploadModal(data.data.id, docType, '');
+      } else {
+        alert(data.error || 'Error al registrar la máquina automáticamente.');
+      }
+    } catch (err) {
+      alert('Error de conexión al registrar la máquina.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const openDetailsModalForMachine = (machineName: string, lic?: License) => {
     if (lic) {
       setDetailsModalLicense(lic);
@@ -986,23 +1037,28 @@ export default function LicensesPage() {
                               Ver
                             </button>
                           </td>
-                          <td className="p-4 text-center text-slate-400">-</td>
-                          <td className="p-4 text-center text-slate-400">-</td>
-                          <td className="p-4 text-center text-slate-400">-</td>
-                          <td className="p-4 text-center text-slate-400">-</td>
-                          <td className="p-4 text-center text-slate-400">-</td>
-                          <td className="p-4 text-center text-slate-400">-</td>
+                          {(['certificado', 'protocolo', 'informeTecnico', 'factura', 'presupuesto', 'checklist'] as LicenseDocType[]).map((docType) => {
+                            return (
+                              <td key={docType} className="p-4 text-center align-top">
+                                <div className="space-y-2">
+                                  <span className="block text-[11px] text-slate-400">Sin archivo</span>
+                                  {user?.role !== 'VIEWER' && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUploadForPlaceholder(row.machineName, docType)}
+                                      className="text-[11px] text-slate-600 hover:text-slate-900 font-semibold rounded-xl px-2 py-1 bg-slate-100 hover:bg-slate-200 transition"
+                                    >
+                                      Subir
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            );
+                          })}
                           <td className="p-4 text-center">
-                            {user?.role !== 'VIEWER' && (
-                              <button
-                                onClick={() => openCreateModal(row.machineName)}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-2.5 py-1.5 text-[10px] font-bold text-brand-600 border border-brand-200 hover:bg-brand-100 transition active:scale-95 cursor-pointer shadow-sm"
-                                title="Registrar Máquina para subir archivos"
-                              >
-                                <Plus className="w-3.5 h-3.5" />
-                                <span>Registrar</span>
-                              </button>
-                            )}
+                            <div className="flex items-center justify-center gap-1">
+                              {/* Acciones limpias y alineadas */}
+                            </div>
                           </td>
                         </tr>
                       );
