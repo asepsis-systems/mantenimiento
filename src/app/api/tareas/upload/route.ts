@@ -44,7 +44,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Tarea no encontrada.' }, { status: 404 });
     }
 
+    const customName = formData.get('customName') as string | null;
     const originalName = file.name;
+    const displayName = customName || originalName;
     const extension = path.extname(originalName);
 
     // Set up local storage path inside MTTO project
@@ -83,7 +85,7 @@ export async function POST(request: NextRequest) {
     const updatedTarea = await db.tarea.update({
       where: { id },
       data: {
-        certificadoNombre: originalName,
+        certificadoNombre: displayName,
         certificadoPath: certificateRelativePath,
         estado: targetEstado,
         fechaUltimaEjecucion,
@@ -96,7 +98,7 @@ export async function POST(request: NextRequest) {
       await db.tareaArchivo.create({
         data: {
           tareaId: id,
-          originalName,
+          originalName: displayName,
           path: certificateRelativePath
         }
       });

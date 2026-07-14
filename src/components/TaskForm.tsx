@@ -227,24 +227,18 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         )}
       </div>
 
-      {/* Descripción */}
+      {/* Falla (Now in the main large area) */}
       <div>
-        <label className="text-xs font-semibold text-slate-400 block mb-1">Descripción del Trabajo</label>
+        <label className="text-xs font-semibold text-slate-400 block mb-1">Falla Reportada</label>
         <textarea
-          rows={4}
-          value={descripcion}
-          onChange={(e) => setDescripcion(e.target.value)}
-          placeholder="ej. Lubricación de los motores principales y revisión de niveles..."
+          rows={3}
+          value={falla}
+          onChange={(e) => setFalla(e.target.value)}
+          placeholder="Describe la falla reportada..."
           className={`w-full bg-slate-900 border ${
-            errors.descripcion ? 'border-rose-500' : 'border-white/10'
+            errors.falla ? 'border-rose-500' : 'border-white/10'
           } hover:border-white/20 rounded-xl py-2.5 px-3 text-slate-200 text-sm focus:outline-none focus:border-brand-500 font-medium placeholder-slate-600 resize-none`}
         />
-        {errors.descripcion && (
-          <p className="text-rose-450 text-[10px] mt-1 flex items-center gap-1">
-            <AlertCircle className="w-3 h-3" />
-            <span>{errors.descripcion}</span>
-          </p>
-        )}
       </div>
 
       {/* Equipo / Máquina, Sede, Falla */}
@@ -313,14 +307,22 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           </select>
         </div>
         <div>
-          <label className="text-xs font-semibold text-slate-400 block mb-1">Falla</label>
-        <textarea
-          rows={3}
-          value={falla}
-          onChange={(e) => setFalla(e.target.value)}
-          placeholder="Describe la falla..."
-          className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm resize-none"
-        />
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Descripción de Actividad</label>
+          <textarea
+            rows={3}
+            value={descripcion}
+            onChange={(e) => setDescripcion(e.target.value)}
+            placeholder="Describe la actividad realizada..."
+            className={`w-full bg-slate-900 border ${
+              errors.descripcion ? 'border-rose-500' : 'border-white/10'
+            } hover:border-white/20 rounded-xl py-2.5 px-3 text-slate-200 text-sm focus:outline-none focus:border-brand-500 font-medium placeholder-slate-600 resize-none`}
+          />
+          {errors.descripcion && (
+            <p className="text-rose-450 text-[10px] mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              <span>{errors.descripcion}</span>
+            </p>
+          )}
         </div>
       </div>
 

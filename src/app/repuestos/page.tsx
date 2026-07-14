@@ -513,7 +513,7 @@ export default function SparePartsPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Header Banner */}
-      <header className="bg-slate-900 text-white shadow-xl shadow-slate-950/10">
+      <header className="bg-slate-900 text-white shadow-xl shadow-slate-950/10 sticky top-0 z-[40]">
         <div className="max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="bg-white rounded-xl p-1 shadow-md shrink-0 flex items-center justify-center w-12 h-10">
@@ -720,34 +720,34 @@ export default function SparePartsPage() {
         <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-xs uppercase tracking-wider">
+              <thead className="bg-[#0f172a] text-white shadow-sm">
+                <tr className="text-[10px] tracking-[0.24em] uppercase font-bold border-b border-slate-800">
                   {activeTab === 'INVENTARIOS' ? (
                     <>
-                      <th className="p-4">Método</th>
-                      <th className="p-4">Código</th>
-                      <th className="p-4">Nombre</th>
-                      <th className="p-4">Repuesto</th>
-                      <th className="p-4">Código</th>
-                      <th className="p-4">Marca 1</th>
-                      <th className="p-4">Comentario</th>
-                      <th className="p-4 text-center">Stock</th>
-                      <th className="p-4 text-center">Foto</th>
-                      <th className="p-4">Almacenado</th>
-                      <th className="p-4">Sección</th>
+                      <th className="p-4 border-r border-white/5">Método</th>
+                      <th className="p-4 border-r border-white/5">Código</th>
+                      <th className="p-4 border-r border-white/5">Nombre</th>
+                      <th className="p-4 border-r border-white/5">Repuesto</th>
+                      <th className="p-4 border-r border-white/5">Código</th>
+                      <th className="p-4 border-r border-white/5">Marca 1</th>
+                      <th className="p-4 border-r border-white/5">Comentario</th>
+                      <th className="p-4 text-center border-r border-white/5">Stock</th>
+                      <th className="p-4 text-center border-r border-white/5">Foto</th>
+                      <th className="p-4 border-r border-white/5">Almacenado</th>
+                      <th className="p-4 border-r border-white/5">Sección</th>
                     </>
                   ) : (
                     <>
-                      <th className="p-4">Método</th>
-                      <th className="p-4">Método 2</th>
-                      <th className="p-4">Correlativo</th>
-                      <th className="p-4">Descripción</th>
-                      <th className="p-4">Código Mtchna</th>
-                      <th className="p-4">Forma parte del kit</th>
-                      <th className="p-4">Forma parte del kit 2</th>
-                      <th className="p-4 text-center">Stock</th>
-                      <th className="p-4 text-center">Usados</th>
-                      <th className="p-4">Ubicación</th>
+                      <th className="p-4 border-r border-white/5">Método</th>
+                      <th className="p-4 border-r border-white/5">Método 2</th>
+                      <th className="p-4 border-r border-white/5">Correlativo</th>
+                      <th className="p-4 border-r border-white/5">Descripción</th>
+                      <th className="p-4 border-r border-white/5">Código Mtchna</th>
+                      <th className="p-4 border-r border-white/5">Forma parte del kit</th>
+                      <th className="p-4 border-r border-white/5">Forma parte del kit 2</th>
+                      <th className="p-4 text-center border-r border-white/5">Stock</th>
+                      <th className="p-4 text-center border-r border-white/5">Usados</th>
+                      <th className="p-4 border-r border-white/5">Ubicación</th>
                     </>
                   )}
                   {user?.role !== 'VIEWER' && <th className="p-4 text-center w-24">Acciones</th>}

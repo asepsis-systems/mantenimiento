@@ -101,18 +101,18 @@ type SectionName = (typeof sectionNames)[number];
 
 const sectionMachines: Record<SectionName, string[]> = {
   EQUIPOS: [
-    '4XL 1',
-    '5XL 2',
-    '4XL 3',
-    '5XL 4',
-    '5XL 5',
-    '5XL 6',
-    '8XL 7',
-    '8XL 8',
-    '4XL 9',
-    '5XL 10',
-    '4 XL',
-    '5 XL',
+    'OE 4XL 1',
+    'OE 5XL 2',
+    'OE 4XL 3',
+    'OE 5XL 4',
+    'OE 5XL 5',
+    'OE 5XL 6',
+    'OE 8XL 7',
+    'OE 8XL 8',
+    'OE 4XL 9',
+    'OE 5XL 10',
+    'OE 4 XL',
+    'OE 5 XL',
     'AUTOCLAVE V1',
     'AUTOCLAVE V2',
     'AUTOCLAVE V3',
@@ -304,7 +304,7 @@ export default function LicensesPage() {
     setFormIssueDate('');
     setFormExpiryDate('');
     setFormStatus('VIGENTE');
-    setDetailEquipo('');
+    setDetailEquipo(defaultName);
     setDetailMarca('');
     setDetailModelo('');
     setDetailSerie('');
@@ -597,11 +597,19 @@ export default function LicensesPage() {
 
   const handleDocUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uploadFile || !currentDocUploadLicenseId) return;
+    if (!currentDocUploadLicenseId) return;
+    
+    // If not editing, or editing but no file exists and no file is selected, return
+    const isEditing = !!currentDocUploadLicenseId;
+    const hasExistingFile = isEditing && !!(licenses.find(l => l.id === currentDocUploadLicenseId)?.[docTypeFieldMap[currentDocUploadType].nameField]);
+    
+    if (!uploadFile && !hasExistingFile) return;
 
     setActionLoading(true);
     const formData = new FormData();
-    formData.append('file', uploadFile);
+    if (uploadFile) {
+      formData.append('file', uploadFile);
+    }
     formData.append('docType', currentDocUploadType);
     formData.append('id', currentDocUploadLicenseId);
     if (uploadEntity.trim()) {
@@ -698,6 +706,7 @@ export default function LicensesPage() {
 
     const docTypes: LicenseDocType[] = ['certificado', 'protocolo', 'informeTecnico', 'factura', 'presupuesto', 'checklist'];
     docTypes.forEach((docType) => {
+
       const field = docTypeFieldMap[docType];
       const name = lic[field.nameField];
       if (name) {
@@ -752,7 +761,9 @@ export default function LicensesPage() {
       license: lic
     }));
 
-  const displayRows = [...visibleMachineRows, ...extraLicenseRows];
+  const displayRows = [...visibleMachineRows, ...extraLicenseRows].sort((a, b) =>
+    a.machineName.localeCompare(b.machineName, undefined, { numeric: true, sensitivity: 'base' })
+  );
 
   const rowStatus = (lic?: License) => {
     if (!lic) return null;
@@ -763,7 +774,7 @@ export default function LicensesPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-slate-900 text-white shadow-xl shadow-slate-950/10">
+      <header className="bg-slate-900 text-white shadow-xl shadow-slate-950/10 sticky top-0 z-[40]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="bg-white rounded-xl p-1 shadow-md shrink-0 flex items-center justify-center w-12 h-10">
@@ -937,17 +948,17 @@ export default function LicensesPage() {
         <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs w-full max-w-none">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1100px] text-left border-collapse text-sm">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
-                  <th className="p-4">N°</th>
-                  <th className="p-4">NOMBRE/MAQUINA</th>
-                  <th className="p-4">DETALLES</th>
-                  <th className="p-4">CERTIFICADO</th>
-                  <th className="p-4">PROTOCOLO</th>
-                  <th className="p-4">INFORME TÉCNICO</th>
-                  <th className="p-4 text-center">FACTURA</th>
-                  <th className="p-4 text-center">PRESUPUESTO</th>
-                  <th className="p-4 text-center">CHECK LIST</th>
+              <thead className="bg-[#0f172a] text-white shadow-sm">
+                <tr className="text-[10px] tracking-[0.24em] uppercase font-bold border-b border-slate-800">
+                  <th className="p-4 text-center border-r border-white/5">N°</th>
+                  <th className="p-4 border-r border-white/5">NOMBRE/MAQUINA</th>
+                  <th className="p-4 border-r border-white/5">DETALLES</th>
+                  <th className="p-4 border-r border-white/5">CERTIFICADO</th>
+                  <th className="p-4 border-r border-white/5">PROTOCOLO</th>
+                  <th className="p-4 border-r border-white/5">INFORME TÉCNICO</th>
+                  <th className="p-4 text-center border-r border-white/5">FACTURA</th>
+                  <th className="p-4 text-center border-r border-white/5">PRESUPUESTO</th>
+                  <th className="p-4 text-center border-r border-white/5">CHECK LIST</th>
                   <th className="p-4 text-center w-32">Acciones</th>
                 </tr>
               </thead>
@@ -982,13 +993,16 @@ export default function LicensesPage() {
                           <td className="p-4 text-center text-slate-400">-</td>
                           <td className="p-4 text-center text-slate-400">-</td>
                           <td className="p-4 text-center">
-                            <button
-                              type="button"
-                              onClick={() => openCreateModal(row.machineName)}
-                              className="inline-flex items-center justify-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-[11px] font-semibold text-brand-700 hover:bg-brand-100 transition cursor-pointer"
-                            >
-                              Crear
-                            </button>
+                            {user?.role !== 'VIEWER' && (
+                              <button
+                                onClick={() => openCreateModal(row.machineName)}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-2.5 py-1.5 text-[10px] font-bold text-brand-600 border border-brand-200 hover:bg-brand-100 transition active:scale-95 cursor-pointer shadow-sm"
+                                title="Registrar Máquina para subir archivos"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>Registrar</span>
+                              </button>
+                            )}
                           </td>
                         </tr>
                       );
@@ -1051,7 +1065,7 @@ export default function LicensesPage() {
                                     onClick={() => openDocUploadModal(lic.id, docType, specificExpiryDate || '')}
                                     className="text-[11px] text-slate-600 hover:text-slate-900 font-semibold rounded-xl px-2 py-1 bg-slate-100 hover:bg-slate-200 transition"
                                   >
-                                    {name ? 'Reemplazar' : 'Subir'}
+                                    {name ? 'Editar' : 'Subir'}
                                   </button>
                                 )}
                               </div>
@@ -1061,30 +1075,21 @@ export default function LicensesPage() {
                         <td className="p-4 text-center">
                           <div className="flex items-center justify-center gap-1">
                             {user?.role !== 'VIEWER' && (
-                              <>
-                                <button
-                                  onClick={() => openEditModal(lic)}
-                                  className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors cursor-pointer"
-                                  title="Editar"
-                                >
-                                  <Edit3 className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    if (confirm(`¿Está seguro de eliminar la licencia/permiso "${lic.name}"?`)) {
-                                      fetch(`/api/licencias/${lic.id}`, { method: 'DELETE' })
-                                        .then((res) => res.json())
-                                        .then((data) => {
-                                          if (data.success) fetchLicenses();
-                                        });
-                                    }
-                                  }}
-                                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                  title="Eliminar"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </>
+                              <button
+                                onClick={() => {
+                                  if (confirm(`¿Está seguro de eliminar la licencia/permiso "${lic.name}"?`)) {
+                                    fetch(`/api/licencias/${lic.id}`, { method: 'DELETE' })
+                                      .then((res) => res.json())
+                                      .then((data) => {
+                                        if (data.success) fetchLicenses();
+                                      });
+                                  }
+                                }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                title="Eliminar"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             )}
                           </div>
                         </td>
@@ -1406,7 +1411,7 @@ export default function LicensesPage() {
                     }
                   }}
                   className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer"
-                  required
+                  required={!currentDocUploadLicenseId || !(licenses.find(l => l.id === currentDocUploadLicenseId)?.[docTypeFieldMap[currentDocUploadType].nameField])}
                 />
               </div>
               <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
@@ -1419,10 +1424,10 @@ export default function LicensesPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={actionLoading || !uploadFile}
+                  disabled={actionLoading || (!uploadFile && !currentDocUploadLicenseId)}
                   className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
                 >
-                  {actionLoading ? 'Subiendo...' : 'Subir Archivo'}
+                  {actionLoading ? 'Guardando...' : (currentDocUploadLicenseId && (licenses.find(l => l.id === currentDocUploadLicenseId)?.[docTypeFieldMap[currentDocUploadType].nameField]) ? 'Guardar Cambios' : 'Subir Archivo')}
                 </button>
               </div>
             </form>

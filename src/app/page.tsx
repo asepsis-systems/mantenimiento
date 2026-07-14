@@ -87,6 +87,11 @@ export default function Dashboard() {
   // Filters & Inputs
   const [selectedEquipoFilter, setSelectedEquipoFilter] = useState<string | null>(null);
   const [selectedSedeFilter, setSelectedSedeFilter] = useState<'Lima' | 'Trujillo' | null>(null);
+  const [selectedResponsableFilter, setSelectedResponsableFilter] = useState<string | null>(null);
+  const [selectedTipoFilter, setSelectedTipoFilter] = useState<string | null>(null);
+  const [selectedDocFilter, setSelectedDocFilter] = useState<'ALL' | 'CON_DOC' | 'SIN_DOC'>('ALL');
+  const [selectedFrecuenciaFilter, setSelectedFrecuenciaFilter] = useState<string | null>(null);
+
   const equipoOptions = Array.from(
     new Set(
       tareas
@@ -94,6 +99,32 @@ export default function Dashboard() {
         .filter((e): e is string => typeof e === 'string' && e.trim() !== '')
     )
   ).sort((a, b) => a.localeCompare(b));
+
+  const responsableOptions = Array.from(
+    new Set(
+      tareas
+        .map((t) => t.responsable)
+        .filter((r): r is string => typeof r === 'string' && r.trim() !== '')
+    )
+  ).sort((a, b) => a.localeCompare(b));
+
+  const tipoOptions = Array.from(
+    new Set([
+      'PREVENTIVO', 'CORRECTIVO', 'PREDICTIVO',
+      ...tareas.map((t) => (t.tipo || '').toUpperCase()).filter(Boolean)
+    ])
+  ).sort((a, b) => a.localeCompare(b));
+
+  const frecuenciaOptions = Array.from(
+    new Set([
+      '1', '2', '3', '4', '6', '12',
+      ...tareas
+        .map((t) => t.frecuenciaMeses)
+        .filter((f): f is number => f !== null && f !== undefined)
+        .map(f => String(f))
+    ])
+  ).sort((a, b) => Number(a) - Number(b));
+
   const [searchRespQuery, setSearchRespQuery] = useState('');
   const [newRespName, setNewRespName] = useState('');
 
@@ -117,6 +148,14 @@ export default function Dashboard() {
   const [editingTask, setEditingTask] = useState<Tarea | null>(null);
   const [editingDateId, setEditingDateId] = useState<string | null>(null);
   const [uploadingTaskId, setUploadingTaskId] = useState<string | null>(null);
+  const [isMultiUploadOpen, setIsMultiUploadOpen] = useState(false);
+  const [multiUploadTaskId, setMultiUploadTaskId] = useState<string | null>(null);
+  const [multiUploadSlots, setMultiUploadSlots] = useState<{ name: string, file: File | null }[]>([
+    { name: 'Certificado 1', file: null },
+    { name: 'Certificado 2', file: null },
+    { name: 'Certificado 3', file: null },
+    { name: 'Certificado 4', file: null },
+  ]);
   
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmDeleteRespId, setConfirmDeleteRespId] = useState<string | null>(null);
@@ -404,6 +443,50 @@ export default function Dashboard() {
     }
   };
 
+  const handleMultiUpload = async () => {
+    if (!multiUploadTaskId) return;
+    const filesToUpload = multiUploadSlots.filter(s => s.file !== null);
+    if (filesToUpload.length === 0) {
+      showFeedback('error', 'Por favor seleccione al menos un archivo.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      for (const slot of filesToUpload) {
+        if (!slot.file) continue;
+        const formData = new FormData();
+        formData.append('file', slot.file);
+        formData.append('id', multiUploadTaskId);
+        formData.append('customName', slot.name);
+
+        const res = await fetch('/api/tareas/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Error subiendo uno de los archivos');
+        }
+      }
+
+      // Refresh data
+      const res = await fetch(`/api/tareas/${multiUploadTaskId}`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTareas(prev => prev.map(t => t.id === multiUploadTaskId ? data.tarea : t));
+      }
+
+      showFeedback('success', 'Todos los archivos han sido cargados.');
+      setIsMultiUploadOpen(false);
+    } catch (err: any) {
+      showFeedback('error', err.message || 'Error en la subida múltiple');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleUpdateFechaCulminado = async (taskId: string, val: string) => {
     setEditingDateId(null);
     setIsTableLoading(true);
@@ -412,7 +495,10 @@ export default function Dashboard() {
       const res = await fetch(`/api/tareas/${taskId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fechaCulminado: val })
+        body: JSON.stringify({ 
+          fechaCulminado: val,
+          ...(val ? { estado: 'CULMINADO' } : {})
+        })
       });
 
       const data = await res.json();
@@ -701,6 +787,27 @@ export default function Dashboard() {
       return false;
     }
 
+    // Responsable filter
+    if (selectedResponsableFilter && (t.responsable || '').toLowerCase() !== selectedResponsableFilter.toLowerCase()) {
+      return false;
+    }
+
+    // Tipo filter
+    if (selectedTipoFilter && (t.tipo || '').toLowerCase() !== selectedTipoFilter.toLowerCase()) {
+      return false;
+    }
+
+    // Document filter
+    if (selectedDocFilter === 'CON_DOC' && !t.certificadoPath) return false;
+    if (selectedDocFilter === 'SIN_DOC' && t.certificadoPath) return false;
+
+    // Frecuencia filter
+    if (selectedFrecuenciaFilter) {
+      if (selectedFrecuenciaFilter === 'UNICA' && t.frecuenciaMeses !== null) return false;
+      if (selectedFrecuenciaFilter === 'RECURRENTE' && t.frecuenciaMeses === null) return false;
+      if (!['UNICA', 'RECURRENTE'].includes(selectedFrecuenciaFilter) && String(t.frecuenciaMeses) !== selectedFrecuenciaFilter) return false;
+    }
+
     // Date range filter
     const tDate = getTaskDate(t);
     if (fromDate && tDate < fromDate) return false;
@@ -841,6 +948,11 @@ export default function Dashboard() {
     setSearchTerm('');
     setSelectedEquipoFilter(null);
     setSelectedSedeFilter(null);
+    setSelectedResponsableFilter(null);
+    setSelectedTipoFilter(null);
+    setSelectedDocFilter('ALL');
+    setSelectedFrecuenciaFilter(null);
+    setStatusFilter('ALL');
     setTimeout(() => setIsTableLoading(false), 300);
     showFeedback('success', 'Filtros restaurados con éxito.');
   };
@@ -1134,11 +1246,15 @@ export default function Dashboard() {
             )}
 
             <button
-              onClick={handleExportTasksPDF}
-              className="py-2 px-3.5 rounded-2xl bg-brand-600 hover:bg-brand-500 border border-brand-500/30 text-xs font-bold text-white transition-all active:scale-95 flex items-center gap-1.5 shadow-md shadow-brand-600/15 cursor-pointer"
+              type="button"
+              onClick={() => {
+                setEditingTask(null);
+                setIsTaskModalOpen(true);
+              }}
+              className="py-2.5 px-5 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 border border-brand-400/20 text-xs font-bold text-white transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-brand-600/20 cursor-pointer"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span>Exportar PDF</span>
+              <Plus className="w-4 h-4" />
+              <span>Crear nueva tarea</span>
             </button>
 
             <button
@@ -1161,17 +1277,6 @@ export default function Dashboard() {
             <h2 className="text-xl font-extrabold text-slate-900 tracking-tight sm:text-2xl">Control de Tareas de Mantenimiento</h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">Supervisión y control integral de actividades mecánicas de planta.</p>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setEditingTask(null);
-              setIsTaskModalOpen(true);
-            }}
-            className="inline-flex items-center gap-2 rounded-2xl bg-brand-600 px-4.5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-500 transition-all duration-200 hover:scale-[1.02] active:scale-95 shrink-0 cursor-pointer"
-          >
-            <Plus className="w-4.5 h-4.5" />
-            <span>Crear nueva tarea</span>
-          </button>
         </div>
 
         {/* --- STATS CARDS DASHBOARD HEADER --- */}
@@ -1405,66 +1510,42 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Quick Equipo/Máquina + Sede Filter Row */}
-          <div className="mt-4 pt-4 border-t border-slate-100 grid gap-2 sm:grid-cols-2 items-center">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="equipoFilter" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Filtrar por Equipo/Máquina:</label>
-              <select
-                id="equipoFilter"
-                value={selectedEquipoFilter ?? ''}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSelectedEquipoFilter(value === '' ? null : value);
-                  handleSearchTrigger();
-                }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition-all"
-              >
-                <option value="">Todos</option>
-                {equipoOptions.map((equipo) => (
-                  <option key={equipo} value={equipo}>{equipo}</option>
-                ))}
-              </select>
-            </div>
 
-            <div className="flex flex-col gap-2">
-              <label htmlFor="sedeFilter" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Filtrar por Sede:</label>
-              <select
-                id="sedeFilter"
-                value={selectedSedeFilter ?? ''}
-                onChange={(e) => {
-                  const value = e.target.value as '' | 'Lima' | 'Trujillo';
-                  setSelectedSedeFilter(value === '' ? null : value);
-                  handleSearchTrigger();
-                }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition-all"
-              >
-                <option value="">Todos</option>
-                <option value="Lima">Lima</option>
-                <option value="Trujillo">Trujillo</option>
-              </select>
-            </div>
-          </div>
         </section>
 
         {/* --- MAIN MODERN DATA GRID CONTAINER --- */}
-        <section className={`rounded-2xl border transition-all duration-300 overflow-hidden relative shadow-sm ${
+        <section className={`rounded-2xl border transition-all duration-300 relative shadow-sm ${
           isPremiumDarkMode 
             ? 'bg-[#0b0f19] border-[#1e293b]' 
             : 'bg-white border-slate-200'
         }`}>
           
-          {/* Table list header status info */}
-          <div className={`px-6 py-4.5 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors duration-300 ${
+          <div className={`px-6 py-4.5 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-t-2xl transition-colors duration-300 ${
             isPremiumDarkMode 
               ? 'border-[#1e293b] bg-[#0d1324]/60' 
               : 'border-slate-100 bg-slate-50/50'
           }`}>
-            <div className="flex items-center gap-2">
-              <h3 className={`font-extrabold text-base transition-colors duration-300 ${
-                isPremiumDarkMode ? 'text-slate-100' : 'text-slate-900'
-              }`}>Listado de Tareas de Planta</h3>
-              
-              {isTableLoading && <Loader2 className="animate-spin h-4 w-4 text-brand-500 shrink-0" />}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <h3 className={`font-extrabold text-base transition-colors duration-300 ${
+                  isPremiumDarkMode ? 'text-slate-100' : 'text-slate-900'
+                }`}>Listado de Tareas de Planta</h3>
+                
+                {isTableLoading && <Loader2 className="animate-spin h-4 w-4 text-brand-500 shrink-0" />}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleExportTasksPDF}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-[11px] font-bold transition-all cursor-pointer border ${
+                  isPremiumDarkMode 
+                    ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700' 
+                    : 'bg-white text-slate-700 border-slate-200 shadow-sm hover:bg-slate-50'
+                }`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Exportar PDF</span>
+              </button>
             </div>
             <div className={`text-xs font-semibold transition-colors duration-300 ${
               isPremiumDarkMode ? 'text-slate-400' : 'text-slate-500'
@@ -1473,70 +1554,140 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* INTEGRATED QUICK FILTER BAR */}
+          <div className={`px-4 py-3 border-b grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 transition-colors duration-300 ${
+            isPremiumDarkMode 
+              ? 'bg-[#0f172a]/40 border-[#1e293b]' 
+              : 'bg-white border-slate-100'
+          }`}>
+            <select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value as any); handleSearchTrigger(); }}
+              className={`text-[10px] font-bold rounded-xl px-2 py-2 border outline-none transition-all ${
+                isPremiumDarkMode 
+                  ? 'bg-slate-900/50 border-slate-800 text-slate-300 focus:border-sky-500/50' 
+                  : 'bg-slate-50 border-slate-200 text-slate-600 focus:border-brand-500/50'
+              }`}
+            >
+              <option value="ALL">ESTADO: TODOS</option>
+              <option value="PENDIENTE">PENDIENTE</option>
+              <option value="EN_PROCESO">EN PROCESO</option>
+              <option value="CULMINADO">CULMINADO</option>
+            </select>
+
+            <select
+              value={selectedSedeFilter ?? ''}
+              onChange={(e) => { setSelectedSedeFilter(e.target.value === '' ? null : e.target.value as any); handleSearchTrigger(); }}
+              className={`text-[10px] font-bold rounded-xl px-2 py-2 border outline-none transition-all ${
+                isPremiumDarkMode 
+                  ? 'bg-slate-900/50 border-slate-800 text-slate-300 focus:border-sky-500/50' 
+                  : 'bg-slate-50 border-slate-200 text-slate-600 focus:border-brand-500/50'
+              }`}
+            >
+              <option value="">SEDE: TODAS</option>
+              <option value="Lima">LIMA</option>
+              <option value="Trujillo">TRUJILLO</option>
+            </select>
+
+            <select
+              value={selectedTipoFilter ?? ''}
+              onChange={(e) => { setSelectedTipoFilter(e.target.value === '' ? null : e.target.value); handleSearchTrigger(); }}
+              className={`text-[10px] font-bold rounded-xl px-2 py-2 border outline-none transition-all ${
+                isPremiumDarkMode 
+                  ? 'bg-slate-900/50 border-slate-800 text-slate-300 focus:border-sky-500/50' 
+                  : 'bg-slate-50 border-slate-200 text-slate-600 focus:border-brand-500/50'
+              }`}
+            >
+              <option value="">TIPO: TODOS</option>
+              {tipoOptions.map(t => (
+                <option key={t} value={t}>{t.toUpperCase()}</option>
+              ))}
+            </select>
+
+            <select
+              value={selectedDocFilter}
+              onChange={(e) => { setSelectedDocFilter(e.target.value as any); handleSearchTrigger(); }}
+              className={`text-[10px] font-bold rounded-xl px-2 py-2 border outline-none transition-all ${
+                isPremiumDarkMode 
+                  ? 'bg-slate-900/50 border-slate-800 text-slate-300 focus:border-sky-500/50' 
+                  : 'bg-slate-50 border-slate-200 text-slate-600 focus:border-brand-500/50'
+              }`}
+            >
+              <option value="ALL">DOC: TODOS</option>
+              <option value="CON_DOC">CON DOCUMENTO</option>
+              <option value="SIN_DOC">SIN DOCUMENTO</option>
+            </select>
+
+            <select
+              value={selectedFrecuenciaFilter ?? ''}
+              onChange={(e) => { setSelectedFrecuenciaFilter(e.target.value === '' ? null : e.target.value); handleSearchTrigger(); }}
+              className={`text-[10px] font-bold rounded-xl px-2 py-2 border outline-none transition-all ${
+                isPremiumDarkMode 
+                  ? 'bg-slate-900/50 border-slate-800 text-slate-300 focus:border-sky-500/50' 
+                  : 'bg-slate-50 border-slate-200 text-slate-600 focus:border-brand-500/50'
+              }`}
+            >
+              <option value="">FRECUENCIA: TODAS</option>
+              <option value="UNICA">ÚNICA</option>
+              <option value="RECURRENTE">RECURRENTE</option>
+              {frecuenciaOptions.map(f => (
+                <option key={f} value={f}>{f} MESES</option>
+              ))}
+            </select>
+          </div>
+
           {/* DESKTOP TABLE VIEW */}
           <div className="hidden lg:block overflow-x-auto bg-slate-50/40">
             <table className="w-full min-w-[1400px] text-sm table-auto border-collapse">
               <thead>
-                <tr className={`text-[10px] tracking-[0.24em] uppercase font-semibold border-b sticky top-0 transition-colors duration-300 z-15 ${
-                  isPremiumDarkMode 
-                    ? 'bg-[#0f172a] text-slate-400 border-[#1e293b]' 
-                    : 'bg-slate-50/95 text-slate-500 border-slate-200 backdrop-blur-md'
-                }`}>
-                  <th className={`px-4 py-3.5 text-center border-b w-14 align-middle transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Item</th>
+                <tr className="text-[10px] tracking-[0.24em] uppercase font-bold border-b bg-[#0f172a] text-white border-slate-800 shadow-sm">
+                  <th className="px-4 py-4 text-center border-b w-14 align-middle border-slate-800 border-r border-white/5">Item</th>
                   <th 
                     onClick={() => handleSort('responsable')} 
-                    className={`px-4 py-3.5 text-left border-b cursor-pointer select-none transition-colors ${
-                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-200 hover:bg-slate-100/60'
-                    }`}
+                    className="px-5 py-4 text-left border-b cursor-pointer select-none transition-colors border-slate-800 hover:bg-white/5 border-r border-white/5"
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center justify-between gap-1.5">
                       <span>Responsable</span>
-                      <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
+                      <ArrowUpDown className="w-3 h-3 text-sky-400" />
                     </div>
                   </th>
                   <th 
                     onClick={() => handleSort('equipo')} 
-                    className={`px-4 py-3.5 text-left border-b cursor-pointer select-none transition-colors ${
-                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-200 hover:bg-slate-100/60'
-                    }`}
+                    className="px-5 py-4 text-left border-b cursor-pointer select-none transition-colors border-slate-800 hover:bg-white/5 border-r border-white/5"
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center justify-between gap-1.5">
                       <span>Equipo / Máquina</span>
-                      <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
+                      <ArrowUpDown className="w-3 h-3 text-sky-400" />
                     </div>
                   </th>
-                  <th className={`px-4 py-3.5 text-left border-b transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Sede</th>
-                  <th className={`px-4 py-3.5 text-left border-b w-48 transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Falla Reportada</th>
-                  <th className={`px-4 py-3.5 text-left border-b transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Tipo Mant.</th>
-                  <th className={`px-4 py-3.5 text-left border-b w-64 transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Descripción de Actividad</th>
-                  <th className={`px-4 py-3.5 text-left border-b transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Repuestos</th>
+                  <th className="px-5 py-4 text-left border-b border-slate-800 border-r border-white/5">Sede</th>
+                  <th className="px-5 py-4 text-left border-b w-48 border-slate-800 border-r border-white/5">Falla Reportada</th>
+                  <th className="px-5 py-4 text-left border-b border-slate-800 border-r border-white/5">Tipo Mant.</th>
+                  <th className="px-5 py-4 text-left border-b w-64 border-slate-800 border-r border-white/5">Descripción de Actividad</th>
+                  <th className="px-5 py-4 text-left border-b border-slate-800 border-r border-white/5">Repuestos</th>
                   <th 
                     onClick={() => handleSort('cantidad')} 
-                    className={`px-4 py-3.5 text-center border-b cursor-pointer select-none w-20 transition-colors ${
-                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-200 hover:bg-slate-100/60'
-                    }`}
+                    className="px-4 py-4 text-center border-b cursor-pointer select-none w-20 transition-colors border-slate-800 hover:bg-white/5 border-r border-white/5"
                   >
                     <div className="flex items-center justify-center gap-1.5">
                       <span>Cant</span>
-                      <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
+                      <ArrowUpDown className="w-3 h-3 text-sky-400" />
                     </div>
                   </th>
-                  <th className={`px-4 py-3.5 text-center border-b w-32 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Certif. Operatividad</th>
-                  <th className={`px-4 py-3.5 text-center border-b w-36 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Fecha Culminado</th>
+                  <th className="px-4 py-4 text-center border-b w-32 select-none border-slate-800 border-r border-white/5">Certif. Operatividad</th>
+                  <th className="px-4 py-4 text-center border-b w-36 select-none border-slate-800 border-r border-white/5">Fecha Culminado</th>
                   <th 
                     onClick={() => handleSort('estado')} 
-                    className={`px-4 py-3.5 text-center border-b cursor-pointer select-none w-32 transition-colors ${
-                      isPremiumDarkMode ? 'border-[#1e293b] hover:bg-slate-800/30' : 'border-slate-200 hover:bg-slate-100/60'
-                    }`}
+                    className="px-4 py-4 text-center border-b cursor-pointer select-none w-32 transition-colors border-slate-800 hover:bg-white/5 border-r border-white/5"
                   >
                     <div className="flex items-center justify-center gap-1.5">
                       <span>Estado</span>
-                      <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
+                      <ArrowUpDown className="w-3 h-3 text-sky-400" />
                     </div>
                   </th>
-                  <th className={`px-4 py-3.5 text-center border-b w-28 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Frecuencia</th>
-                  <th className={`px-4 py-3.5 text-center border-b w-32 select-none transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Prox. Mant.</th>
-                  <th className={`px-4 py-3.5 text-center border-b w-28 pl-5 pr-6 transition-colors ${isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'}`}>Acciones</th>
+                  <th className="px-4 py-4 text-center border-b w-28 select-none border-slate-800 border-r border-white/5">Frecuencia</th>
+                  <th className="px-4 py-4 text-center border-b w-32 select-none border-slate-800 border-r border-white/5">Prox. Mant.</th>
+                  <th className="px-4 py-4 text-center border-b w-28 pl-5 pr-6 border-slate-800">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -1634,10 +1785,22 @@ export default function Dashboard() {
                           }`} title={t.falla || ''}>
                             {t.falla || '-'}
                           </td>
-                          <td className={`px-3.5 py-3.5 border-b text-[12px] font-semibold uppercase tracking-[0.12em] transition-colors ${
-                            isPremiumDarkMode ? 'text-amber-400/90 border-[#1e293b]' : 'text-slate-600 border-slate-200'
+                           <td className={`px-3.5 py-3.5 border-b text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                            isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'
                           }`}>
-                            {t.tipo || '-'}
+                            {t.tipo ? (
+                              <span className={`px-2.5 py-1 rounded-lg border ${
+                                t.tipo.toUpperCase() === 'CORRECTIVO' 
+                                  ? (isPremiumDarkMode ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-rose-50 border-rose-200 text-rose-600')
+                                  : t.tipo.toUpperCase() === 'PREVENTIVO'
+                                  ? (isPremiumDarkMode ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : 'bg-sky-50 border-sky-200 text-sky-600')
+                                  : t.tipo.toUpperCase() === 'PREDICTIVO'
+                                  ? (isPremiumDarkMode ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' : 'bg-indigo-50 border-indigo-200 text-indigo-600')
+                                  : (isPremiumDarkMode ? 'bg-slate-500/10 border-slate-500/30 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600')
+                              }`}>
+                                {t.tipo}
+                              </span>
+                            ) : '-'}
                           </td>
                           <td className={`px-3.5 py-3.5 border-b text-[12px] font-medium whitespace-pre-wrap leading-6 transition-colors ${
                             isPremiumDarkMode ? 'text-slate-300 border-[#1e293b]' : 'text-slate-700 border-slate-200'
@@ -1659,59 +1822,47 @@ export default function Dashboard() {
                           <td className={`px-3.5 py-3.5 text-center border-b select-none transition-colors ${
                             isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'
                           }`}>
-                            <div className="flex items-center justify-center">
+                            <div className="flex items-center justify-center gap-2">
                               {uploadingTaskId === t.id ? (
                                 <Loader2 className="w-4 h-4 text-brand-500 animate-spin" />
-                              ) : t.certificadoPath ? (
-                                    <>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          // Open the current certificado in a new tab
-                                          const fileName = (t.certificadoPath || '').split('/').pop();
-                                          if (fileName) window.open(`/api/tareas/archivo?file=${encodeURIComponent(fileName)}`, '_blank');
-                                        }}
-                                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold rounded-full transition-colors cursor-pointer ${
-                                          isPremiumDarkMode
-                                            ? 'bg-sky-500/10 border border-sky-400/30 text-sky-400 hover:bg-sky-500/20'
-                                            : 'bg-sky-50 border border-sky-200 hover:bg-sky-100 hover:border-sky-300 text-sky-700'
-                                        }`}
-                                      >
-                                        <span>👁️ Ver archivo</span>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => openFilesModal(t.id)}
-                                        className="ml-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-50 border border-slate-100 text-slate-700"
-                                      >
-                                        Historial
-                                      </button>
-                                    </>
                               ) : (
-                                <div>
-                                  <input
-                                    type="file"
-                                    id={`file-input-${t.id}`}
-                                    accept=".pdf,image/jpeg,image/png"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                      const file = e.target.files?.[0];
-                                      if (file) handleUploadCertificado(t.id, file);
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setMultiUploadTaskId(t.id);
+                                      setMultiUploadSlots([
+                                        { name: 'Certificado 1', file: null },
+                                        { name: 'Certificado 2', file: null },
+                                        { name: 'Certificado 3', file: null },
+                                        { name: 'Certificado 4', file: null },
+                                      ]);
+                                      setIsMultiUploadOpen(true);
                                     }}
-                                  />
-                                  <label
-                                    htmlFor={`file-input-${t.id}`}
                                     className={`inline-flex items-center justify-center p-1.5 rounded-xl transition-all duration-150 active:scale-90 cursor-pointer ${
                                       isPremiumDarkMode
                                         ? 'border border-slate-700 bg-slate-850/80 hover:bg-slate-750 hover:border-slate-650 text-slate-300'
                                         : 'border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 text-slate-600'
                                     }`}
-                                    title="Subir Certificado (PDF/JPG/PNG)"
+                                    title="Subir Archivos (Múltiple)"
                                   >
                                     <span className="text-sm font-semibold">📎</span>
-                                  </label>
-                                  {/* empty placeholder for layout */}
-                                </div>
+                                  </button>
+
+                                  {(t.certificadoPath || (t as any).archivos?.length > 0) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => openFilesModal(t.id)}
+                                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold rounded-full transition-colors cursor-pointer ${
+                                        isPremiumDarkMode
+                                          ? 'bg-sky-500/10 border border-sky-400/30 text-sky-400 hover:bg-sky-500/20'
+                                          : 'bg-sky-50 border border-sky-200 hover:bg-sky-100 hover:border-sky-300 text-sky-700'
+                                      }`}
+                                    >
+                                      <span>📂 Ver ({ (t as any).archivos?.length || (t.certificadoPath ? 1 : 0) })</span>
+                                    </button>
+                                  )}
+                                </>
                               )}
                             </div>
                           </td>
@@ -1837,24 +1988,6 @@ export default function Dashboard() {
                             isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-100'
                           }`}>
                             <div className="flex items-center justify-center gap-1.5">
-                              {!isViewer && (
-                                <div className="relative group/tooltip">
-                                  <button
-                                    onClick={() => { setEditingTask(t); setIsTaskModalOpen(true); }}
-                                    className={`p-1.5 rounded-xl border transition-all duration-150 active:scale-90 cursor-pointer ${
-                                      isPremiumDarkMode
-                                        ? 'border-sky-500/20 bg-sky-500/10 text-sky-400 hover:bg-sky-500/20'
-                                        : 'border-sky-100 bg-sky-50 text-sky-600 hover:bg-sky-100 hover:text-sky-700'
-                                    }`}
-                                    title="Editar Tarea"
-                                  >
-                                    <Edit2 className="w-3.5 h-3.5" />
-                                  </button>
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-[9px] font-bold rounded-lg opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-md">
-                                    Editar Tarea
-                                  </div>
-                                </div>
-                              )}
                               {!isViewer && (
                                 <div className="relative group/tooltip">
                                   <button
@@ -2095,7 +2228,7 @@ export default function Dashboard() {
           </div>
 
           {/* --- MODERN PAGINATION CONTROLS BAR --- */}
-          <div className={`px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 select-none transition-colors duration-300 ${
+          <div className={`px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 select-none rounded-b-2xl transition-colors duration-300 ${
             isPremiumDarkMode 
               ? 'bg-[#0f172a] border-[#1e293b]' 
               : 'bg-slate-50/50 border-slate-100'
@@ -2328,6 +2461,99 @@ export default function Dashboard() {
             </button>
           </div>
         </form>
+      </TaskModal>
+
+      {/* Multi-File Upload Modal */}
+      <TaskModal
+        isOpen={isMultiUploadOpen}
+        title="Subir Documentos (Máx. 4)"
+        onClose={() => setIsMultiUploadOpen(false)}
+      >
+        <div className="space-y-4">
+          <p className="text-[11px] text-slate-500">Puedes asignar un nombre personalizado a cada archivo antes de subirlo.</p>
+          
+          <div className="space-y-3">
+            {multiUploadSlots.map((slot, idx) => (
+              <div key={idx} className={`p-3 rounded-2xl border ${isPremiumDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 block mb-1">Nombre del Archivo</label>
+                    <input
+                      type="text"
+                      value={slot.name}
+                      onChange={(e) => {
+                        const newSlots = [...multiUploadSlots];
+                        newSlots[idx].name = e.target.value;
+                        setMultiUploadSlots(newSlots);
+                      }}
+                      className={`w-full text-xs rounded-lg px-3 py-2 border outline-none ${
+                        isPremiumDarkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-slate-800'
+                      }`}
+                      placeholder="Ej. Certificado de Calibración"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      id={`multi-file-${idx}`}
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        const newSlots = [...multiUploadSlots];
+                        newSlots[idx].file = file;
+                        if (file && !newSlots[idx].name) newSlots[idx].name = file.name;
+                        setMultiUploadSlots(newSlots);
+                      }}
+                    />
+                    <label
+                      htmlFor={`multi-file-${idx}`}
+                      className={`flex-1 text-center py-2 rounded-lg border text-[10px] font-bold cursor-pointer transition-all ${
+                        slot.file 
+                          ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-500' 
+                          : 'bg-slate-200/50 border-slate-300 text-slate-600'
+                      }`}
+                    >
+                      {slot.file ? '✅ Archivo Seleccionado' : '📁 Seleccionar Archivo'}
+                    </label>
+                    {slot.file && (
+                      <button
+                        onClick={() => {
+                          const newSlots = [...multiUploadSlots];
+                          newSlots[idx].file = null;
+                          setMultiUploadSlots(newSlots);
+                        }}
+                        className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {slot.file && (
+                  <div className="mt-1 text-[9px] text-slate-400 truncate">
+                    Archivo: {slot.file.name}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              onClick={() => setIsMultiUploadOpen(false)}
+              className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleMultiUpload}
+              disabled={isSubmitting || !multiUploadSlots.some(s => s.file)}
+              className="px-6 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold disabled:opacity-50 transition-all shadow-lg shadow-brand-600/20"
+            >
+              {isSubmitting ? 'Subiendo...' : 'Subir Archivos'}
+            </button>
+          </div>
+        </div>
       </TaskModal>
 
       {/* Files History Modal */}

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const issueDate = (formData.get('issueDate') as string | null)?.trim() || null;
     const status = (formData.get('status') as string | null)?.trim() || null;
 
-    if (!file) {
+    if (!file && !licenseIdFromForm) {
       return NextResponse.json(
         { success: false, error: 'No se ha proporcionado ningún archivo.' },
         { status: 400 }
@@ -33,8 +33,6 @@ export async function POST(request: NextRequest) {
     }
 
     const licenseId = licenseIdFromForm || crypto.randomUUID();
-    const originalName = file.name;
-    const extension = path.extname(originalName);
     
     // Set up local storage path inside MTTO project
     const uploadDir = path.join(process.cwd(), 'uploads', 'licencias');
@@ -42,14 +40,20 @@ export async function POST(request: NextRequest) {
     // Ensure the directory exists
     await fs.mkdir(uploadDir, { recursive: true });
     
-    // Unique file name to avoid collisions
-    const fileName = `${licenseId}-${docType}${extension}`;
-    const filePath = path.join(uploadDir, fileName);
-    
-    // Write buffer to disk
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await fs.writeFile(filePath, buffer);
+    let fileName = '';
+    let filePath = '';
+    let originalName = '';
+
+    if (file) {
+      originalName = file.name;
+      const extension = path.extname(originalName);
+      fileName = `${licenseId}-${docType}${extension}`;
+      filePath = path.join(uploadDir, fileName);
+      
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      await fs.writeFile(filePath, buffer);
+    }
 
     const fieldMap: Record<string, { nameField: string; pathField: string; expiryField: string }> = {
       certificado: { nameField: 'archivoNombreCertificado', pathField: 'archivoPathCertificado', expiryField: 'vencimientoCertificado' },
@@ -61,10 +65,12 @@ export async function POST(request: NextRequest) {
     };
 
     const selectedFields = fieldMap[docType];
-    const fileData = {
-      [selectedFields.nameField]: originalName,
-      [selectedFields.pathField]: `uploads/licencias/${fileName}`
-    } as any;
+    const fileData = {} as any;
+    
+    if (file) {
+      fileData[selectedFields.nameField] = originalName;
+      fileData[selectedFields.pathField] = `uploads/licencias/${fileName}`;
+    }
 
     if (expiryDate) {
       fileData[selectedFields.expiryField] = expiryDate;
@@ -85,18 +91,17 @@ export async function POST(request: NextRequest) {
         data: updateData
       });
     } else {
-      // Format current date as default DD/MM/YYYY
+      // Create new (only if file was provided, otherwise it would have errored above)
       const now = new Date();
       const dd = String(now.getDate()).padStart(2, '0');
       const mm = String(now.getMonth() + 1).padStart(2, '0');
       const yyyy = now.getFullYear();
       const todayStr = `${dd}/${mm}/${yyyy}`;
 
-      // Create the license record with default fields and file info
       license = await db.license.create({
         data: {
           id: licenseId,
-          name: originalName,
+          name: originalName || 'Documento sin nombre',
           entity: entity || 'POR ESPECIFICAR',
           code: code || 'S/N',
           issueDate: issueDate || todayStr,
