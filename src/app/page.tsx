@@ -95,10 +95,17 @@ export default function Dashboard() {
   const equipoOptions = Array.from(
     new Set(
       tareas
-        .map((t) => t.equipo)
+        .flatMap((t) => {
+          const eq = t.equipo;
+          if (!eq) return [];
+          if (eq.includes(' | ')) {
+            return eq.split(' | ').map(s => s.trim());
+          }
+          return [eq.trim()];
+        })
         .filter((e): e is string => typeof e === 'string' && e.trim() !== '')
     )
-  ).sort((a, b) => a.localeCompare(b));
+  ).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base', numeric: true }));
 
   const responsableOptions = Array.from(
     new Set(
@@ -229,6 +236,18 @@ export default function Dashboard() {
       setError('Error de comunicación con el servidor');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchResponsables = async () => {
+    try {
+      const res = await fetch('/api/responsables');
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setResponsables(data.responsables);
+      }
+    } catch (err) {
+      console.error('Error fetching responsables:', err);
     }
   };
 
@@ -435,6 +454,7 @@ export default function Dashboard() {
           setIsTaskModalOpen(false);
           setEditingTask(null);
           showFeedback('success', 'Tarea actualizada con éxito.');
+          await fetchResponsables();
         } else {
           showFeedback('error', data.error || 'Error al actualizar tarea.');
         }
@@ -450,6 +470,7 @@ export default function Dashboard() {
           setTareas(prev => [data.tarea, ...prev]);
           setIsTaskModalOpen(false);
           showFeedback('success', 'Tarea creada con éxito.');
+          await fetchResponsables();
         } else {
           showFeedback('error', data.error || 'Error al crear tarea.');
         }
@@ -835,8 +856,13 @@ export default function Dashboard() {
   // Filter computation
   const filteredTareas = tareas.filter(t => {
     // Equipo/Máquina filter
-    if (selectedEquipoFilter && (t.equipo || '').toLowerCase() !== selectedEquipoFilter.toLowerCase()) {
-      return false;
+    if (selectedEquipoFilter) {
+      const eqLower = (t.equipo || '').toLowerCase();
+      const filterLower = selectedEquipoFilter.toLowerCase();
+      const isMatch = eqLower === filterLower || 
+        eqLower.split(' | ').map(s => s.trim()).includes(filterLower);
+      
+      if (!isMatch) return false;
     }
 
     // Sede filter
@@ -2517,7 +2543,14 @@ export default function Dashboard() {
           existingEquipos={Array.from(
             new Set(
               tareas
-                .map((t) => t.equipo)
+                .flatMap((t) => {
+                  const eq = t.equipo;
+                  if (!eq) return [];
+                  if (eq.includes(' | ')) {
+                    return eq.split(' | ').map(s => s.trim());
+                  }
+                  return [eq.trim()];
+                })
                 .filter((e): e is string => typeof e === 'string' && e.trim() !== '')
             )
           )}

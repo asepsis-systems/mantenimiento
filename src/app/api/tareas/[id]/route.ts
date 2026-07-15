@@ -81,6 +81,21 @@ export async function PUT(
         return NextResponse.json({ success: false, error: 'El responsable no puede estar vacío.' }, { status: 400 });
       }
       updateData.responsable = responsable.trim();
+
+      // Guardar automáticamente el responsable en la tabla de Responsables si no existe
+      const cleanResponsable = responsable.trim();
+      try {
+        const existingResp = await db.responsable.findFirst({
+          where: { nombre: cleanResponsable }
+        });
+        if (!existingResp) {
+          await db.responsable.create({
+            data: { nombre: cleanResponsable }
+          });
+        }
+      } catch (dbErr) {
+        console.error('Error saving automatic responsible:', dbErr);
+      }
     }
 
     if (descripcion !== undefined) {

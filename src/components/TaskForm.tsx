@@ -89,8 +89,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   // Lista base ampliada de Equipos/Máquinas estándar en planta
   const defaultEquipoOptions = [
-    '4XL 1', '5XL 2', '4XL 3', '5XL 4', '5XL 5', '5XL 6',
-    '8XL 7', '8XL 8', '4XL 9', '5XL 10', '4 XL', '5 XL',
+    'OE 4XL 1', 'OE 5XL 2', 'OE 4XL 3', 'OE 5XL 4', 'OE 5XL 5', 'OE 5XL 6',
+    'OE 8XL 7', 'OE 8XL 8', 'OE 4XL 9', 'OE 5XL 10', 'OE 4 XL', 'OE 5 XL',
     'AUTOCLAVE V1', 'AUTOCLAVE V2', 'AUTOCLAVE V3', 'AUTOCLAVE V4', 'AUTOCLAVE V5',
     'AUTOCLAVE V6',
     'PLASMA P1', 'PLASMA P2', 'PLASMA P3',

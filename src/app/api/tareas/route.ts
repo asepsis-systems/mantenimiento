@@ -122,6 +122,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'El responsable es obligatorio.' }, { status: 400 });
     }
 
+    // Guardar automáticamente el responsable en la tabla de Responsables si no existe
+    const cleanResponsable = responsable.trim();
+    try {
+      const existingResp = await db.responsable.findFirst({
+        where: { nombre: cleanResponsable }
+      });
+      if (!existingResp) {
+        await db.responsable.create({
+          data: { nombre: cleanResponsable }
+        });
+      }
+    } catch (dbErr) {
+      console.error('Error saving automatic responsible:', dbErr);
+    }
+
     // Formatear fecha por defecto si no existe (formato YYYY-MM-DD)
     const taskFecha = fecha || new Date().toISOString().split('T')[0];
 
