@@ -103,3 +103,61 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const type = searchParams.get('type');
+
+    if (!id || !type) {
+      return NextResponse.json({ success: false, error: 'Se requiere id de la licencia y tipo de documento.' }, { status: 400 });
+    }
+
+    const license = await db.license.findUnique({ where: { id } });
+    if (!license) {
+      return NextResponse.json({ success: false, error: 'Licencia no encontrada.' }, { status: 404 });
+    }
+
+    const fieldMap: Record<string, { nameField: string; pathField: string }> = {
+      certificado: { nameField: 'archivoNombreCertificado', pathField: 'archivoPathCertificado' },
+      protocolo: { nameField: 'archivoNombreProtocolo', pathField: 'archivoPathProtocolo' },
+      informeTecnico: { nameField: 'archivoNombreInformeTecnico', pathField: 'archivoPathInformeTecnico' },
+      factura: { nameField: 'archivoNombreFactura', pathField: 'archivoPathFactura' },
+      presupuesto: { nameField: 'archivoNombrePresupuesto', pathField: 'archivoPathPresupuesto' },
+      checklist: { nameField: 'archivoNombreCheckList', pathField: 'archivoPathCheckList' }
+    };
+
+    const docFields = fieldMap[type];
+    if (!docFields) {
+      return NextResponse.json({ success: false, error: 'Tipo de documento no válido.' }, { status: 400 });
+    }
+
+    const relativePath = (license as any)[docFields.pathField] as string | undefined;
+
+    // 1) Delete physical file if exists
+    if (relativePath) {
+      const filePath = path.join(process.cwd(), relativePath);
+      try {
+        await fs.unlink(filePath);
+      } catch (err) {
+        console.error('Error deleting physical file:', err);
+      }
+    }
+
+    // 2) Update database fields
+    const updateData: any = {};
+    updateData[docFields.nameField] = null;
+    updateData[docFields.pathField] = null;
+
+    await db.license.update({
+      where: { id },
+      data: updateData
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Error deleting file:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}

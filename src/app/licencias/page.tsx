@@ -201,6 +201,45 @@ export default function LicensesPage() {
 
   const [actionLoading, setActionLoading] = useState(false);
 
+  const [deletedPlaceholders, setDeletedPlaceholders] = useState<string[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('deletedPlaceholders');
+    if (saved) {
+      try {
+        setDeletedPlaceholders(JSON.parse(saved));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
+
+  const handleDeletePlaceholder = (name: string) => {
+    const updated = [...deletedPlaceholders, name];
+    setDeletedPlaceholders(updated);
+    localStorage.setItem('deletedPlaceholders', JSON.stringify(updated));
+  };
+
+  const handleDeleteFile = async (id: string, type: LicenseDocType) => {
+    if (!confirm('¿Está seguro de eliminar este archivo?')) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/licencias/archivo?id=${id}&type=${type}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        await fetchLicenses();
+      } else {
+        alert(data.error || 'Error al eliminar el archivo.');
+      }
+    } catch (err) {
+      alert('Error de conexión al eliminar el archivo.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const normalizeFolderName = (name: string) =>
     name.toUpperCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
 
@@ -380,6 +419,12 @@ export default function LicensesPage() {
       const data = await res.json();
 
       if (res.ok && data.success) {
+        const updated = deletedPlaceholders.filter(
+          (name) => normalizeMachineName(name) !== normalizeMachineName(newName)
+        );
+        setDeletedPlaceholders(updated);
+        localStorage.setItem('deletedPlaceholders', JSON.stringify(updated));
+
         setIsMachineModalOpen(false);
         await fetchLicenses();
       } else {
@@ -431,6 +476,12 @@ export default function LicensesPage() {
       const data = await res.json();
 
       if (res.ok && data.success && data.data) {
+        const updated = deletedPlaceholders.filter(
+          (name) => normalizeMachineName(name) !== normalizeMachineName(machineName)
+        );
+        setDeletedPlaceholders(updated);
+        localStorage.setItem('deletedPlaceholders', JSON.stringify(updated));
+
         await fetchLicenses();
         openDocUploadModal(data.data.id, docType, '');
       } else {
@@ -796,12 +847,18 @@ export default function LicensesPage() {
 
   type DisplayRow = { machineName: string; license?: License };
 
-  const visibleMachineRows: DisplayRow[] = sectionPlaceholders.map((machineName) => {
-    const license = filteredLicenses.find(
-      (lic) => normalizeMachineName(lic.name || '') === normalizeMachineName(machineName)
-    );
-    return { machineName, license };
-  });
+  const visibleMachineRows: DisplayRow[] = sectionPlaceholders
+    .filter((machineName) => 
+      !deletedPlaceholders.some(
+        (delName) => normalizeMachineName(delName) === normalizeMachineName(machineName)
+      )
+    )
+    .map((machineName) => {
+      const license = filteredLicenses.find(
+        (lic) => normalizeMachineName(lic.name || '') === normalizeMachineName(machineName)
+      );
+      return { machineName, license };
+    });
 
   const extraLicenseRows: DisplayRow[] = filteredLicenses
     .filter((lic) => !sectionPlaceholders.some(
@@ -1057,7 +1114,20 @@ export default function LicensesPage() {
                           })}
                           <td className="p-4 text-center">
                             <div className="flex items-center justify-center gap-1">
-                              {/* Acciones limpias y alineadas */}
+                              {user?.role !== 'VIEWER' && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (confirm(`¿Está seguro de eliminar la máquina "${row.machineName}" de la lista?`)) {
+                                      handleDeletePlaceholder(row.machineName);
+                                    }
+                                  }}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                  title="Eliminar"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -1103,14 +1173,26 @@ export default function LicensesPage() {
                                       <span>{documentState.label}</span>
                                     </div>
                                     <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">{specificExpiryDate || '-'}</p>
-                                    <button
-                                      type="button"
-                                      onClick={() => openFilePreview(lic.id, name, docType)}
-                                      className="inline-flex items-center justify-center gap-2 text-[11px] text-brand-600 hover:text-brand-700 font-medium hover:underline bg-brand-50 px-2 py-1 rounded-md border border-brand-100"
-                                    >
-                                      <FileText className="w-3.5 h-3.5 text-brand-500" />
-                                      <span className="truncate max-w-[7rem]">{name}</span>
-                                    </button>
+                                    <div className="flex items-center justify-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => openFilePreview(lic.id, name, docType)}
+                                        className="inline-flex items-center justify-center gap-2 text-[11px] text-brand-600 hover:text-brand-700 font-medium hover:underline bg-brand-50 px-2 py-1 rounded-md border border-brand-100"
+                                      >
+                                        <FileText className="w-3.5 h-3.5 text-brand-500" />
+                                        <span className="truncate max-w-[7rem]">{name}</span>
+                                      </button>
+                                      {user?.role !== 'VIEWER' && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteFile(lic.id, docType)}
+                                          className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all duration-200"
+                                          title="Eliminar archivo"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
+                                    </div>
                                   </>
                                 ) : (
                                   <span className="block text-[11px] text-slate-400">Sin archivo</span>
@@ -1133,11 +1215,14 @@ export default function LicensesPage() {
                             {user?.role !== 'VIEWER' && (
                               <button
                                 onClick={() => {
-                                  if (confirm(`¿Está seguro de eliminar la licencia/permiso "${lic.name}"?`)) {
+                                  if (confirm(`¿Está seguro de eliminar la máquina "${lic.name}" de la lista?`)) {
                                     fetch(`/api/licencias/${lic.id}`, { method: 'DELETE' })
                                       .then((res) => res.json())
                                       .then((data) => {
-                                        if (data.success) fetchLicenses();
+                                        if (data.success) {
+                                          handleDeletePlaceholder(lic.name);
+                                          fetchLicenses();
+                                        }
                                       });
                                   }
                                 }}

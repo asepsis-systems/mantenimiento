@@ -188,6 +188,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
             className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
+            style={{ colorScheme: 'dark' }}
           />
         </div>
       </div>

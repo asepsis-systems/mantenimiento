@@ -133,6 +133,7 @@ export default function Dashboard() {
   const [toDate, setToDate] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDIENTE' | 'EN_PROCESO' | 'CULMINADO'>('ALL');
+  const [quickRange, setQuickRange] = useState<string>('ALL');
 
   // Sorting
   const [sortField, setSortField] = useState<'fecha' | 'responsable' | 'equipo' | 'estado' | 'cantidad'>('fecha');
@@ -884,19 +885,22 @@ export default function Dashboard() {
     if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
     if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
 
-    // Secondary sort: itemNumber ascending or creation date descending
+    // Secondary sort: itemNumber DESCENDING or creation date DESCENDING
     if (sortField !== 'fecha') {
       const dateA = getTaskDate(a);
       const dateB = getTaskDate(b);
       if (dateA !== dateB) return dateA > dateB ? -1 : 1;
     }
-    const itemA = a.itemNumber || 9999;
-    const itemB = b.itemNumber || 9999;
-    return itemA - itemB;
+    const itemA = a.itemNumber || 0;
+    const itemB = b.itemNumber || 0;
+    if (itemA !== itemB) {
+      return itemB - itemA; // Descending itemNumber
+    }
+    return new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime(); // Descending creation date
   });
 
-  // Stable daily correlatives computation starting from 1 (render-time sequential)
-  // Maps task.id to its 1-based index within its date group
+  // Stable daily correlatives computation starting from count down to 1 (render-time sequential)
+  // Maps task.id to its index within its date group
   const getStableItemNumbers = () => {
     const groups: Record<string, string[]> = {};
     
@@ -909,17 +913,19 @@ export default function Dashboard() {
 
     const itemMap: Record<string, number> = {};
     Object.keys(groups).forEach(d => {
-      // Sort tasks within this day by their original itemNumber or creation time to keep order stable
+      // Sort tasks within this day by their original itemNumber (descending) or creation time (descending) to keep order stable
       const dayTasks = groups[d].map(id => tareas.find(x => x.id === id)!);
       dayTasks.sort((a, b) => {
-        if (a.itemNumber !== undefined && a.itemNumber !== null && b.itemNumber !== undefined && b.itemNumber !== null) {
-          return a.itemNumber - b.itemNumber;
+        const itemA = a.itemNumber || 0;
+        const itemB = b.itemNumber || 0;
+        if (itemA !== itemB) {
+          return itemB - itemA;
         }
-        return new Date(a.fecha_creacion).getTime() - new Date(b.fecha_creacion).getTime();
+        return new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime();
       });
 
       dayTasks.forEach((t, idx) => {
-        itemMap[t.id] = idx + 1;
+        itemMap[t.id] = dayTasks.length - idx; // descending count (e.g., 3, 2, 1)
       });
     });
 
@@ -940,6 +946,59 @@ export default function Dashboard() {
     setTimeout(() => setIsTableLoading(false), 350);
   };
 
+  const handleQuickRangeChange = (range: string) => {
+    setQuickRange(range);
+    if (range === 'ALL') {
+      setFromDate('');
+      setToDate('');
+      handleSearchTrigger();
+      return;
+    }
+
+    const today = new Date();
+    const formatDate = (date: Date) => {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
+
+    if (range === 'ESTA_SEMANA') {
+      const currentDay = today.getDay(); // 0: Sunday, 1: Monday...
+      const daysToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+      const monday = new Date(today);
+      monday.setDate(today.getDate() + daysToMonday);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      
+      setFromDate(formatDate(monday));
+      setToDate(formatDate(sunday));
+    } else if (range === 'SEMANA_PASADA') {
+      const currentDay = today.getDay();
+      const daysToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+      const monday = new Date(today);
+      monday.setDate(today.getDate() + daysToMonday - 7);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
+      setFromDate(formatDate(monday));
+      setToDate(formatDate(sunday));
+    } else if (range === 'ESTE_MES') {
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+      setFromDate(formatDate(firstDay));
+      setToDate(formatDate(lastDay));
+    } else if (range === 'MES_PASADO') {
+      const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+
+      setFromDate(formatDate(firstDay));
+      setToDate(formatDate(lastDay));
+    }
+    handleSearchTrigger();
+  };
+
   // Clear all advanced date filters and search terms
   const handleClearFilters = () => {
     setIsTableLoading(true);
@@ -953,6 +1012,7 @@ export default function Dashboard() {
     setSelectedDocFilter('ALL');
     setSelectedFrecuenciaFilter(null);
     setStatusFilter('ALL');
+    setQuickRange('ALL');
     setTimeout(() => setIsTableLoading(false), 300);
     showFeedback('success', 'Filtros restaurados con éxito.');
   };
@@ -1634,6 +1694,22 @@ export default function Dashboard() {
                 <option key={f} value={f}>{f} MESES</option>
               ))}
             </select>
+
+            <select
+              value={quickRange}
+              onChange={(e) => handleQuickRangeChange(e.target.value)}
+              className={`text-[10px] font-bold rounded-xl px-2 py-2 border outline-none transition-all ${
+                isPremiumDarkMode 
+                  ? 'bg-slate-900/50 border-slate-800 text-slate-300 focus:border-sky-500/50' 
+                  : 'bg-slate-50 border-slate-200 text-slate-600 focus:border-brand-500/50'
+              }`}
+            >
+              <option value="ALL">PERÍODO: TODOS</option>
+              <option value="ESTA_SEMANA">ESTA SEMANA (LUN - DOM)</option>
+              <option value="SEMANA_PASADA">SEMANA PASADA</option>
+              <option value="ESTE_MES">ESTE MES</option>
+              <option value="MES_PASADO">MES PASADO</option>
+            </select>
           </div>
 
           {/* DESKTOP TABLE VIEW */}
@@ -1793,9 +1869,9 @@ export default function Dashboard() {
                                 t.tipo.toUpperCase() === 'CORRECTIVO' 
                                   ? (isPremiumDarkMode ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-rose-50 border-rose-200 text-rose-600')
                                   : t.tipo.toUpperCase() === 'PREVENTIVO'
-                                  ? (isPremiumDarkMode ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : 'bg-sky-50 border-sky-200 text-sky-600')
+                                  ? (isPremiumDarkMode ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-600')
                                   : t.tipo.toUpperCase() === 'PREDICTIVO'
-                                  ? (isPremiumDarkMode ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' : 'bg-indigo-50 border-indigo-200 text-indigo-600')
+                                  ? (isPremiumDarkMode ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : 'bg-sky-50 border-sky-200 text-sky-600')
                                   : (isPremiumDarkMode ? 'bg-slate-500/10 border-slate-500/30 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600')
                               }`}>
                                 {t.tipo}
@@ -1989,22 +2065,43 @@ export default function Dashboard() {
                           }`}>
                             <div className="flex items-center justify-center gap-1.5">
                               {!isViewer && (
-                                <div className="relative group/tooltip">
-                                  <button
-                                    onClick={() => setConfirmDeleteId(t.id)}
-                                    className={`p-1.5 rounded-xl border transition-all duration-150 active:scale-90 cursor-pointer ${
-                                      isPremiumDarkMode
-                                        ? 'border-rose-500/20 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20'
-                                        : 'border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700'
-                                    }`}
-                                    title="Eliminar Tarea"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-[9px] font-bold rounded-lg opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-md">
-                                    Eliminar Tarea
+                                <>
+                                  {/* Edit Task Action Button */}
+                                  <div className="relative group/tooltip">
+                                    <button
+                                      onClick={() => { setEditingTask(t); setIsTaskModalOpen(true); }}
+                                      className={`p-1.5 rounded-xl border transition-all duration-150 active:scale-90 cursor-pointer ${
+                                        isPremiumDarkMode
+                                          ? 'border-sky-500/20 bg-sky-500/10 text-sky-400 hover:bg-sky-500/20'
+                                          : 'border-sky-100 bg-sky-50 text-sky-600 hover:bg-sky-100 hover:text-sky-700'
+                                      }`}
+                                      title="Editar Tarea"
+                                    >
+                                      <Edit2 className="w-3.5 h-3.5" />
+                                    </button>
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-[9px] font-bold rounded-lg opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-md">
+                                      Editar Tarea
+                                    </div>
                                   </div>
-                                </div>
+
+                                  {/* Delete Task Action Button */}
+                                  <div className="relative group/tooltip">
+                                    <button
+                                      onClick={() => setConfirmDeleteId(t.id)}
+                                      className={`p-1.5 rounded-xl border transition-all duration-150 active:scale-90 cursor-pointer ${
+                                        isPremiumDarkMode
+                                          ? 'border-rose-500/20 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20'
+                                          : 'border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700'
+                                      }`}
+                                      title="Eliminar Tarea"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-[9px] font-bold rounded-lg opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-md">
+                                      Eliminar Tarea
+                                    </div>
+                                  </div>
+                                </>
                               )}
                             </div>
                           </td>
