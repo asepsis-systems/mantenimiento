@@ -164,6 +164,7 @@ export default function Dashboard() {
   // Files modal (historial)
   const [filesModalOpen, setFilesModalOpen] = useState(false);
   const [modalFiles, setModalFiles] = useState<any[]>([]);
+  const [activeHistoryTaskId, setActiveHistoryTaskId] = useState<string | null>(null);
   const [modalLoadingFiles, setModalLoadingFiles] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -249,6 +250,7 @@ export default function Dashboard() {
 
   // Open files modal and fetch history
   const openFilesModal = async (tareaId: string) => {
+    setActiveHistoryTaskId(tareaId);
     setModalLoadingFiles(true);
     try {
       const res = await fetch(`/api/tareas/archivo?id=${encodeURIComponent(tareaId)}&list=true`);
@@ -263,6 +265,29 @@ export default function Dashboard() {
       showFeedback('error', 'Error de red al solicitar historial');
     } finally {
       setModalLoadingFiles(false);
+    }
+  };
+
+  const handleDeleteHistoryFile = async (fileId: string) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar este archivo del historial?')) return;
+    try {
+      const res = await fetch(`/api/tareas/archivo?id=${encodeURIComponent(fileId)}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showFeedback('success', 'Archivo eliminado con éxito.');
+        // Re-load history files
+        if (activeHistoryTaskId) {
+          openFilesModal(activeHistoryTaskId);
+        }
+        // Re-load main dashboard tasks to update active certificate status
+        fetchData();
+      } else {
+        showFeedback('error', data.error || 'No se pudo eliminar el archivo');
+      }
+    } catch (err) {
+      showFeedback('error', 'Error de red al intentar eliminar el archivo');
     }
   };
 
@@ -2702,17 +2727,27 @@ export default function Dashboard() {
                         <button
                           type="button"
                           onClick={() => openPreview(fileName, f.originalName)}
-                          className="px-3 py-1 rounded-lg bg-sky-50 border border-sky-100 text-sky-700 text-xs font-semibold"
+                          className="px-3 py-1 rounded-lg bg-sky-50 border border-sky-100 text-sky-700 text-xs font-semibold cursor-pointer hover:bg-sky-100 transition-colors"
                         >
                           Ver
                         </button>
                         <a
                           href={`/api/tareas/archivo?file=${encodeURIComponent(fileName)}`}
                           download={f.originalName}
-                          className="px-3 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-semibold"
+                          className="px-3 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors"
                         >
                           Descargar
                         </a>
+                        {user?.role !== 'VIEWER' && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteHistoryFile(f.id)}
+                            className="p-1.5 rounded-lg bg-rose-50 border border-rose-100 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
+                            title="Eliminar archivo del historial"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

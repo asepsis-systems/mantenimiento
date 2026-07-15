@@ -114,3 +114,78 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: 'Falta especificar el ID del archivo a eliminar.' },
+        { status: 400 }
+      );
+    }
+
+    // Find the record
+    const record = await db.tareaArchivo.findUnique({
+      where: { id }
+    });
+
+    if (!record) {
+      return NextResponse.json(
+        { success: false, error: 'El registro del archivo no existe.' },
+        { status: 404 }
+      );
+    }
+
+    // Delete from db
+    await db.tareaArchivo.delete({
+      where: { id }
+    });
+
+    // Delete physical file
+    const filePath = path.join(process.cwd(), record.path);
+    try {
+      await fs.unlink(filePath);
+    } catch (err) {
+      console.warn('No se pudo borrar el archivo físico (puede que ya no exista):', err);
+    }
+
+    // Check if this was the active certificate in the Tarea
+    const tarea = await db.tarea.findUnique({
+      where: { id: record.tareaId }
+    });
+
+    if (tarea && tarea.certificadoPath === record.path) {
+      // Find the next most recent archive file
+      const nextRecent = await db.tareaArchivo.findFirst({
+        where: { tareaId: record.tareaId },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      if (nextRecent) {
+        await db.tarea.update({
+          where: { id: record.tareaId },
+          data: {
+            certificadoNombre: nextRecent.originalName,
+            certificadoPath: nextRecent.path
+          }
+        });
+      } else {
+        await db.tarea.update({
+          where: { id: record.tareaId },
+          data: {
+            certificadoNombre: null,
+            certificadoPath: null
+          }
+        });
+      }
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Error deleting task certificate file:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
