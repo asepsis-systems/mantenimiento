@@ -19,6 +19,25 @@ function addMonths(dateStr: string, months: number): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  try {
+    const tarea = await db.tarea.findUnique({
+      where: { id }
+    });
+    if (!tarea) {
+      return NextResponse.json({ success: false, error: 'Tarea no encontrada.' }, { status: 404 });
+    }
+    return NextResponse.json({ success: true, tarea });
+  } catch (error: any) {
+    console.error('Error fetching task:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
