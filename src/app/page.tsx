@@ -294,7 +294,7 @@ export default function Dashboard() {
   const openPreview = (fileName: string | undefined, originalName?: string) => {
     if (!fileName) return;
     const url = `/api/tareas/archivo?file=${encodeURIComponent(fileName)}`;
-    const ext = (originalName || fileName).split('.').pop()?.toLowerCase() || '';
+    const ext = fileName.split('.').pop()?.toLowerCase() || '';
     setPreviewUrl(url);
     setPreviewName(originalName || fileName);
     setPreviewExt(ext);
