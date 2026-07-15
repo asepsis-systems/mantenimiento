@@ -479,6 +479,15 @@ export default function Dashboard() {
 
     setIsSubmitting(true);
     try {
+      // Validar límite máximo de 4 archivos
+      const checkRes = await fetch(`/api/tareas/archivo?id=${encodeURIComponent(multiUploadTaskId)}&list=true`);
+      const checkData = await checkRes.json();
+      const existingCount = checkData.success ? (checkData.files || []).length : 0;
+
+      if (existingCount + filesToUpload.length > 4) {
+        throw new Error(`Esta tarea ya tiene ${existingCount} archivos en su historial. No puedes subir ${filesToUpload.length} más ya que superaría el límite máximo de 4 archivos por tarea. Elimina algunos en la papelera para continuar.`);
+      }
+
       for (const slot of filesToUpload) {
         if (!slot.file) continue;
         const formData = new FormData();

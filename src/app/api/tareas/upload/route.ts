@@ -44,6 +44,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Tarea no encontrada.' }, { status: 404 });
     }
 
+    // Validar límite máximo de 4 archivos en el historial de la base de datos
+    const existingCount = await db.tareaArchivo.count({
+      where: { tareaId: id }
+    });
+    if (existingCount >= 4) {
+      return NextResponse.json({ success: false, error: 'Esta tarea ya cuenta con el límite máximo de 4 archivos en su historial. Elimina algunos en la papelera para continuar.' }, { status: 400 });
+    }
+
     const customName = formData.get('customName') as string | null;
     const originalName = file.name;
     const displayName = customName || originalName;
