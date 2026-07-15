@@ -90,30 +90,7 @@ export async function PUT(
       updateData.descripcion = descripcion.trim();
     }
 
-    // Resolviendo los nuevos valores
-    const finalFechaCulminado = fechaCulminado !== undefined ? (fechaCulminado === '' ? null : fechaCulminado) : existing.fechaCulminado;
-    const finalCertificadoNombre = certificadoNombre !== undefined ? (certificadoNombre === '' ? null : certificadoNombre) : existing.certificadoNombre;
-    const finalCertificadoPath = certificadoPath !== undefined ? (certificadoPath === '' ? null : certificadoPath) : existing.certificadoPath;
-
-    if (fechaCulminado !== undefined) updateData.fechaCulminado = finalFechaCulminado;
-    if (certificadoNombre !== undefined) updateData.certificadoNombre = finalCertificadoNombre;
-    if (certificadoPath !== undefined) updateData.certificadoPath = finalCertificadoPath;
-
-    // Lógica de transición de estado automática:
-    // Si tiene fecha de culminado y certificado de operatividad, pasa automáticamente a CULMINADO.
-    // Si el usuario borra uno de los dos y no se está enviando un estado explícito, revertimos a PENDIENTE (o mantemos el estado explícito).
-    let targetEstado = estado !== undefined 
-      ? (estado === 'HECHO' || estado === 'CULMINADO' ? 'CULMINADO' : estado)
-      : existing.estado;
-
-    if (finalFechaCulminado && finalCertificadoPath) {
-      targetEstado = 'CULMINADO';
-    } else if (estado === undefined && existing.estado === 'CULMINADO' && (!finalFechaCulminado || !finalCertificadoPath)) {
-      targetEstado = 'PENDIENTE';
-    }
-
-    updateData.estado = targetEstado;
-
+    // Resolviendo la fecha final de la tarea (fecha de registro)
     let finalFecha = existing.fecha;
     if (fecha !== undefined) {
       finalFecha = fecha === '' ? new Date().toISOString().split('T')[0] : fecha;
@@ -130,6 +107,40 @@ export async function PUT(
         updateData.itemNumber = (maxItem?.itemNumber || 0) + 1;
       }
     }
+
+    // Resolviendo los nuevos valores
+    let finalFechaCulminado = fechaCulminado !== undefined ? (fechaCulminado === '' ? null : fechaCulminado) : existing.fechaCulminado;
+    const finalCertificadoNombre = certificadoNombre !== undefined ? (certificadoNombre === '' ? null : certificadoNombre) : existing.certificadoNombre;
+    const finalCertificadoPath = certificadoPath !== undefined ? (certificadoPath === '' ? null : certificadoPath) : existing.certificadoPath;
+
+    if (certificadoNombre !== undefined) updateData.certificadoNombre = finalCertificadoNombre;
+    if (certificadoPath !== undefined) updateData.certificadoPath = finalCertificadoPath;
+
+    // Lógica de transición de estado automática:
+    // Si tiene fecha de culminado y certificado de operatividad, pasa automáticamente a CULMINADO.
+    // Si el usuario borra uno de los dos y no se está enviando un estado explícito, revertimos a PENDIENTE (o mantemos el estado explícito).
+    let targetEstado = estado !== undefined 
+      ? (estado === 'HECHO' || estado === 'CULMINADO' ? 'CULMINADO' : estado)
+      : existing.estado;
+
+    if (finalFechaCulminado && finalCertificadoPath) {
+      targetEstado = 'CULMINADO';
+    } else if (estado === undefined && existing.estado === 'CULMINADO' && (!finalFechaCulminado || !finalCertificadoPath)) {
+      targetEstado = 'PENDIENTE';
+    }
+
+    // Si el estado final es CULMINADO, autocompletar la fecha de culminación si no está especificada
+    if (targetEstado === 'CULMINADO') {
+      if (!finalFechaCulminado) {
+        finalFechaCulminado = finalFecha;
+      }
+    } else {
+      // Si el nuevo estado no es CULMINADO, vaciar la fecha de culminación
+      finalFechaCulminado = null;
+    }
+
+    updateData.fechaCulminado = finalFechaCulminado;
+    updateData.estado = targetEstado;
 
     if (itemNumber !== undefined) {
       updateData.itemNumber = itemNumber === '' ? null : Number(itemNumber);

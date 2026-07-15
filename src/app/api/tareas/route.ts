@@ -122,9 +122,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'El responsable es obligatorio.' }, { status: 400 });
     }
 
-    const finalFechaCulminado = fechaCulminado || null;
-    const finalCertificadoNombre = certificadoNombre || null;
-    const finalCertificadoPath = certificadoPath || null;
+    // Formatear fecha por defecto si no existe (formato YYYY-MM-DD)
+    const taskFecha = fecha || new Date().toISOString().split('T')[0];
 
     // Mapear estados anteriores y validar nuevos
     let cleanEstado = 'PENDIENTE';
@@ -134,13 +133,18 @@ export async function POST(request: NextRequest) {
       cleanEstado = 'EN_PROCESO';
     }
 
-    // Transición automática si tiene fecha de culminado y certificado de operatividad
-    if (finalFechaCulminado && finalCertificadoPath) {
-      cleanEstado = 'CULMINADO';
+    let finalFechaCulminado = fechaCulminado || null;
+    if (cleanEstado === 'CULMINADO') {
+      if (!finalFechaCulminado) {
+        finalFechaCulminado = taskFecha;
+      }
+    } else {
+      // No debe tener fecha de culminado si está pendiente o en proceso
+      finalFechaCulminado = null;
     }
 
-    // Formatear fecha por defecto si no existe (formato YYYY-MM-DD)
-    const taskFecha = fecha || new Date().toISOString().split('T')[0];
+    const finalCertificadoNombre = certificadoNombre || null;
+    const finalCertificadoPath = certificadoPath || null;
 
     // Calcular automáticamente el ítem correlativo del día si se dejó vacío
     let calculatedItemNumber = itemNumber;
