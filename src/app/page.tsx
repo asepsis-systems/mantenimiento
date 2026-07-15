@@ -157,6 +157,7 @@ export default function Dashboard() {
     { name: 'Certificado 3', file: null },
     { name: 'Certificado 4', file: null },
   ]);
+  const [multiUploadHistoryFiles, setMultiUploadHistoryFiles] = useState<any[]>([]);
   
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmDeleteRespId, setConfirmDeleteRespId] = useState<string | null>(null);
@@ -265,6 +266,27 @@ export default function Dashboard() {
       showFeedback('error', 'Error de red al solicitar historial');
     } finally {
       setModalLoadingFiles(false);
+    }
+  };
+
+  const openMultiUploadModal = async (tareaId: string) => {
+    setMultiUploadTaskId(tareaId);
+    setMultiUploadSlots([
+      { name: 'Certificado 1', file: null },
+      { name: 'Certificado 2', file: null },
+      { name: 'Certificado 3', file: null },
+      { name: 'Certificado 4', file: null },
+    ]);
+    setMultiUploadHistoryFiles([]);
+    setIsMultiUploadOpen(true);
+    try {
+      const res = await fetch(`/api/tareas/archivo?id=${encodeURIComponent(tareaId)}&list=true`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setMultiUploadHistoryFiles(data.files || []);
+      }
+    } catch (err) {
+      console.error('Error al precargar archivos para multi-upload:', err);
     }
   };
 
@@ -1939,16 +1961,7 @@ export default function Dashboard() {
                                 <>
                                   <button
                                     type="button"
-                                    onClick={() => {
-                                      setMultiUploadTaskId(t.id);
-                                      setMultiUploadSlots([
-                                        { name: 'Certificado 1', file: null },
-                                        { name: 'Certificado 2', file: null },
-                                        { name: 'Certificado 3', file: null },
-                                        { name: 'Certificado 4', file: null },
-                                      ]);
-                                      setIsMultiUploadOpen(true);
-                                    }}
+                                    onClick={() => openMultiUploadModal(t.id)}
                                     className={`inline-flex items-center justify-center p-1.5 rounded-xl transition-all duration-150 active:scale-90 cursor-pointer ${
                                       isPremiumDarkMode
                                         ? 'border border-slate-700 bg-slate-850/80 hover:bg-slate-750 hover:border-slate-650 text-slate-300'
@@ -2604,69 +2617,96 @@ export default function Dashboard() {
           <p className="text-[11px] text-slate-500">Puedes asignar un nombre personalizado a cada archivo antes de subirlo.</p>
           
           <div className="space-y-3">
-            {multiUploadSlots.map((slot, idx) => (
-              <div key={idx} className={`p-3 rounded-2xl border ${isPremiumDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 block mb-1">Nombre del Archivo</label>
-                    <input
-                      type="text"
-                      value={slot.name}
-                      onChange={(e) => {
-                        const newSlots = [...multiUploadSlots];
-                        newSlots[idx].name = e.target.value;
-                        setMultiUploadSlots(newSlots);
-                      }}
-                      className={`w-full text-xs rounded-lg px-3 py-2 border outline-none ${
-                        isPremiumDarkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-slate-800'
-                      }`}
-                      placeholder="Ej. Certificado de Calibración"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="file"
-                      id={`multi-file-${idx}`}
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] || null;
-                        const newSlots = [...multiUploadSlots];
-                        newSlots[idx].file = file;
-                        if (file && !newSlots[idx].name) newSlots[idx].name = file.name;
-                        setMultiUploadSlots(newSlots);
-                      }}
-                    />
-                    <label
-                      htmlFor={`multi-file-${idx}`}
-                      className={`flex-1 text-center py-2 rounded-lg border text-[10px] font-bold cursor-pointer transition-all ${
-                        slot.file 
-                          ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-500' 
-                          : 'bg-slate-200/50 border-slate-300 text-slate-600'
-                      }`}
-                    >
-                      {slot.file ? '✅ Archivo Seleccionado' : '📁 Seleccionar Archivo'}
-                    </label>
-                    {slot.file && (
-                      <button
-                        onClick={() => {
+            {multiUploadSlots.map((slot, idx) => {
+              const matchedExistingFile = multiUploadHistoryFiles.find(f => 
+                (f.originalName || '').toLowerCase().trim() === (slot.name || '').toLowerCase().trim()
+              );
+              return (
+                <div key={idx} className={`p-3 rounded-2xl border ${isPremiumDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 block mb-1">Nombre del Archivo</label>
+                      <input
+                        type="text"
+                        value={slot.name}
+                        onChange={(e) => {
                           const newSlots = [...multiUploadSlots];
-                          newSlots[idx].file = null;
+                          newSlots[idx].name = e.target.value;
                           setMultiUploadSlots(newSlots);
                         }}
-                        className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg"
+                        className={`w-full text-xs rounded-lg px-3 py-2 border outline-none ${
+                          isPremiumDarkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-slate-800'
+                        }`}
+                        placeholder="Ej. Certificado de Calibración"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="file"
+                        id={`multi-file-${idx}`}
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          const newSlots = [...multiUploadSlots];
+                          newSlots[idx].file = file;
+                          if (file && !newSlots[idx].name) newSlots[idx].name = file.name;
+                          setMultiUploadSlots(newSlots);
+                        }}
+                      />
+                      <label
+                        htmlFor={`multi-file-${idx}`}
+                        className={`flex-1 text-center py-2 rounded-lg border text-[10px] font-bold cursor-pointer transition-all ${
+                          slot.file 
+                            ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-500' 
+                            : 'bg-slate-200/50 border-slate-300 text-slate-600'
+                        }`}
                       >
-                        ✕
+                        {slot.file ? '✅ Archivo Seleccionado' : '📁 Seleccionar Archivo'}
+                      </label>
+                      {slot.file && (
+                        <button
+                          onClick={() => {
+                            const newSlots = [...multiUploadSlots];
+                            newSlots[idx].file = null;
+                            setMultiUploadSlots(newSlots);
+                          }}
+                          className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {slot.file && (
+                    <div className="mt-1 text-[9px] text-slate-400 truncate">
+                      Archivo: {slot.file.name}
+                    </div>
+                  )}
+                  {matchedExistingFile && (
+                    <div className={`mt-2.5 flex items-center justify-between border-t border-dashed pt-2 text-[11px] ${
+                      isPremiumDarkMode ? 'border-slate-800' : 'border-slate-200'
+                    }`}>
+                      <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
+                        <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>✓ Guardado en el servidor</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const existingFileName = (matchedExistingFile.path || '').split('/').pop();
+                          openPreview(existingFileName, matchedExistingFile.originalName);
+                        }}
+                        className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-colors ${
+                          isPremiumDarkMode ? 'bg-brand-500/20 hover:bg-brand-500/30 text-brand-400' : 'bg-brand-50 hover:bg-brand-100 text-brand-600'
+                        }`}
+                      >
+                        👁️ Ver Archivo
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
-                {slot.file && (
-                  <div className="mt-1 text-[9px] text-slate-400 truncate">
-                    Archivo: {slot.file.name}
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
