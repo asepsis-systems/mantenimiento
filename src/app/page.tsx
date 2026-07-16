@@ -750,50 +750,38 @@ export default function Dashboard() {
 
     // 1. Si la tarea tiene una fecha de culminación explícita
     if (t.fechaCulminado) {
-      if (t.frecuenciaMeses && t.esRecurrente !== false) {
-        const targetDate = addMonths(t.fechaCulminado, t.frecuenciaMeses);
-        const diff = getDaysDiff(todayStr, targetDate);
-        const tooltipText = `Próximo mantenimiento: ${formatSmallDate(targetDate)}`;
+      const targetDate = addMonths(t.fechaCulminado, t.frecuenciaMeses);
+      const diff = getDaysDiff(todayStr, targetDate);
+      const tooltipText = `Próximo mantenimiento: ${formatSmallDate(targetDate)}`;
 
-        if (diff < 0) {
-          const absDiff = Math.abs(diff);
-          return (
-            <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
-                isPremiumDarkMode
-                  ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
-                  : 'bg-rose-50 border-rose-200 text-rose-700'
-              }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
-                <span>Vence hace {absDiff} d</span>
-              </span>
-            </div>
-          );
-        } else {
-          return (
-            <span className={`font-medium text-xs select-none transition-colors duration-300 ${
-              isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
-            }`} title={tooltipText}>
-              {formatSmallDate(targetDate)}
+      if (diff < 0) {
+        const absDiff = Math.abs(diff);
+        return (
+          <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
+              isPremiumDarkMode
+                ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
+                : 'bg-rose-50 border-rose-200 text-rose-700'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
+              <span>Vence hace {absDiff} d</span>
             </span>
-          );
-        }
+          </div>
+        );
       } else {
-        // Tareas con fecha de culminación pero sin recurrencia ("Única")
-        return <span className={`font-medium text-xs select-none transition-colors duration-300 ${
-          isPremiumDarkMode ? 'text-slate-500' : 'text-slate-400'
-        }`}>Sin recurrencia</span>;
+        return (
+          <span className={`font-medium text-xs select-none transition-colors duration-300 ${
+            isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
+          }`} title={tooltipText}>
+            {formatSmallDate(targetDate)}
+          </span>
+        );
       }
     }
 
     // 2. Si es una tarea ya culminada pero sin fechaCulminado (fallback heredado)
     const isCompleted = t.estado === 'CULMINADO' || t.estado === 'HECHO';
     if (isCompleted) {
-      if (!t.frecuenciaMeses || !t.esRecurrente) {
-        return <span className={`font-medium text-xs select-none transition-colors duration-300 ${
-          isPremiumDarkMode ? 'text-slate-500' : 'text-slate-400'
-        }`}>Sin recurrencia</span>;
-      }
       const targetDate = t.proximaEjecucion;
       if (!targetDate) {
         return <span className={`font-light text-xs transition-colors duration-300 ${
@@ -1286,6 +1274,177 @@ export default function Dashboard() {
     setTimeout(() => win.print(), 800);
   };
 
+  const handleExportTasksExcel = () => {
+    const escapeHtml = (s?: string) => {
+      if (!s) return '';
+      return s
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
+
+    // Build visual grouping of rows by date for the Excel report
+    let lastDate = '';
+    const rowsHtml = sortedTareas.map(t => {
+      const currDate = getTaskDate(t);
+      const isHeaderNeeded = currDate !== lastDate;
+      lastDate = currDate;
+
+      const itemNum = computedItemNumbers[t.id] || t.itemNumber || 1;
+      
+      const headerRow = isHeaderNeeded ? `
+        <tr style="background-color:#f1f5f9; font-weight:bold;">
+          <td colspan="11" style="padding:10px; border:1px solid #cbd5e1; font-size:11px; color:#1e293b; text-align:left; font-family:'Segoe UI', Arial, sans-serif;">
+            📅 ${formatFriendlyDate(currDate)} (${sortedTareas.filter(x => getTaskDate(x) === currDate).length} tareas)
+          </td>
+        </tr>
+      ` : '';
+
+      const stateBadge = t.estado === 'PENDIENTE' ? '<span style="background-color:#ffe4e6;color:#9f1239;padding:4px 10px;border-radius:12px;font-weight:bold;font-size:10px;font-family:\'Segoe UI\', Arial, sans-serif;">Pendiente</span>' :
+                         t.estado === 'EN_PROCESO' ? '<span style="background-color:#fef3c7;color:#92400e;padding:4px 10px;border-radius:12px;font-weight:bold;font-size:10px;font-family:\'Segoe UI\', Arial, sans-serif;">En Proceso</span>' :
+                         '<span style="background-color:#d1fae5;color:#065f46;padding:4px 10px;border-radius:12px;font-weight:bold;font-size:10px;font-family:\'Segoe UI\', Arial, sans-serif;">Culminado</span>';
+
+      // Calculate Próximo Mantenimiento date (respecting unique frequency)
+      let proximoText = 'Sin recurrencia';
+      if (t.frecuenciaMeses && t.esRecurrente !== false) {
+        const targetDate = t.fechaCulminado ? addMonths(t.fechaCulminado, t.frecuenciaMeses) : (t.estado === 'CULMINADO' || t.estado === 'HECHO' ? t.proximaEjecucion : t.fecha);
+        proximoText = targetDate ? formatSmallDate(targetDate) : '-';
+      }
+      
+      const frecuenciaText = t.frecuenciaMeses ? `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
+
+      return `
+        ${headerRow}
+        <tr>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;text-align:center;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${itemNum}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${escapeHtml(t.responsable)}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;font-weight:bold;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${escapeHtml(t.equipo || '')}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;color:#b91c1c;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${escapeHtml(t.falla || '-')}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;"><strong>${escapeHtml(t.tipo || '')}</strong><br/><span style="color:#475569;">${escapeHtml(t.descripcion)}</span></td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;text-align:center;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${t.fechaCulminado ? formatSmallDate(t.fechaCulminado) : '-'}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;text-align:center;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${stateBadge}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;text-align:center;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${escapeHtml(frecuenciaText)}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;text-align:center;font-weight:bold;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${escapeHtml(proximoText)}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${escapeHtml(t.repuestos || '-')}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;text-align:center;font-weight:bold;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${t.cantidad || '0'}</td>
+        </tr>
+      `;
+    }).join('\n');
+
+    const activeRangeText = fromDate || toDate 
+      ? `Período: ${fromDate ? formatSmallDate(fromDate) : 'Inicio'} hasta ${toDate ? formatSmallDate(toDate) : 'Fin'}`
+      : '';
+
+    const activeSearchText = searchTerm.trim() ? `Búsqueda: "${escapeHtml(searchTerm)}"` : '';
+    const activeEquipoText = selectedEquipoFilter ? `Filtrado por equipo: ${escapeHtml(selectedEquipoFilter)}` : '';
+
+    const html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>Mantenimiento</x:Name>
+                <x:WorksheetOptions>
+                  <x:DisplayGridlines/>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <meta charset="utf-8" />
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; color: #0f172a; }
+          table { border-collapse: collapse; width: 100%; }
+          td, th { border: 1px solid #cbd5e1; padding: 10px; }
+          th { background-color: #0f172a; color: #ffffff; text-align: center; font-weight: bold; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; }
+          .title { font-size: 18px; font-weight: bold; color: #1e3a8a; font-family: 'Segoe UI', Arial, sans-serif; }
+          .subtitle { font-size: 11px; color: #64748b; font-family: 'Segoe UI', Arial, sans-serif; }
+          .meta { font-size: 9px; color: #64748b; text-align: right; font-family: 'Segoe UI', Arial, sans-serif; }
+          .kpi-title { font-size: 9px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.05em; text-align: center; }
+          .kpi-value { font-size: 16px; font-weight: bold; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <!-- Header Section -->
+        <table>
+          <tr>
+            <td colspan="7" class="title" style="border:none; padding-bottom:5px;">Control de Reportes de Mantenimiento</td>
+            <td colspan="4" class="meta" style="border:none; padding-bottom:5px;">
+              <strong>Generado por:</strong> ${escapeHtml(user?.name || 'Administrador')}<br/>
+              <strong>Fecha:</strong> ${new Date().toLocaleString('es-PE')}
+            </td>
+          </tr>
+          <tr>
+            <td colspan="7" class="subtitle" style="border:none; padding-bottom:15px; font-style:italic;">Módulo CMMS Empresarial • T&CH ASEPSIS S.A.C.</td>
+            <td colspan="4" style="border:none;"></td>
+          </tr>
+          ${activeRangeText || activeSearchText || activeEquipoText ? `
+          <tr>
+            <td colspan="11" style="border:none; font-size:11px; background-color:#f8fafc; padding:10px; color:#263fff; font-weight:600;">
+              ${activeRangeText}${activeRangeText && activeSearchText ? ' | ' : ''}${activeSearchText}${(activeRangeText || activeSearchText) && activeEquipoText ? ' | ' : ''}${activeEquipoText}
+            </td>
+          </tr>
+          ` : ''}
+          <tr><td colspan="11" style="border:none; height:10px;"></td></tr>
+          
+          <!-- KPI Section -->
+          <tr>
+            <td colspan="2" class="kpi-title" style="background-color:#dbeafe; color:#1e40af; border:1px solid #cbd5e1; font-weight:bold;">TOTAL TAREAS</td>
+            <td colspan="3" class="kpi-title" style="background-color:#fee2e2; color:#991b1b; border:1px solid #cbd5e1; font-weight:bold;">PENDIENTES</td>
+            <td colspan="2" class="kpi-title" style="background-color:#fef3c7; color:#92400e; border:1px solid #cbd5e1; font-weight:bold;">EN PROCESO</td>
+            <td colspan="4" class="kpi-title" style="background-color:#d1fae5; color:#065f46; border:1px solid #cbd5e1; font-weight:bold;">CULMINADAS</td>
+          </tr>
+          <tr>
+            <td colspan="2" class="kpi-value" style="background-color:#f0f9ff; color:#1d4ed8; border:1px solid #cbd5e1; font-weight:bold;">${totalCount}</td>
+            <td colspan="3" class="kpi-value" style="background-color:#fef2f2; color:#dc2626; border:1px solid #cbd5e1; font-weight:bold;">${pendientesCount}</td>
+            <td colspan="2" class="kpi-value" style="background-color:#fffbeb; color:#d97706; border:1px solid #cbd5e1; font-weight:bold;">${enProcesoCount}</td>
+            <td colspan="4" class="kpi-value" style="background-color:#f0fdf4; color:#16a34a; border:1px solid #cbd5e1; font-weight:bold;">${culminadasCount}</td>
+          </tr>
+          <tr><td colspan="11" style="border:none; height:15px;"></td></tr>
+          
+          <!-- Table Header -->
+          <thead>
+            <tr>
+              <th style="width:5%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Item</th>
+              <th style="width:14%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Responsable</th>
+              <th style="width:14%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Equipo / Máquina</th>
+              <th style="width:14%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Falla</th>
+              <th style="width:23%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Tipo y Descripción</th>
+              <th style="width:10%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Fecha Culm.</th>
+              <th style="width:10%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Estado</th>
+              <th style="width:8%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Frecuencia</th>
+              <th style="width:10%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Próximo Mant.</th>
+              <th style="width:12%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Repuestos</th>
+              <th style="width:6%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Cant</th>
+            </tr>
+          </thead>
+          
+          <!-- Table Body -->
+          <tbody>
+            ${rowsHtml || '<tr><td colspan="11" style="text-align:center;padding:20px;color:#94a3b8;font-family:\'Segoe UI\', Arial, sans-serif;">No se encontraron registros para los filtros seleccionados.</td></tr>'}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'Control_de_Reportes_de_Mantenimiento.xls';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleSort = (field: 'fecha' | 'responsable' | 'equipo' | 'estado' | 'cantidad') => {
     if (sortField === field) {
       setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -1698,6 +1857,25 @@ export default function Dashboard() {
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 <span>Exportar PDF</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportTasksExcel}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-[11px] font-bold transition-all cursor-pointer border ${
+                  isPremiumDarkMode 
+                    ? 'bg-[#064e3b]/80 text-emerald-300 border-emerald-800/60 hover:bg-emerald-900/60 shadow-md' 
+                    : 'bg-emerald-50 text-emerald-800 border-emerald-200 shadow-sm hover:bg-emerald-100'
+                }`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                <span>Exportar Excel</span>
               </button>
             </div>
             <div className={`text-xs font-semibold transition-colors duration-300 ${
