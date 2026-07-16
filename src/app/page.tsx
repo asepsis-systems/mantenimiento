@@ -1822,16 +1822,6 @@ export default function Dashboard() {
                   <th className="px-5 py-4 text-left border-b w-48 border-slate-800 border-r border-white/5">Falla Reportada</th>
                   <th className="px-5 py-4 text-left border-b border-slate-800 border-r border-white/5">Tipo Mant.</th>
                   <th className="px-5 py-4 text-left border-b w-64 border-slate-800 border-r border-white/5">Descripción de Actividad</th>
-                  <th className="px-5 py-4 text-left border-b border-slate-800 border-r border-white/5">Repuestos</th>
-                  <th 
-                    onClick={() => handleSort('cantidad')} 
-                    className="px-4 py-4 text-center border-b cursor-pointer select-none w-20 transition-colors border-slate-800 hover:bg-white/5 border-r border-white/5"
-                  >
-                    <div className="flex items-center justify-center gap-1.5">
-                      <span>Cant</span>
-                      <ArrowUpDown className="w-3 h-3 text-sky-400" />
-                    </div>
-                  </th>
                   <th className="px-4 py-4 text-center border-b w-32 select-none border-slate-800 border-r border-white/5">Certif. Operatividad</th>
                   <th className="px-4 py-4 text-center border-b w-36 select-none border-slate-800 border-r border-white/5">Fecha Culminado</th>
                   <th 
@@ -1845,6 +1835,16 @@ export default function Dashboard() {
                   </th>
                   <th className="px-4 py-4 text-center border-b w-28 select-none border-slate-800 border-r border-white/5">Frecuencia</th>
                   <th className="px-4 py-4 text-center border-b w-32 select-none border-slate-800 border-r border-white/5">Prox. Mant.</th>
+                  <th className="px-5 py-4 text-left border-b border-slate-800 border-r border-white/5">Repuestos</th>
+                  <th 
+                    onClick={() => handleSort('cantidad')} 
+                    className="px-4 py-4 text-center border-b cursor-pointer select-none w-20 transition-colors border-slate-800 hover:bg-white/5 border-r border-white/5"
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span>Cant</span>
+                      <ArrowUpDown className="w-3 h-3 text-sky-400" />
+                    </div>
+                  </th>
                   <th className="px-4 py-4 text-center border-b w-28 pl-5 pr-6 border-slate-800">Acciones</th>
                 </tr>
               </thead>
@@ -1964,16 +1964,6 @@ export default function Dashboard() {
                             isPremiumDarkMode ? 'text-slate-300 border-[#1e293b]' : 'text-slate-700 border-slate-200'
                           }`}>
                             {t.descripcion}
-                          </td>
-                          <td className={`px-3.5 py-3.5 border-b text-[12px] font-medium transition-colors ${
-                            isPremiumDarkMode ? 'text-slate-400 border-[#1e293b]' : 'text-slate-600 border-slate-200'
-                          }`}>
-                            {t.repuestos || '-'}
-                          </td>
-                          <td className={`px-3.5 py-3.5 text-center border-b font-semibold text-[12px] transition-colors ${
-                            isPremiumDarkMode ? 'text-slate-200 border-[#1e293b]' : 'text-slate-800 border-slate-200'
-                          }`}>
-                            {t.cantidad || '-'}
                           </td>
 
                           {/* Certificado de Operatividad Column */}
@@ -2130,6 +2120,17 @@ export default function Dashboard() {
                             isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'
                           }`}>
                             {renderProximoBadge(t)}
+                          </td>
+
+                          <td className={`px-3.5 py-3.5 border-b text-[12px] font-medium transition-colors ${
+                            isPremiumDarkMode ? 'text-slate-400 border-[#1e293b]' : 'text-slate-600 border-slate-200'
+                          }`}>
+                            {t.repuestos || '-'}
+                          </td>
+                          <td className={`px-3.5 py-3.5 text-center border-b font-semibold text-[12px] transition-colors ${
+                            isPremiumDarkMode ? 'text-slate-200 border-[#1e293b]' : 'text-slate-800 border-slate-200'
+                          }`}>
+                            {t.cantidad || '-'}
                           </td>
 
                           {/* Action Icon buttons with Tooltips */}
