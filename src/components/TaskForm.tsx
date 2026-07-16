@@ -52,7 +52,22 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   })());
   const [tipo, setTipo] = useState((initialValues as any).tipo ?? '');
   const [repuestos, setRepuestos] = useState((initialValues as any).repuestos ?? '');
-  const [cantidad, setCantidad] = useState((initialValues as any).cantidad ?? '');
+  const [qty, setQty] = useState(() => {
+    const rawVal = (initialValues as any).cantidad ?? '';
+    const trimmed = String(rawVal).trim();
+    if (trimmed.endsWith(' metros')) return trimmed.replace(' metros', '');
+    if (trimmed.endsWith(' kilogramo')) return trimmed.replace(' kilogramo', '');
+    if (trimmed.endsWith(' unidades')) return trimmed.replace(' unidades', '');
+    return trimmed;
+  });
+  const [unit, setUnit] = useState(() => {
+    const rawVal = (initialValues as any).cantidad ?? '';
+    const trimmed = String(rawVal).trim();
+    if (trimmed.endsWith(' metros')) return 'metros';
+    if (trimmed.endsWith(' kilogramo')) return 'kilogramo';
+    if (trimmed.endsWith(' unidades')) return 'unidades';
+    return '';
+  });
   const [customEquipo, setCustomEquipo] = useState('');
   const [selectedEquipos, setSelectedEquipos] = useState<string[]>(() => {
     // Si initialValues.equipo contiene separador ' | ' asumimos lista
@@ -147,6 +162,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         finalEsRecurrente = true;
       }
 
+      const finalCantidad = qty.trim() ? (unit ? `${qty.trim()} ${unit}` : qty.trim()) : '';
+
       onSubmit({
         responsable: responsable === 'Otro' ? customResponsable || '' : responsable,
         descripcion,
@@ -158,7 +175,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         falla: falla || undefined,
         tipo: tipo === 'Otro' ? customTipo || undefined : tipo || undefined,
         repuestos: repuestos || undefined,
-        cantidad: cantidad || undefined,
+        cantidad: finalCantidad || undefined,
         frecuenciaMeses: finalFrecuenciaMeses,
         esRecurrente: finalEsRecurrente
       });
@@ -432,14 +449,26 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         </div>
         <div>
           <label className="text-xs font-semibold text-slate-400 block mb-1">Cantidad</label>
-          <input
-            type="number"
-            value={cantidad}
-            min={0}
-            onChange={(e) => setCantidad(e.target.value)}
-            placeholder="ej. 1"
-            className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
-          />
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="number"
+              value={qty}
+              min={0}
+              onChange={(e) => setQty(e.target.value)}
+              placeholder="ej. 1"
+              className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
+            />
+            <select
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm cursor-pointer"
+            >
+              <option value="">-- Unidad (opcional) --</option>
+              <option value="metros">metros</option>
+              <option value="kilogramo">kilogramo</option>
+              <option value="unidades">unidades</option>
+            </select>
+          </div>
         </div>
       </div>
 
