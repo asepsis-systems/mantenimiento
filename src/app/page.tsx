@@ -737,6 +737,17 @@ export default function Dashboard() {
   };
 
   const renderProximoBadge = (t: Tarea) => {
+    // Si la frecuencia es única, el próximo mantenimiento siempre es sin recurrencia
+    if (!t.frecuenciaMeses || t.esRecurrente === false) {
+      return (
+        <span className={`font-medium text-xs select-none transition-colors duration-300 ${
+          isPremiumDarkMode ? 'text-slate-500' : 'text-slate-400'
+        }`}>
+          Sin recurrencia
+        </span>
+      );
+    }
+
     // 1. Si la tarea tiene una fecha de culminación explícita
     if (t.fechaCulminado) {
       if (t.frecuenciaMeses && t.esRecurrente !== false) {
