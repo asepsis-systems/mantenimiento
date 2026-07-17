@@ -70,6 +70,12 @@ interface Responsable {
   nombre: string;
 }
 
+const DAYS_OF_WEEK = ['DO', 'LU', 'MA', 'MI', 'JU', 'VI', 'SA'];
+const MONTHS = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
+
 export default function Dashboard() {
   const router = useRouter();
   
@@ -157,6 +163,8 @@ export default function Dashboard() {
   const [editingTask, setEditingTask] = useState<Tarea | null>(null);
   const [editingDateId, setEditingDateId] = useState<string | null>(null);
   const [tempDate, setTempDate] = useState<string>('');
+  const [calYear, setCalYear] = useState<number>(new Date().getFullYear());
+  const [calMonth, setCalMonth] = useState<number>(new Date().getMonth());
   const editContainerRef = useRef<HTMLDivElement | null>(null);
   const [uploadingTaskId, setUploadingTaskId] = useState<string | null>(null);
   const [isMultiUploadOpen, setIsMultiUploadOpen] = useState(false);
@@ -2219,62 +2227,160 @@ export default function Dashboard() {
                           </td>
 
                           {/* Fecha Culminado (Inline Datepicker) Column */}
-                          <td className={`px-3.5 py-3.5 text-center border-b transition-colors ${
+                          <td className={`px-3.5 py-3.5 text-center border-b transition-colors relative ${
                             isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'
                           }`}>
                             <div className="flex items-center justify-center">
-                              {editingDateId === t.id ? (
-                                <div ref={editContainerRef} className="flex items-center justify-center animate-in fade-in zoom-in-95 duration-100">
-                                  <input
-                                    type="date"
-                                    autoFocus
-                                    value={tempDate}
-                                    onChange={(e) => {
-                                      const val = e.target.value;
-                                      setTempDate(val);
-                                      if (val) {
-                                        // Only auto-save if the year is fully entered (4 digits and between 2000 and 2100)
-                                        const year = parseInt(val.substring(0, 4));
-                                        if (year >= 2000 && year <= 2100) {
-                                          handleUpdateFechaCulminado(t.id, val);
-                                        }
+                              <span
+                                onClick={() => {
+                                  if (!isViewer) {
+                                    setEditingDateId(t.id);
+                                    const currentVal = t.fechaCulminado || '';
+                                    setTempDate(currentVal);
+                                    if (currentVal) {
+                                      const parts = currentVal.split('-');
+                                      if (parts.length === 3) {
+                                        setCalYear(parseInt(parts[0]));
+                                        setCalMonth(parseInt(parts[1]) - 1);
+                                      } else {
+                                        setCalYear(new Date().getFullYear());
+                                        setCalMonth(new Date().getMonth());
                                       }
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Escape') {
-                                        setEditingDateId(null);
-                                      }
-                                    }}
-                                    className={`border rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-brand-500 font-semibold max-w-[130px] ${
-                                      isPremiumDarkMode 
-                                        ? 'bg-slate-800 border-slate-700 text-slate-100 focus:ring-1 focus:ring-brand-500/20' 
-                                        : 'bg-white border-slate-300 text-slate-700 focus:ring-1 focus:ring-brand-500/20 shadow-xs'
-                                    }`}
-                                  />
-                                </div>
-                              ) : (
-                                <span
-                                  onClick={() => {
-                                    if (!isViewer) {
-                                      setEditingDateId(t.id);
-                                      setTempDate(t.fechaCulminado || '');
+                                    } else {
+                                      setCalYear(new Date().getFullYear());
+                                      setCalMonth(new Date().getMonth());
                                     }
-                                  }}
-                                  className={`px-2.5 py-1 border border-transparent rounded-lg text-[11px] font-semibold cursor-pointer transition-all duration-150 ${
-                                    isViewer 
-                                      ? '' 
-                                      : isPremiumDarkMode
-                                      ? 'text-slate-300 hover:border-slate-700 hover:bg-slate-800'
-                                      : 'text-slate-700 hover:border-slate-200 hover:bg-slate-50'
-                                  }`}
-                                >
-                                  {t.fechaCulminado ? formatSmallDate(t.fechaCulminado) : '--/--/----'}
-                                </span>
+                                  }
+                                }}
+                                className={`px-2.5 py-1 border border-transparent rounded-lg text-[11px] font-semibold cursor-pointer transition-all duration-150 ${
+                                  isViewer 
+                                    ? '' 
+                                    : isPremiumDarkMode
+                                    ? 'text-slate-300 hover:border-slate-700 hover:bg-slate-800'
+                                    : 'text-slate-700 hover:border-slate-200 hover:bg-slate-50'
+                                }`}
+                              >
+                                {t.fechaCulminado ? formatSmallDate(t.fechaCulminado) : '--/--/----'}
+                              </span>
+
+                              {editingDateId === t.id && (
+                                <div ref={editContainerRef} className={`absolute z-50 mt-1 p-3 rounded-xl shadow-xl border w-[250px] animate-in fade-in zoom-in-95 duration-100 left-1/2 -translate-x-1/2 top-full ${
+                                  isPremiumDarkMode 
+                                    ? 'bg-slate-800 border-slate-700 text-slate-100 shadow-slate-950/50' 
+                                    : 'bg-white border-slate-200 text-slate-700 shadow-slate-200/50'
+                                }`}>
+                                  <div className="flex items-center justify-between gap-2 mb-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (calMonth === 0) {
+                                          setCalMonth(11);
+                                          setCalYear(prev => prev - 1);
+                                        } else {
+                                          setCalMonth(prev => prev - 1);
+                                        }
+                                      }}
+                                      className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer flex items-center justify-center shrink-0"
+                                    >
+                                      <ChevronLeft className="w-3.5 h-3.5 text-slate-500" />
+                                    </button>
+                                    
+                                    <span className="font-semibold text-xs text-slate-700 dark:text-slate-200">
+                                      {MONTHS[calMonth]} {calYear}
+                                    </span>
+                                    
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (calMonth === 11) {
+                                          setCalMonth(0);
+                                          setCalYear(prev => prev + 1);
+                                        } else {
+                                          setCalMonth(prev => prev + 1);
+                                        }
+                                      }}
+                                      className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer flex items-center justify-center shrink-0"
+                                    >
+                                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                                    </button>
+                                  </div>
+
+                                  <div className="grid grid-cols-7 gap-1 mt-2">
+                                    {DAYS_OF_WEEK.map(d => (
+                                      <div key={d} className="text-center font-bold text-slate-400 text-[10px] py-1">{d}</div>
+                                    ))}
+                                    {(() => {
+                                      const startDay = new Date(calYear, calMonth, 1).getDay();
+                                      const totalDays = new Date(calYear, calMonth + 1, 0).getDate();
+                                      
+                                      const cells: (number | null)[] = [];
+                                      for (let i = 0; i < startDay; i++) {
+                                        cells.push(null);
+                                      }
+                                      for (let i = 1; i <= totalDays; i++) {
+                                        cells.push(i);
+                                      }
+                                      
+                                      return cells.map((day, idx) => {
+                                        if (day === null) {
+                                          return <div key={`empty-${idx}`} />;
+                                        }
+                                        
+                                        const formattedDay = String(day).padStart(2, '0');
+                                        const formattedMonth = String(calMonth + 1).padStart(2, '0');
+                                        const dateStr = `${calYear}-${formattedMonth}-${formattedDay}`;
+                                        const isSelected = tempDate === dateStr;
+                                        
+                                        return (
+                                          <button
+                                            key={`day-${day}`}
+                                            type="button"
+                                            onClick={() => {
+                                              handleUpdateFechaCulminado(t.id, dateStr);
+                                              setEditingDateId(null);
+                                            }}
+                                            className={`w-7 h-7 flex items-center justify-center rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
+                                              isSelected
+                                                ? 'bg-sky-500 text-white font-semibold shadow-xs'
+                                                : isPremiumDarkMode
+                                                ? 'text-slate-200 hover:bg-slate-700'
+                                                : 'text-slate-700 hover:bg-slate-100'
+                                            }`}
+                                          >
+                                            {day}
+                                          </button>
+                                        );
+                                      });
+                                    })()}
+                                  </div>
+
+                                  <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-700 pt-2 mt-2 gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        handleUpdateFechaCulminado(t.id, '');
+                                        setEditingDateId(null);
+                                      }}
+                                      className="text-[10px] font-semibold text-rose-500 hover:text-rose-600 cursor-pointer"
+                                    >
+                                      Borrar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const todayStr = new Date().toISOString().substring(0, 10);
+                                        handleUpdateFechaCulminado(t.id, todayStr);
+                                        setEditingDateId(null);
+                                      }}
+                                      className="text-[10px] font-semibold text-sky-500 hover:text-sky-600 cursor-pointer"
+                                    >
+                                      Hoy
+                                    </button>
+                                  </div>
+                                </div>
                               )}
                             </div>
                           </td>
-
-                          {/* Modern Badge State Column */}
                           <td className={`px-3.5 py-3.5 text-center border-b select-none transition-colors ${
                             isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'
                           }`}>
