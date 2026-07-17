@@ -38,37 +38,18 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbars */
+/* Custom scrollbars (Globally applied to the entire app, including the browser's right scrollbar) */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 14px;  /* Much larger vertical scrollbar (right side)! */
+  height: 14px; /* Much larger horizontal scrollbar (bottom side)! */
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* Horizontal scrollbar custom larger styles */
-.scrollbar-horizontal-large::-webkit-scrollbar {
-  height: 14px; /* Much larger and easier to grab! */
-  width: 14px;  /* Match vertical size to horizontal scrollbar */
-}
-
-.scrollbar-horizontal-large::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.03);
   border-radius: 10px;
 }
 
-.scrollbar-horizontal-large::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border: 3px solid transparent;
   background-clip: padding-box;
@@ -76,24 +57,30 @@ body {
   transition: background 0.2s;
 }
 
-.scrollbar-horizontal-large::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
   border: 3px solid transparent;
   background-clip: padding-box;
 }
 
-/* Dark mode specific for large scrollbar when inside dark container */
-.dark-scroll .scrollbar-horizontal-large::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+/* Dark mode support for global scrollbars */
+.dark ::-webkit-scrollbar-track,
+[class*="dark"] ::-webkit-scrollbar-track,
+.dark-scroll ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.dark-scroll .scrollbar-horizontal-large::-webkit-scrollbar-thumb {
+.dark ::-webkit-scrollbar-thumb,
+[class*="dark"] ::-webkit-scrollbar-thumb,
+.dark-scroll ::-webkit-scrollbar-thumb {
   background: #475569;
   border: 3px solid transparent;
   background-clip: padding-box;
 }
 
-.dark-scroll .scrollbar-horizontal-large::-webkit-scrollbar-thumb:hover {
+.dark ::-webkit-scrollbar-thumb:hover,
+[class*="dark"] ::-webkit-scrollbar-thumb:hover,
+.dark-scroll ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
   border: 3px solid transparent;
   background-clip: padding-box;
