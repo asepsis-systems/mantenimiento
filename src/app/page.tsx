@@ -675,6 +675,9 @@ export default function Dashboard() {
 
   // Extract task date in YYYY-MM-DD format
   const getTaskDate = (t: Tarea) => {
+    if (t.fechaCulminado && (t.estado === 'CULMINADO' || t.estado === 'HECHO')) {
+      return t.fechaCulminado;
+    }
     if (t.fecha) return t.fecha;
     if (t.fecha_creacion) return t.fecha_creacion.substring(0, 10);
     return '';
