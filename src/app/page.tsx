@@ -675,10 +675,6 @@ export default function Dashboard() {
 
   // Extract task date in YYYY-MM-DD format
   const getTaskDate = (t: Tarea) => {
-    // Si la tarea está culminada o hecha, se agrupa bajo su fecha de creación (fecha creada)
-    if (t.estado === 'CULMINADO' || t.estado === 'HECHO') {
-      if (t.fecha_creacion) return t.fecha_creacion.substring(0, 10);
-    }
     if (t.fecha) return t.fecha;
     if (t.fecha_creacion) return t.fecha_creacion.substring(0, 10);
     return '';
