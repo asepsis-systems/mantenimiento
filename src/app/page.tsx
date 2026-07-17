@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Plus,
@@ -26,6 +26,7 @@ import {
   ChevronUp,
   ChevronDown,
   Check,
+  X,
   Clock
 } from 'lucide-react';
 
@@ -155,6 +156,8 @@ export default function Dashboard() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Tarea | null>(null);
   const [editingDateId, setEditingDateId] = useState<string | null>(null);
+  const [tempDate, setTempDate] = useState<string>('');
+  const editContainerRef = useRef<HTMLDivElement | null>(null);
   const [uploadingTaskId, setUploadingTaskId] = useState<string | null>(null);
   const [isMultiUploadOpen, setIsMultiUploadOpen] = useState(false);
   const [multiUploadTaskId, setMultiUploadTaskId] = useState<string | null>(null);
@@ -168,6 +171,18 @@ export default function Dashboard() {
   
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmDeleteRespId, setConfirmDeleteRespId] = useState<string | null>(null);
+
+  // Click outside handling for inline date picker
+  useEffect(() => {
+    if (!editingDateId) return;
+    const handleDocumentClick = (e: MouseEvent) => {
+      if (editContainerRef.current && !editContainerRef.current.contains(e.target as Node)) {
+        setEditingDateId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleDocumentClick);
+    return () => document.removeEventListener('mousedown', handleDocumentClick);
+  }, [editingDateId]);
 
   // Files modal (historial)
   const [filesModalOpen, setFilesModalOpen] = useState(false);
@@ -648,6 +663,10 @@ export default function Dashboard() {
 
   // Extract task date in YYYY-MM-DD format
   const getTaskDate = (t: Tarea) => {
+    // Si la tarea está culminada o hecha, se agrupa bajo su fecha de creación (fecha creada)
+    if (t.estado === 'CULMINADO' || t.estado === 'HECHO') {
+      if (t.fecha_creacion) return t.fecha_creacion.substring(0, 10);
+    }
     if (t.fecha) return t.fecha;
     if (t.fecha_creacion) return t.fecha_creacion.substring(0, 10);
     return '';
@@ -2201,25 +2220,38 @@ export default function Dashboard() {
                           }`}>
                             <div className="flex items-center justify-center">
                               {editingDateId === t.id ? (
-                                <input
-                                  type="date"
-                                  autoFocus
-                                  defaultValue={t.fechaCulminado || ''}
-                                  onBlur={(e) => handleUpdateFechaCulminado(t.id, e.target.value)}
-                                  onChange={(e) => {
-                                    if (e.target.value) {
-                                      handleUpdateFechaCulminado(t.id, e.target.value);
-                                    }
-                                  }}
-                                  className={`border rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-brand-500 font-semibold ${
-                                    isPremiumDarkMode 
-                                      ? 'bg-slate-800 border-slate-700 text-slate-100' 
-                                      : 'bg-slate-50 border border-slate-300 text-slate-700'
-                                  }`}
-                                />
+                                <div ref={editContainerRef} className="flex items-center justify-center animate-in fade-in zoom-in-95 duration-100">
+                                  <input
+                                    type="date"
+                                    autoFocus
+                                    value={tempDate}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setTempDate(val);
+                                      if (val) {
+                                        handleUpdateFechaCulminado(t.id, val);
+                                      }
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Escape') {
+                                        setEditingDateId(null);
+                                      }
+                                    }}
+                                    className={`border rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-brand-500 font-semibold max-w-[130px] ${
+                                      isPremiumDarkMode 
+                                        ? 'bg-slate-800 border-slate-700 text-slate-100 focus:ring-1 focus:ring-brand-500/20' 
+                                        : 'bg-white border-slate-300 text-slate-700 focus:ring-1 focus:ring-brand-500/20 shadow-xs'
+                                    }`}
+                                  />
+                                </div>
                               ) : (
                                 <span
-                                  onClick={() => !isViewer && setEditingDateId(t.id)}
+                                  onClick={() => {
+                                    if (!isViewer) {
+                                      setEditingDateId(t.id);
+                                      setTempDate(t.fechaCulminado || '');
+                                    }
+                                  }}
                                   className={`px-2.5 py-1 border border-transparent rounded-lg text-[11px] font-semibold cursor-pointer transition-all duration-150 ${
                                     isViewer 
                                       ? '' 
