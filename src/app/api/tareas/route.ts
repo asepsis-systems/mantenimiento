@@ -112,7 +112,10 @@ export async function POST(request: NextRequest) {
       tareaPadreId,
       fechaCulminado,
       certificadoNombre,
-      certificadoPath
+      certificadoPath,
+      horaInicio,
+      frecuenciaHrs,
+      proximoMantenimientoHrs
     } = body;
 
     if (!descripcion || !descripcion.trim()) {
@@ -207,7 +210,10 @@ export async function POST(request: NextRequest) {
         tareaPadreId: tareaPadreId || null,
         fechaCulminado: finalFechaCulminado,
         certificadoNombre: finalCertificadoNombre,
-        certificadoPath: finalCertificadoPath
+        certificadoPath: finalCertificadoPath,
+        horaInicio: horaInicio !== undefined && horaInicio !== null && horaInicio !== '' ? Number(horaInicio) : null,
+        frecuenciaHrs: frecuenciaHrs !== undefined && frecuenciaHrs !== null && frecuenciaHrs !== '' ? Number(frecuenciaHrs) : null,
+        proximoMantenimientoHrs: proximoMantenimientoHrs !== undefined && proximoMantenimientoHrs !== null && proximoMantenimientoHrs !== '' ? Number(proximoMantenimientoHrs) : null
       }
     });
 

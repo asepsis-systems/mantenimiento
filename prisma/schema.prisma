@@ -94,6 +94,11 @@ model Tarea {
   fechaCulminado      String?  // Fecha en formato YYYY-MM-DD seleccionada por el usuario
   archivos             TareaArchivo[]
 
+  // Campos para Programación por Uso (Horómetro) - Solo para compresoras
+  horaInicio             Float?
+  frecuenciaHrs          Float?
+  proximoMantenimientoHrs Float?
+
   @@map("Tarea")
 }
 

@@ -64,7 +64,10 @@ export async function PUT(
       tareaPadreId,
       fechaCulminado,
       certificadoNombre,
-      certificadoPath
+      certificadoPath,
+      horaInicio,
+      frecuenciaHrs,
+      proximoMantenimientoHrs
     } = body;
 
     // Check if task exists
@@ -182,6 +185,16 @@ export async function PUT(
     }
     if (tareaPadreId !== undefined) {
       updateData.tareaPadreId = tareaPadreId === '' ? null : tareaPadreId;
+    }
+
+    if (horaInicio !== undefined) {
+      updateData.horaInicio = horaInicio === '' || horaInicio === null ? null : Number(horaInicio);
+    }
+    if (frecuenciaHrs !== undefined) {
+      updateData.frecuenciaHrs = frecuenciaHrs === '' || frecuenciaHrs === null ? null : Number(frecuenciaHrs);
+    }
+    if (proximoMantenimientoHrs !== undefined) {
+      updateData.proximoMantenimientoHrs = proximoMantenimientoHrs === '' || proximoMantenimientoHrs === null ? null : Number(proximoMantenimientoHrs);
     }
 
     // Lógica CMMS en base a fecha de culminado y frecuencia, independiente del estado (PENDIENTE o CULMINADO)

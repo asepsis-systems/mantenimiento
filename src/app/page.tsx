@@ -63,6 +63,9 @@ interface Tarea {
   certificadoNombre?: string | null;
   certificadoPath?: string | null;
   fechaCulminado?: string | null;
+  horaInicio?: number | null;
+  frecuenciaHrs?: number | null;
+  proximoMantenimientoHrs?: number | null;
 }
 
 interface Responsable {
@@ -767,6 +770,24 @@ export default function Dashboard() {
   };
 
   const renderProximoBadge = (t: Tarea) => {
+    // Si es una compresora, mostrar las horas
+    if (t.equipo && (t.equipo.toUpperCase().includes('COMPRESOR') || t.equipo.toUpperCase().includes('COMPRESORA'))) {
+      if (t.proximoMantenimientoHrs !== null && t.proximoMantenimientoHrs !== undefined) {
+        return (
+          <span className={`font-semibold text-xs select-none transition-colors duration-300 ${
+            isPremiumDarkMode ? 'text-indigo-400' : 'text-indigo-700'
+          }`}>
+            {t.proximoMantenimientoHrs} Hrs
+          </span>
+        );
+      }
+      return (
+        <span className={`font-light text-xs transition-colors duration-300 ${
+          isPremiumDarkMode ? 'text-slate-500' : 'text-slate-400'
+        }`}>-</span>
+      );
+    }
+
     // Si la frecuencia es única, el próximo mantenimiento siempre es sin recurrencia
     if (!t.frecuenciaMeses || t.esRecurrente === false) {
       return (
@@ -1339,12 +1360,19 @@ export default function Dashboard() {
 
       // Calculate Próximo Mantenimiento date (respecting unique frequency)
       let proximoText = 'Sin recurrencia';
-      if (t.frecuenciaMeses && t.esRecurrente !== false) {
-        const targetDate = t.fechaCulminado ? addMonths(t.fechaCulminado, t.frecuenciaMeses) : (t.estado === 'CULMINADO' || t.estado === 'HECHO' ? t.proximaEjecucion : t.fecha);
-        proximoText = targetDate ? formatSmallDate(targetDate) : '-';
+      let frecuenciaText = t.frecuenciaMeses ? `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
+      const isCompTask = !!(t.equipo && (t.equipo.toUpperCase().includes('COMPRESOR') || t.equipo.toUpperCase().includes('COMPRESORA')));
+      const proximoFormatStyle = isCompTask ? '' : "mso-number-format:'dd\\/mm\\/yyyy';";
+
+      if (isCompTask) {
+        frecuenciaText = t.frecuenciaHrs ? `${t.frecuenciaHrs} Hrs` : 'Única';
+        proximoText = t.proximoMantenimientoHrs ? `${t.proximoMantenimientoHrs} Hrs` : '-';
+      } else {
+        if (t.frecuenciaMeses && t.esRecurrente !== false) {
+          const targetDate = t.fechaCulminado ? addMonths(t.fechaCulminado, t.frecuenciaMeses) : (t.estado === 'CULMINADO' || t.estado === 'HECHO' ? t.proximaEjecucion : t.fecha);
+          proximoText = targetDate ? formatSmallDate(targetDate) : '-';
+        }
       }
-      
-      const frecuenciaText = t.frecuenciaMeses ? `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
 
       const rowBgColor = dataRowIndex % 2 === 0 ? '#F8F9FA' : '#FFFFFF';
       dataRowIndex++;
@@ -1363,7 +1391,7 @@ export default function Dashboard() {
           <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;mso-number-format:'dd\\/mm\\/yyyy';">${t.fechaCulminado ? formatSmallDate(t.fechaCulminado) : '--/--/----'}</td>
           <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;">${stateBadge}</td>
           <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;">${escapeHtml(frecuenciaText)}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-weight:bold;font-family:'Calibri', sans-serif;vertical-align:middle;mso-number-format:'dd\\/mm\\/yyyy';">${escapeHtml(proximoText)}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-weight:bold;font-family:'Calibri', sans-serif;vertical-align:middle;${proximoFormatStyle}">${escapeHtml(proximoText)}</td>
         </tr>
       `;
     }).join('\n');
@@ -2537,7 +2565,25 @@ export default function Dashboard() {
                           <td className={`px-3.5 py-3.5 text-center border-b select-none transition-colors ${
                             isPremiumDarkMode ? 'border-[#1e293b]' : 'border-slate-200'
                           }`}>
-                            {t.frecuenciaMeses ? (
+                            {t.equipo && (t.equipo.toUpperCase().includes('COMPRESOR') || t.equipo.toUpperCase().includes('COMPRESORA')) ? (
+                              t.frecuenciaHrs ? (
+                                <span className={`inline-flex px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
+                                  isPremiumDarkMode
+                                    ? 'bg-[#1e1b4b] border-indigo-500/30 text-indigo-400'
+                                    : 'bg-indigo-50 border-indigo-100 text-indigo-700'
+                                }`}>
+                                  {t.frecuenciaHrs} Hrs
+                                </span>
+                              ) : (
+                                <span className={`inline-flex px-2.5 py-1 text-[10px] font-medium rounded-full border transition-colors ${
+                                  isPremiumDarkMode
+                                    ? 'bg-slate-800 border-slate-700 text-slate-400'
+                                    : 'bg-slate-100 border-slate-200 text-slate-500'
+                                }`}>
+                                  Única
+                                </span>
+                              )
+                            ) : t.frecuenciaMeses ? (
                               <span className={`inline-flex px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
                                 isPremiumDarkMode
                                   ? 'bg-[#1e1b4b] border-indigo-500/30 text-indigo-400'
@@ -3011,7 +3057,10 @@ export default function Dashboard() {
                   repuestos: editingTask.repuestos ?? '',
                   cantidad: editingTask.cantidad ?? '',
                   frecuenciaMeses: editingTask.frecuenciaMeses,
-                  esRecurrente: editingTask.esRecurrente ?? true
+                  esRecurrente: editingTask.esRecurrente ?? true,
+                  horaInicio: editingTask.horaInicio,
+                  frecuenciaHrs: editingTask.frecuenciaHrs,
+                  proximoMantenimientoHrs: editingTask.proximoMantenimientoHrs
                 }
               : selectedEquipoFilter
               ? {

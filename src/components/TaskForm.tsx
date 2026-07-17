@@ -20,6 +20,9 @@ interface FormValues {
   cantidad?: string;
   frecuenciaMeses?: number | null;
   esRecurrente?: boolean;
+  horaInicio?: number | null;
+  frecuenciaHrs?: number | null;
+  proximoMantenimientoHrs?: number | null;
 }
 
 interface TaskFormProps {
@@ -100,6 +103,42 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     return '';
   });
 
+  // Estados para Programación por Uso (Horómetro) - Solo compresoras
+  const [horaInicio, setHoraInicio] = useState<number | ''>(() => {
+    if (initialValues.horaInicio !== undefined && initialValues.horaInicio !== null) {
+      return Number(initialValues.horaInicio);
+    }
+    return '';
+  });
+  const [frecuenciaHrs, setFrecuenciaHrs] = useState<number | ''>(() => {
+    if (initialValues.frecuenciaHrs !== undefined && initialValues.frecuenciaHrs !== null) {
+      return Number(initialValues.frecuenciaHrs);
+    }
+    return '';
+  });
+  const [proximoMantenimientoHrs, setProximoMantenimientoHrs] = useState<number | ''>(() => {
+    if (initialValues.proximoMantenimientoHrs !== undefined && initialValues.proximoMantenimientoHrs !== null) {
+      return Number(initialValues.proximoMantenimientoHrs);
+    }
+    return '';
+  });
+
+  const isCompresor = () => {
+    if (selectedEquipos.length > 0) {
+      return selectedEquipos.some(eq => eq.toUpperCase().includes('COMPRESOR') || eq.toUpperCase().includes('COMPRESORA'));
+    }
+    const currentEquipo = equipo === 'Otro' ? customEquipo : equipo;
+    return !!(currentEquipo && (currentEquipo.toUpperCase().includes('COMPRESOR') || currentEquipo.toUpperCase().includes('COMPRESORA')));
+  };
+
+  React.useEffect(() => {
+    if (horaInicio !== '' && frecuenciaHrs !== '') {
+      setProximoMantenimientoHrs(Number(horaInicio) + Number(frecuenciaHrs));
+    } else {
+      setProximoMantenimientoHrs('');
+    }
+  }, [horaInicio, frecuenciaHrs]);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Lista base ampliada de Equipos/Máquinas estándar en planta
@@ -177,7 +216,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         repuestos: repuestos || undefined,
         cantidad: finalCantidad || undefined,
         frecuenciaMeses: finalFrecuenciaMeses,
-        esRecurrente: finalEsRecurrente
+        esRecurrente: finalEsRecurrente,
+        horaInicio: isCompresor() ? (horaInicio === '' ? null : Number(horaInicio)) : null,
+        frecuenciaHrs: isCompresor() ? (frecuenciaHrs === '' ? null : Number(frecuenciaHrs)) : null,
+        proximoMantenimientoHrs: isCompresor() ? (proximoMantenimientoHrs === '' ? null : Number(proximoMantenimientoHrs)) : null
       });
     }
   };
@@ -471,6 +513,49 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Programación por Uso (Horómetro) - Solo para compresoras */}
+      {isCompresor() && (
+        <div className="border-t border-white/5 pt-4 space-y-4 animate-in fade-in duration-300">
+          <h4 className="text-xs font-bold text-brand-400 uppercase tracking-wider flex items-center gap-1.5">
+            <span>💡 PROGRAMACIÓN POR USO (HORÓMETRO)</span>
+          </h4>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-slate-400 block mb-1">Hora Inicio (Hrs)</label>
+              <input
+                type="number"
+                min={0}
+                value={horaInicio}
+                onChange={(e) => setHoraInicio(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="ej. 2000"
+                className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm focus:outline-none focus:border-brand-500 font-medium"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-400 block mb-1">Frecuencia (Hrs)</label>
+              <input
+                type="number"
+                min={1}
+                value={frecuenciaHrs}
+                onChange={(e) => setFrecuenciaHrs(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="ej. 200"
+                className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm focus:outline-none focus:border-brand-500 font-medium"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-400 block mb-1">Próximo Mantenimiento (Hrs)</label>
+              <input
+                type="number"
+                readOnly
+                value={proximoMantenimientoHrs}
+                placeholder="Calculado"
+                className="w-full bg-slate-800/50 border border-white/5 rounded-2xl py-3 px-4 text-slate-400 text-sm focus:outline-none cursor-not-allowed font-semibold"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Programación de Mantenimiento Preventivo (CMMS) */}
       <div className="border-t border-white/5 pt-4 space-y-4">
