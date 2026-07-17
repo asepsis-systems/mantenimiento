@@ -2149,7 +2149,7 @@ export default function Dashboard() {
           )}
 
           {/* DESKTOP TABLE VIEW */}
-          <div className={`hidden lg:block overflow-x-auto overflow-y-auto max-h-[70vh] scrollbar-horizontal-large ${
+          <div className={`hidden lg:block overflow-x-auto overflow-y-auto min-h-[380px] max-h-[70vh] pb-4 scrollbar-horizontal-large ${
             isPremiumDarkMode ? 'bg-[#0f172a]/20 dark-scroll' : 'bg-slate-50/40'
           }`}>
             <table className="w-full min-w-[1400px] text-sm table-auto border-collapse">
