@@ -1314,6 +1314,7 @@ export default function Dashboard() {
 
     // Build visual grouping of rows by date for the Excel report
     let lastDate = '';
+    let dataRowIndex = 0;
     const rowsHtml = sortedTareas.map(t => {
       const currDate = getTaskDate(t);
       const isHeaderNeeded = currDate !== lastDate;
@@ -1322,16 +1323,16 @@ export default function Dashboard() {
       const itemNum = computedItemNumbers[t.id] || t.itemNumber || 1;
       
       const headerRow = isHeaderNeeded ? `
-        <tr style="background-color:#f1f5f9; font-weight:bold;">
-          <td colspan="11" style="padding:10px; border:1px solid #cbd5e1; font-size:11px; color:#1e293b; text-align:left; font-family:'Segoe UI', Arial, sans-serif;">
+        <tr style="background-color:#F1F3F5; font-weight:bold;">
+          <td colspan="12" style="padding:10px 12px; border:1px solid #cbd5e1; font-size:11pt; color:#0D1B2A; text-align:left; font-family:'Calibri', Arial, sans-serif;">
             📅 ${formatFriendlyDate(currDate)} (${sortedTareas.filter(x => getTaskDate(x) === currDate).length} tareas)
           </td>
         </tr>
       ` : '';
 
-      const stateBadge = t.estado === 'PENDIENTE' ? '<span style="background-color:#ffe4e6;color:#9f1239;padding:4px 10px;border-radius:12px;font-weight:bold;font-size:10px;font-family:\'Segoe UI\', Arial, sans-serif;">Pendiente</span>' :
-                         t.estado === 'EN_PROCESO' ? '<span style="background-color:#fef3c7;color:#92400e;padding:4px 10px;border-radius:12px;font-weight:bold;font-size:10px;font-family:\'Segoe UI\', Arial, sans-serif;">En Proceso</span>' :
-                         '<span style="background-color:#d1fae5;color:#065f46;padding:4px 10px;border-radius:12px;font-weight:bold;font-size:10px;font-family:\'Segoe UI\', Arial, sans-serif;">Culminado</span>';
+      const stateBadge = t.estado === 'PENDIENTE' ? '<span style="background-color:#F8D7DA;color:#721C24;border:1px solid #f5c6cb;padding:4px 10px;border-radius:12px;font-weight:bold;font-size:10px;font-family:\'Calibri\', sans-serif;text-transform:uppercase;">Pendiente</span>' :
+                         t.estado === 'EN_PROCESO' ? '<span style="background-color:#FFF3CD;color:#856404;border:1px solid #ffeeba;padding:4px 10px;border-radius:12px;font-weight:bold;font-size:10px;font-family:\'Calibri\', sans-serif;text-transform:uppercase;">En Proceso</span>' :
+                         '<span style="background-color:#D4EDDA;color:#155724;border:1px solid #c3e6cb;padding:4px 10px;border-radius:12px;font-weight:bold;font-size:10px;font-family:\'Calibri\', sans-serif;text-transform:uppercase;">Culminado</span>';
 
       // Calculate Próximo Mantenimiento date (respecting unique frequency)
       let proximoText = 'Sin recurrencia';
@@ -1342,20 +1343,24 @@ export default function Dashboard() {
       
       const frecuenciaText = t.frecuenciaMeses ? `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
 
+      const rowBgColor = dataRowIndex % 2 === 0 ? '#F8F9FA' : '#FFFFFF';
+      dataRowIndex++;
+
       return `
         ${headerRow}
-        <tr>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;text-align:center;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${itemNum}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${escapeHtml(t.responsable)}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;font-weight:bold;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${escapeHtml(t.equipo || '')}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;color:#b91c1c;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${escapeHtml(t.falla || '-')}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;"><strong>${escapeHtml(t.tipo || '')}</strong><br/><span style="color:#475569;">${escapeHtml(t.descripcion)}</span></td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;text-align:center;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${t.fechaCulminado ? formatSmallDate(t.fechaCulminado) : '-'}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;text-align:center;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${stateBadge}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;text-align:center;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${escapeHtml(frecuenciaText)}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;text-align:center;font-weight:bold;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${escapeHtml(proximoText)}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${escapeHtml(t.repuestos || '-')}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10px;text-align:center;font-weight:bold;font-family:'Segoe UI', Arial, sans-serif;vertical-align:middle;">${t.cantidad || '0'}</td>
+        <tr style="background-color:${rowBgColor};">
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;">${itemNum}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:left;font-family:'Calibri', sans-serif;vertical-align:middle;">${escapeHtml(t.responsable)}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;font-weight:bold;text-align:left;font-family:'Calibri', sans-serif;vertical-align:middle;">${escapeHtml(t.equipo || '')}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;text-transform:uppercase;">${escapeHtml(t.sede || '-')}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:left;font-family:'Calibri', sans-serif;vertical-align:middle;white-space:normal;word-wrap:break-word;">${escapeHtml(t.falla || '-')}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;text-transform:uppercase;font-weight:bold;">${escapeHtml(t.tipo || '')}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:left;font-family:'Calibri', sans-serif;vertical-align:middle;white-space:normal;word-wrap:break-word;">${escapeHtml(t.descripcion)}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;">${(t as any).archivos?.length || t.certificadoPath ? `📎 Sí (${(t as any).archivos?.length || 1})` : '-'}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;mso-number-format:'dd\\/mm\\/yyyy';">${t.fechaCulminado ? formatSmallDate(t.fechaCulminado) : '--/--/----'}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;">${stateBadge}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;">${escapeHtml(frecuenciaText)}</td>
+          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-weight:bold;font-family:'Calibri', sans-serif;vertical-align:middle;mso-number-format:'dd\\/mm\\/yyyy';">${escapeHtml(proximoText)}</td>
         </tr>
       `;
     }).join('\n');
@@ -1386,75 +1391,76 @@ export default function Dashboard() {
         <![endif]-->
         <meta charset="utf-8" />
         <style>
-          body { font-family: 'Segoe UI', Arial, sans-serif; color: #0f172a; }
+          body { font-family: 'Calibri', Arial, sans-serif; color: #0D1B2A; }
           table { border-collapse: collapse; width: 100%; }
-          td, th { border: 1px solid #cbd5e1; padding: 10px; }
-          th { background-color: #0f172a; color: #ffffff; text-align: center; font-weight: bold; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; }
-          .title { font-size: 18px; font-weight: bold; color: #1e3a8a; font-family: 'Segoe UI', Arial, sans-serif; }
-          .subtitle { font-size: 11px; color: #64748b; font-family: 'Segoe UI', Arial, sans-serif; }
-          .meta { font-size: 9px; color: #64748b; text-align: right; font-family: 'Segoe UI', Arial, sans-serif; }
-          .kpi-title { font-size: 9px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.05em; text-align: center; }
-          .kpi-value { font-size: 16px; font-weight: bold; text-align: center; }
+          td, th { border: 1px solid #cbd5e1; padding: 10px; font-family: 'Calibri', Arial, sans-serif; }
+          th { background-color: #0D1B2A; color: #ffffff; text-align: center; font-weight: bold; font-size: 11pt; text-transform: uppercase; }
+          .title { font-size: 16pt; font-weight: bold; color: #0D1B2A; font-family: 'Calibri', Arial, sans-serif; }
+          .subtitle { font-size: 11pt; color: #475569; font-family: 'Calibri', Arial, sans-serif; }
+          .meta { font-size: 10pt; color: #475569; text-align: right; font-family: 'Calibri', Arial, sans-serif; }
+          .kpi-title { font-size: 10pt; text-transform: uppercase; font-weight: bold; text-align: center; font-family: 'Calibri', Arial, sans-serif; }
+          .kpi-value { font-size: 16pt; font-weight: bold; text-align: center; font-family: 'Calibri', Arial, sans-serif; }
         </style>
       </head>
       <body>
         <!-- Header Section -->
         <table>
           <tr>
-            <td colspan="7" class="title" style="border:none; padding-bottom:5px;">Control de Reportes de Mantenimiento</td>
+            <td colspan="8" class="title" style="border:none; padding-bottom:5px;">Control de Reportes de Mantenimiento</td>
             <td colspan="4" class="meta" style="border:none; padding-bottom:5px;">
               <strong>Generado por:</strong> ${escapeHtml(user?.name || 'Administrador')}<br/>
               <strong>Fecha:</strong> ${new Date().toLocaleString('es-PE')}
             </td>
           </tr>
           <tr>
-            <td colspan="7" class="subtitle" style="border:none; padding-bottom:15px; font-style:italic;">Módulo CMMS Empresarial • T&CH ASEPSIS S.A.C.</td>
+            <td colspan="8" class="subtitle" style="border:none; padding-bottom:15px; font-style:italic;">Módulo CMMS Empresarial • T&CH ASEPSIS S.A.C.</td>
             <td colspan="4" style="border:none;"></td>
           </tr>
           ${activeRangeText || activeSearchText || activeEquipoText ? `
           <tr>
-            <td colspan="11" style="border:none; font-size:11px; background-color:#f8fafc; padding:10px; color:#263fff; font-weight:600;">
+            <td colspan="12" style="border:none; font-size:11px; background-color:#f8fafc; padding:10px; color:#0D1B2A; font-weight:600;">
               ${activeRangeText}${activeRangeText && activeSearchText ? ' | ' : ''}${activeSearchText}${(activeRangeText || activeSearchText) && activeEquipoText ? ' | ' : ''}${activeEquipoText}
             </td>
           </tr>
           ` : ''}
-          <tr><td colspan="11" style="border:none; height:10px;"></td></tr>
+          <tr><td colspan="12" style="border:none; height:10px;"></td></tr>
           
           <!-- KPI Section -->
           <tr>
-            <td colspan="2" class="kpi-title" style="background-color:#dbeafe; color:#1e40af; border:1px solid #cbd5e1; font-weight:bold;">TOTAL TAREAS</td>
+            <td colspan="3" class="kpi-title" style="background-color:#dbeafe; color:#1e40af; border:1px solid #cbd5e1; font-weight:bold;">TOTAL TAREAS</td>
             <td colspan="3" class="kpi-title" style="background-color:#fee2e2; color:#991b1b; border:1px solid #cbd5e1; font-weight:bold;">PENDIENTES</td>
-            <td colspan="2" class="kpi-title" style="background-color:#fef3c7; color:#92400e; border:1px solid #cbd5e1; font-weight:bold;">EN PROCESO</td>
-            <td colspan="4" class="kpi-title" style="background-color:#d1fae5; color:#065f46; border:1px solid #cbd5e1; font-weight:bold;">CULMINADAS</td>
+            <td colspan="3" class="kpi-title" style="background-color:#fef3c7; color:#92400e; border:1px solid #cbd5e1; font-weight:bold;">EN PROCESO</td>
+            <td colspan="3" class="kpi-title" style="background-color:#d1fae5; color:#065f46; border:1px solid #cbd5e1; font-weight:bold;">CULMINADAS</td>
           </tr>
           <tr>
-            <td colspan="2" class="kpi-value" style="background-color:#f0f9ff; color:#1d4ed8; border:1px solid #cbd5e1; font-weight:bold;">${totalCount}</td>
+            <td colspan="3" class="kpi-value" style="background-color:#f0f9ff; color:#1d4ed8; border:1px solid #cbd5e1; font-weight:bold;">${totalCount}</td>
             <td colspan="3" class="kpi-value" style="background-color:#fef2f2; color:#dc2626; border:1px solid #cbd5e1; font-weight:bold;">${pendientesCount}</td>
-            <td colspan="2" class="kpi-value" style="background-color:#fffbeb; color:#d97706; border:1px solid #cbd5e1; font-weight:bold;">${enProcesoCount}</td>
-            <td colspan="4" class="kpi-value" style="background-color:#f0fdf4; color:#16a34a; border:1px solid #cbd5e1; font-weight:bold;">${culminadasCount}</td>
+            <td colspan="3" class="kpi-value" style="background-color:#fffbeb; color:#d97706; border:1px solid #cbd5e1; font-weight:bold;">${enProcesoCount}</td>
+            <td colspan="3" class="kpi-value" style="background-color:#f0fdf4; color:#16a34a; border:1px solid #cbd5e1; font-weight:bold;">${culminadasCount}</td>
           </tr>
-          <tr><td colspan="11" style="border:none; height:15px;"></td></tr>
+          <tr><td colspan="12" style="border:none; height:15px;"></td></tr>
           
           <!-- Table Header -->
           <thead>
             <tr>
-              <th style="width:5%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Item</th>
-              <th style="width:14%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Responsable</th>
-              <th style="width:14%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Equipo / Máquina</th>
-              <th style="width:14%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Falla</th>
-              <th style="width:23%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Tipo y Descripción</th>
-              <th style="width:10%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Fecha Culm.</th>
-              <th style="width:10%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Estado</th>
-              <th style="width:8%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Frecuencia</th>
-              <th style="width:10%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Próximo Mant.</th>
-              <th style="width:12%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Repuestos</th>
-              <th style="width:6%; background-color:#0f172a; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">Cant</th>
+              <th style="width:60px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">ITEM</th>
+              <th style="width:160px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:left; padding:10px;">RESPONSABLE</th>
+              <th style="width:180px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:left; padding:10px;">EQUIPO / MÁQUINA</th>
+              <th style="width:100px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">SEDE</th>
+              <th style="width:280px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:left; padding:10px;">FALLA REPORTADA</th>
+              <th style="width:130px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">TIPO MANT.</th>
+              <th style="width:320px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:left; padding:10px;">DESCRIPCIÓN DE ACTIVIDAD</th>
+              <th style="width:150px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">CERTIF. OPERATIVIDAD</th>
+              <th style="width:140px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">FECHA CULMINADO</th>
+              <th style="width:120px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">ESTADO</th>
+              <th style="width:120px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">FRECUENCIA</th>
+              <th style="width:140px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">PROX. MANT.</th>
             </tr>
           </thead>
           
           <!-- Table Body -->
           <tbody>
-            ${rowsHtml || '<tr><td colspan="11" style="text-align:center;padding:20px;color:#94a3b8;font-family:\'Segoe UI\', Arial, sans-serif;">No se encontraron registros para los filtros seleccionados.</td></tr>'}
+            ${rowsHtml || '<tr><td colspan="12" style="text-align:center;padding:20px;color:#cbd5e1;font-family:\'Calibri\', Arial, sans-serif;">No se encontraron registros para los filtros seleccionados.</td></tr>'}
           </tbody>
         </table>
       </body>
