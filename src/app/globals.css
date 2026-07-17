@@ -60,7 +60,7 @@ body {
 /* Horizontal scrollbar custom larger styles */
 .scrollbar-horizontal-large::-webkit-scrollbar {
   height: 14px; /* Much larger and easier to grab! */
-  width: 8px;
+  width: 14px;  /* Match vertical size to horizontal scrollbar */
 }
 
 .scrollbar-horizontal-large::-webkit-scrollbar-track {
