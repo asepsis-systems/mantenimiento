@@ -176,6 +176,10 @@ export default function Dashboard() {
   useEffect(() => {
     if (!editingDateId) return;
     const handleDocumentClick = (e: MouseEvent) => {
+      // Ignore clicks on body/html because Chrome native datepicker overlay clicks are reported as body/html
+      if (e.target === document.body || e.target === document.documentElement) {
+        return;
+      }
       if (editContainerRef.current && !editContainerRef.current.contains(e.target as Node)) {
         setEditingDateId(null);
       }
@@ -2229,7 +2233,11 @@ export default function Dashboard() {
                                       const val = e.target.value;
                                       setTempDate(val);
                                       if (val) {
-                                        handleUpdateFechaCulminado(t.id, val);
+                                        // Only auto-save if the year is fully entered (4 digits and between 2000 and 2100)
+                                        const year = parseInt(val.substring(0, 4));
+                                        if (year >= 2000 && year <= 2100) {
+                                          handleUpdateFechaCulminado(t.id, val);
+                                        }
                                       }
                                     }}
                                     onKeyDown={(e) => {
