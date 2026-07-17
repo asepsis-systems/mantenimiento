@@ -2010,6 +2010,107 @@ export default function Dashboard() {
             </select>
           </div>
 
+          {/* TOP PAGINATION BAR */}
+          {totalPages > 1 && (
+            <div className={`px-6 py-2.5 border-b flex items-center justify-between transition-colors duration-300 ${
+              isPremiumDarkMode 
+                ? 'bg-[#0f172a]/20 border-[#1e293b]' 
+                : 'bg-slate-50/20 border-slate-100'
+            }`}>
+              <div className={`text-xs font-semibold transition-colors duration-300 ${
+                isPremiumDarkMode ? 'text-slate-400' : 'text-slate-500'
+              }`}>
+                Página <span className={isPremiumDarkMode ? 'text-slate-200' : 'text-slate-800'}>{currentPage}</span> de <span className={isPremiumDarkMode ? 'text-slate-200' : 'text-slate-800'}>{totalPages}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {/* Button First Page */}
+                <button
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  className={`p-1 rounded-lg border disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer ${
+                    isPremiumDarkMode
+                      ? 'border-[#1e293b] bg-[#0b0f19] hover:bg-slate-800/60 text-slate-400 hover:text-slate-200'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800'
+                  }`}
+                  title="Primera página"
+                >
+                  <ChevronsLeft className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Button Previous Page */}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className={`p-1 rounded-lg border disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer ${
+                    isPremiumDarkMode
+                      ? 'border-[#1e293b] bg-[#0b0f19] hover:bg-slate-800/60 text-slate-400 hover:text-slate-200'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800'
+                  }`}
+                  title="Página anterior"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Page Indices List */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((idx) => {
+                  const show = idx === 1 || idx === totalPages || Math.abs(idx - currentPage) <= 1;
+                  if (!show) {
+                    if (idx === 2 || idx === totalPages - 1) {
+                      return <span key={`ellipsis-top-${idx}`} className={`px-1 text-xs ${isPremiumDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>...</span>;
+                    }
+                    return null;
+                  }
+
+                  return (
+                    <button
+                      key={`top-page-${idx}`}
+                      onClick={() => setCurrentPage(idx)}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                        idx === currentPage
+                          ? isPremiumDarkMode
+                            ? 'bg-sky-500 text-white border-sky-400 shadow-sm'
+                            : 'bg-brand-600 text-white border-brand-500 shadow-sm'
+                          : isPremiumDarkMode
+                          ? 'bg-[#0b0f19] hover:bg-slate-800/50 text-slate-300 border-[#1e293b]'
+                          : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200'
+                      }`}
+                    >
+                      {idx}
+                    </button>
+                  );
+                })}
+
+                {/* Button Next Page */}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className={`p-1 rounded-lg border disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer ${
+                    isPremiumDarkMode
+                      ? 'border-[#1e293b] bg-[#0b0f19] hover:bg-slate-800/60 text-slate-400 hover:text-slate-200'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800'
+                  }`}
+                  title="Página siguiente"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Button Last Page */}
+                <button
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className={`p-1 rounded-lg border disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer ${
+                    isPremiumDarkMode
+                      ? 'border-[#1e293b] bg-[#0b0f19] hover:bg-slate-800/60 text-slate-400 hover:text-slate-200'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800'
+                  }`}
+                  title="Última página"
+                >
+                  <ChevronsRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* DESKTOP TABLE VIEW */}
           <div className="hidden lg:block overflow-x-auto bg-slate-50/40">
             <table className="w-full min-w-[1400px] text-sm table-auto border-collapse">
