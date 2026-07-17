@@ -2149,9 +2149,11 @@ export default function Dashboard() {
           )}
 
           {/* DESKTOP TABLE VIEW */}
-          <div className="hidden lg:block overflow-x-auto bg-slate-50/40">
+          <div className={`hidden lg:block overflow-x-auto overflow-y-auto max-h-[70vh] scrollbar-horizontal-large ${
+            isPremiumDarkMode ? 'bg-[#0f172a]/20 dark-scroll' : 'bg-slate-50/40'
+          }`}>
             <table className="w-full min-w-[1400px] text-sm table-auto border-collapse">
-              <thead>
+              <thead className="sticky top-0 z-20 bg-[#0f172a]">
                 <tr className="text-[10px] tracking-[0.24em] uppercase font-bold border-b bg-[#0f172a] text-white border-slate-800 shadow-sm">
                   <th className="px-4 py-4 text-center border-b w-14 align-middle border-slate-800 border-r border-white/5">Item</th>
                   <th 

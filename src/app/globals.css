@@ -57,6 +57,48 @@ body {
   background: #94a3b8;
 }
 
+/* Horizontal scrollbar custom larger styles */
+.scrollbar-horizontal-large::-webkit-scrollbar {
+  height: 14px; /* Much larger and easier to grab! */
+  width: 8px;
+}
+
+.scrollbar-horizontal-large::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+
+.scrollbar-horizontal-large::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.scrollbar-horizontal-large::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Dark mode specific for large scrollbar when inside dark container */
+.dark-scroll .scrollbar-horizontal-large::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark-scroll .scrollbar-horizontal-large::-webkit-scrollbar-thumb {
+  background: #475569;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.dark-scroll .scrollbar-horizontal-large::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
 /* Glassmorphism */
 .glass-panel {
   background: rgba(255, 255, 255, 0.7);
