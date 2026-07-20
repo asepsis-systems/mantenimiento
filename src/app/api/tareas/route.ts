@@ -48,10 +48,11 @@ export async function GET(request: NextRequest) {
         });
 
         if (!existingChild) {
-          // Calcular itemNumber consecutivo para la fecha de próxima ejecución
+          // Calcular itemNumber consecutivo por mes para la fecha de próxima ejecución
           const childFecha = parentTask.proximaEjecucion;
+          const yearMonthStr = childFecha.substring(0, 7);
           const maxItem = await db.tarea.findFirst({
-            where: { fecha: childFecha },
+            where: { fecha: { startsWith: yearMonthStr } },
             orderBy: { itemNumber: 'desc' },
             select: { itemNumber: true }
           });
@@ -164,11 +165,12 @@ export async function POST(request: NextRequest) {
     const finalCertificadoNombre = certificadoNombre || null;
     const finalCertificadoPath = certificadoPath || null;
 
-    // Calcular automáticamente el ítem correlativo del día si se dejó vacío
+    // Calcular automáticamente el ítem correlativo del mes si se dejó vacío
     let calculatedItemNumber = itemNumber;
     if (calculatedItemNumber === undefined || calculatedItemNumber === null || calculatedItemNumber === '') {
+      const yearMonthStr = taskFecha.substring(0, 7);
       const maxItem = await db.tarea.findFirst({
-        where: { fecha: taskFecha },
+        where: { fecha: { startsWith: yearMonthStr } },
         orderBy: { itemNumber: 'desc' },
         select: { itemNumber: true }
       });

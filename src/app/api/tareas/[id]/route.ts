@@ -115,10 +115,12 @@ export async function PUT(
       updateData.fecha = finalFecha;
       
       // Si la fecha cambió y NO se está especificando manualmente un nuevo itemNumber,
-      // recalculamos el correlativo del día para la nueva fecha de forma automática.
+      // recalculamos el correlativo del mes para la nueva fecha de forma automática.
       if (fecha !== existing.fecha && itemNumber === undefined) {
+        const actualFecha = finalFecha || new Date().toISOString().split('T')[0];
+        const yearMonthStr = actualFecha.substring(0, 7);
         const maxItem = await db.tarea.findFirst({
-          where: { fecha: finalFecha },
+          where: { fecha: { startsWith: yearMonthStr } },
           orderBy: { itemNumber: 'desc' },
           select: { itemNumber: true }
         });

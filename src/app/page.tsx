@@ -971,8 +971,8 @@ export default function Dashboard() {
   const culminadasCount = filteredTareas.filter(t => t.estado === 'CULMINADO' || t.estado === 'HECHO').length;
 
   // CMMS KPI Counters
-  const proximosCount = filteredTareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getDaysDiff(todayStr, t.fecha) >= 0 && getDaysDiff(todayStr, t.fecha) <= 30).length;
-  const vencidosCount = filteredTareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getDaysDiff(todayStr, t.fecha) < 0).length;
+  const conDocsProximosCount = filteredTareas.filter(t => t.fecha && getDaysDiff(todayStr, t.fecha) >= 0 && getDaysDiff(todayStr, t.fecha) <= 30 && t.certificadoPath).length;
+  const sinDocsProximosCount = filteredTareas.filter(t => t.fecha && getDaysDiff(todayStr, t.fecha) >= 0 && getDaysDiff(todayStr, t.fecha) <= 30 && !t.certificadoPath).length;
   const estaSemanaCount = filteredTareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getDaysDiff(todayStr, t.fecha) >= 0 && getDaysDiff(todayStr, t.fecha) <= 7).length;
   const esteMesCount = filteredTareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getIsCurrentMonth(t.fecha)).length;
 
@@ -1766,53 +1766,129 @@ export default function Dashboard() {
           <h3 className="font-extrabold text-slate-800 text-sm tracking-tight">Mantenimiento Preventivo Programado (CMMS)</h3>
         </div>
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {/* Card: VENCIDOS */}
-          <div className="bg-white rounded-2xl p-4.5 border border-slate-100 shadow-xs flex items-center justify-between hover:scale-[1.02] transition-all duration-200">
+          {/* Card: CON DOCUMENTOS */}
+          <button
+            type="button"
+            onClick={() => {
+              const today = new Date();
+              const future30 = new Date();
+              future30.setDate(today.getDate() + 30);
+              const formatDate = (date: Date) => {
+                const yyyy = date.getFullYear();
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
+              };
+              setFromDate(formatDate(today));
+              setToDate(formatDate(future30));
+              setSelectedDocFilter('CON_DOC');
+              setQuickRange('ALL');
+              setCurrentPage(1);
+            }}
+            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
+              selectedDocFilter === 'CON_DOC'
+                ? 'bg-emerald-50/25 border-emerald-500 shadow-md shadow-emerald-500/5 ring-2 ring-emerald-500/10 scale-[1.02]'
+                : 'bg-white border-slate-100 shadow-xs hover:border-emerald-200 hover:scale-[1.02] hover:shadow-sm'
+            }`}
+          >
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Vencidos</span>
-              <span className={`text-2xl sm:text-3xl font-extrabold tracking-tight block mt-1 ${vencidosCount > 0 ? 'text-rose-600' : 'text-slate-750'}`}>{vencidosCount}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Preventivos fuera de fecha</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Con Documentos</span>
+              <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600 tracking-tight block mt-1">{conDocsProximosCount}</span>
+              <span className="text-[10px] text-slate-500 mt-1 block">Próximos 30 días</span>
             </div>
-            <div className={`rounded-2xl p-3 shrink-0 ${vencidosCount > 0 ? 'bg-rose-50 text-rose-500' : 'bg-slate-50 text-slate-400'}`}>
-              <AlertTriangle className="w-6 h-6" />
+            <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
+              selectedDocFilter === 'CON_DOC' ? 'bg-emerald-100 text-emerald-600 scale-110' : 'bg-emerald-50 text-emerald-500 group-hover/card:bg-emerald-100 group-hover/card:text-emerald-600 group-hover/card:scale-110'
+            }`}>
+              <CheckCircle2 className="w-6 h-6" />
             </div>
-          </div>
+          </button>
 
-          {/* Card: PRÓXIMOS 30 DÍAS */}
-          <div className="bg-white rounded-2xl p-4.5 border border-slate-100 shadow-xs flex items-center justify-between hover:scale-[1.02] transition-all duration-200">
+          {/* Card: SIN DOCUMENTOS */}
+          <button
+            type="button"
+            onClick={() => {
+              const today = new Date();
+              const future30 = new Date();
+              future30.setDate(today.getDate() + 30);
+              const formatDate = (date: Date) => {
+                const yyyy = date.getFullYear();
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
+              };
+              setFromDate(formatDate(today));
+              setToDate(formatDate(future30));
+              setSelectedDocFilter('SIN_DOC');
+              setQuickRange('ALL');
+              setCurrentPage(1);
+            }}
+            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
+              selectedDocFilter === 'SIN_DOC'
+                ? 'bg-rose-50/25 border-rose-500 shadow-md shadow-rose-500/5 ring-2 ring-rose-500/10 scale-[1.02]'
+                : 'bg-white border-slate-100 shadow-xs hover:border-rose-200 hover:scale-[1.02] hover:shadow-sm'
+            }`}
+          >
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Próximos 30 días</span>
-              <span className="text-2xl sm:text-3xl font-extrabold text-indigo-600 tracking-tight block mt-1">{proximosCount}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Mantenimientos programados</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Sin Documentos</span>
+              <span className="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight block mt-1">{sinDocsProximosCount}</span>
+              <span className="text-[10px] text-slate-500 mt-1 block">Próximos 30 días</span>
             </div>
-            <div className="bg-indigo-50 text-indigo-500 rounded-2xl p-3 shrink-0">
-              <Calendar className="w-6 h-6" />
+            <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
+              selectedDocFilter === 'SIN_DOC' ? 'bg-rose-100 text-rose-600 scale-110' : 'bg-rose-50 text-rose-500 group-hover/card:bg-rose-100 group-hover/card:text-rose-600 group-hover/card:scale-110'
+            }`}>
+              <AlertCircle className="w-6 h-6" />
             </div>
-          </div>
+          </button>
 
           {/* Card: ESTA SEMANA */}
-          <div className="bg-white rounded-2xl p-4.5 border border-slate-100 shadow-xs flex items-center justify-between hover:scale-[1.02] transition-all duration-200">
+          <button
+            type="button"
+            onClick={() => {
+              handleQuickRangeChange('ESTA_SEMANA');
+              setCurrentPage(1);
+            }}
+            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
+              quickRange === 'ESTA_SEMANA'
+                ? 'bg-violet-50/25 border-violet-500 shadow-md shadow-violet-500/5 ring-2 ring-violet-500/10 scale-[1.02]'
+                : 'bg-white border-slate-100 shadow-xs hover:border-violet-200 hover:scale-[1.02] hover:shadow-sm'
+            }`}
+          >
             <div>
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Esta Semana</span>
               <span className="text-2xl sm:text-3xl font-extrabold text-violet-600 tracking-tight block mt-1">{estaSemanaCount}</span>
               <span className="text-[10px] text-slate-500 mt-1 block">Siguientes 7 días</span>
             </div>
-            <div className="bg-violet-50 text-violet-500 rounded-2xl p-3 shrink-0">
+            <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
+              quickRange === 'ESTA_SEMANA' ? 'bg-violet-100 text-violet-600 scale-110' : 'bg-violet-50 text-violet-500 group-hover/card:bg-violet-100 group-hover/card:text-violet-600 group-hover/card:scale-110'
+            }`}>
               <Clock className="w-6 h-6" />
             </div>
-          </div>
+          </button>
 
           {/* Card: ESTE MES */}
-          <div className="bg-white rounded-2xl p-4.5 border border-slate-100 shadow-xs flex items-center justify-between hover:scale-[1.02] transition-all duration-200">
+          <button
+            type="button"
+            onClick={() => {
+              handleQuickRangeChange('ESTE_MES');
+              setCurrentPage(1);
+            }}
+            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
+              quickRange === 'ESTE_MES'
+                ? 'bg-cyan-50/25 border-cyan-500 shadow-md shadow-cyan-500/5 ring-2 ring-cyan-500/10 scale-[1.02]'
+                : 'bg-white border-slate-100 shadow-xs hover:border-cyan-200 hover:scale-[1.02] hover:shadow-sm'
+            }`}
+          >
             <div>
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Este Mes</span>
               <span className="text-2xl sm:text-3xl font-extrabold text-cyan-600 tracking-tight block mt-1">{esteMesCount}</span>
               <span className="text-[10px] text-slate-500 mt-1 block">Mes calendario actual</span>
             </div>
-            <div className="bg-cyan-50 text-cyan-500 rounded-2xl p-3 shrink-0">
+            <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
+              quickRange === 'ESTE_MES' ? 'bg-cyan-100 text-cyan-600 scale-110' : 'bg-cyan-50 text-cyan-500 group-hover/card:bg-cyan-100 group-hover/card:text-cyan-600 group-hover/card:scale-110'
+            }`}>
               <RotateCcw className="w-6 h-6" />
             </div>
-          </div>
+          </button>
         </section>
 
         {/* --- DYNAMIC FILTER CARD PANEL --- */}
