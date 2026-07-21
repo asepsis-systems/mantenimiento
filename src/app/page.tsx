@@ -1344,72 +1344,145 @@ export default function Dashboard() {
         .replace(/'/g, '&#039;');
     };
 
-    // Build visual grouping of rows by date for the Excel report
-    let lastDate = '';
-    let dataRowIndex = 0;
-    const rowsHtml = sortedTareas.map(t => {
-      const currDate = getTaskDate(t);
-      const isHeaderNeeded = currDate !== lastDate;
-      lastDate = currDate;
+    // Group tasks by date to calculate rowspan for consecutive identical responsibles within each day
+    const tasksByDate: Record<string, typeof sortedTareas> = {};
+    sortedTareas.forEach(t => {
+      const dateStr = getTaskDate(t);
+      if (!tasksByDate[dateStr]) {
+        tasksByDate[dateStr] = [];
+      }
+      tasksByDate[dateStr].push(t);
+    });
 
-      const itemNum = computedItemNumbers[t.id] || t.itemNumber || 1;
-      
-      const headerRow = isHeaderNeeded ? `
-        <tr style="background-color:#F1F3F5; font-weight:bold;">
-          <td colspan="12" style="padding:10px 12px; border:1px solid #cbd5e1; font-size:11pt; color:#0D1B2A; text-align:left; font-family:'Calibri', Arial, sans-serif;">
-            📅 ${formatFriendlyDate(currDate)} (${sortedTareas.filter(x => getTaskDate(x) === currDate).length} tareas)
+    // Build the table rows with Day headers and Merged Responsibles
+    let rowsHtml = '';
+    let dataRowIndex = 0;
+
+    // Get sorted list of dates (descending/newest first, matching the grid order)
+    const uniqueDates = Object.keys(tasksByDate).sort((a, b) => b.localeCompare(a));
+
+    uniqueDates.forEach(dateStr => {
+      const dayTasks = tasksByDate[dateStr];
+      const taskCount = dayTasks.length;
+
+      // Group Header Row (colspan 11, background #D9E1F2, color #1F4E79)
+      rowsHtml += `
+        <tr style="background-color:#D9E1F2; font-weight:bold; height: 28px;">
+          <td colspan="11" style="padding:10px 12px; border:1px solid #D9D9D9; font-size:11pt; color:#1F4E79; text-align:left; font-family:'Calibri', Arial, sans-serif; font-weight: bold; vertical-align:middle;">
+            📅 ${formatFriendlyDate(dateStr)} (${taskCount} ${taskCount === 1 ? 'tarea' : 'tareas'})
           </td>
         </tr>
-      ` : '';
-
-      const stateBadge = t.estado === 'PENDIENTE' ? '<span style="background-color:#F8D7DA;color:#721C24;border:1px solid #f5c6cb;padding:4px 10px;border-radius:12px;font-weight:bold;font-size:10px;font-family:\'Calibri\', sans-serif;text-transform:uppercase;">Pendiente</span>' :
-                         t.estado === 'EN_PROCESO' ? '<span style="background-color:#FFF3CD;color:#856404;border:1px solid #ffeeba;padding:4px 10px;border-radius:12px;font-weight:bold;font-size:10px;font-family:\'Calibri\', sans-serif;text-transform:uppercase;">En Proceso</span>' :
-                         '<span style="background-color:#D4EDDA;color:#155724;border:1px solid #c3e6cb;padding:4px 10px;border-radius:12px;font-weight:bold;font-size:10px;font-family:\'Calibri\', sans-serif;text-transform:uppercase;">Culminado</span>';
-
-      // Calculate Próximo Mantenimiento date (respecting unique frequency)
-      let proximoText = 'Sin recurrencia';
-      let frecuenciaText = t.frecuenciaMeses ? `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
-      const isCompTask = !!(t.equipo && (t.equipo.toUpperCase().includes('COMPRESOR') || t.equipo.toUpperCase().includes('COMPRESORA')));
-      const proximoFormatStyle = isCompTask ? '' : "mso-number-format:'dd\\/mm\\/yyyy';";
-
-      if (isCompTask) {
-        frecuenciaText = t.frecuenciaHrs ? `${t.frecuenciaHrs} Hrs` : 'Única';
-        proximoText = t.proximoMantenimientoHrs ? `${t.proximoMantenimientoHrs} Hrs` : '-';
-      } else {
-        if (t.frecuenciaMeses && t.esRecurrente !== false) {
-          const targetDate = t.fechaCulminado ? addMonths(t.fechaCulminado, t.frecuenciaMeses) : (t.estado === 'CULMINADO' || t.estado === 'HECHO' ? t.proximaEjecucion : t.fecha);
-          proximoText = targetDate ? formatSmallDate(targetDate) : '-';
-        }
-      }
-
-      const rowBgColor = dataRowIndex % 2 === 0 ? '#F8F9FA' : '#FFFFFF';
-      dataRowIndex++;
-
-      return `
-        ${headerRow}
-        <tr style="background-color:${rowBgColor};">
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;">${itemNum}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:left;font-family:'Calibri', sans-serif;vertical-align:middle;">${escapeHtml(t.responsable)}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;font-weight:bold;text-align:left;font-family:'Calibri', sans-serif;vertical-align:middle;">${escapeHtml(t.equipo || '')}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;text-transform:uppercase;">${escapeHtml(t.sede || '-')}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:left;font-family:'Calibri', sans-serif;vertical-align:middle;white-space:normal;word-wrap:break-word;">${escapeHtml(t.falla || '-')}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;text-transform:uppercase;font-weight:bold;">${escapeHtml(t.tipo || '')}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:left;font-family:'Calibri', sans-serif;vertical-align:middle;white-space:normal;word-wrap:break-word;">${escapeHtml(t.descripcion)}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;">${(t as any).archivos?.length || t.certificadoPath ? `📎 Sí (${(t as any).archivos?.length || 1})` : '-'}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;mso-number-format:'dd\\/mm\\/yyyy';">${t.fechaCulminado ? formatSmallDate(t.fechaCulminado) : '--/--/----'}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;">${stateBadge}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-family:'Calibri', sans-serif;vertical-align:middle;">${escapeHtml(frecuenciaText)}</td>
-          <td style="padding:10px;border:1px solid #cbd5e1;font-size:10pt;text-align:center;font-weight:bold;font-family:'Calibri', sans-serif;vertical-align:middle;${proximoFormatStyle}">${escapeHtml(proximoText)}</td>
-        </tr>
       `;
-    }).join('\n');
 
-    const activeRangeText = fromDate || toDate 
-      ? `Período: ${fromDate ? formatSmallDate(fromDate) : 'Inicio'} hasta ${toDate ? formatSmallDate(toDate) : 'Fin'}`
-      : '';
+      // Calculate rowspan for consecutive same responsibles within this day
+      const rowspanMap: number[] = new Array(taskCount).fill(1);
+      let currentResp = '';
+      let firstIdx = -1;
+      let spanCount = 0;
 
-    const activeSearchText = searchTerm.trim() ? `Búsqueda: "${escapeHtml(searchTerm)}"` : '';
-    const activeEquipoText = selectedEquipoFilter ? `Filtrado por equipo: ${escapeHtml(selectedEquipoFilter)}` : '';
+      dayTasks.forEach((t, idx) => {
+        const resp = t.responsable || '';
+        if (resp === currentResp && idx > 0) {
+          spanCount++;
+          rowspanMap[idx] = 0; // Hidden
+          rowspanMap[firstIdx] = spanCount;
+        } else {
+          currentResp = resp;
+          spanCount = 1;
+          firstIdx = idx;
+          rowspanMap[idx] = 1;
+        }
+      });
+
+      // Render tasks for this day
+      dayTasks.forEach((t, idx) => {
+        const itemNum = computedItemNumbers[t.id] || t.itemNumber || 1;
+        const rowBgColor = dataRowIndex % 2 === 0 ? '#F8F9FA' : '#FFFFFF';
+        dataRowIndex++;
+
+        // Status Badge Style matching professional conditional formatting
+        let stateStyle = '';
+        if (t.estado === 'PENDIENTE') {
+          stateStyle = 'background-color:#FFC7CE; color:#9C0006; font-weight:bold;';
+        } else if (t.estado === 'EN_PROCESO') {
+          stateStyle = 'background-color:#FFEB9C; color:#9C6500; font-weight:bold;';
+        } else {
+          stateStyle = 'background-color:#C6EFCE; color:#006100; font-weight:bold;';
+        }
+
+        const stateLabel = t.estado === 'PENDIENTE' ? 'Pendiente' :
+                           t.estado === 'EN_PROCESO' ? 'En Proceso' : 'Culminado';
+
+        // Recurrence / Next execution details
+        let proximoText = 'Sin recurrencia';
+        let frecuenciaText = t.frecuenciaMeses ? `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
+        const isCompTask = !!(t.equipo && (t.equipo.toUpperCase().includes('COMPRESOR') || t.equipo.toUpperCase().includes('COMPRESORA')));
+        const proximoFormatStyle = isCompTask ? '' : "mso-number-format:'dd\\/mm\\/yyyy';";
+
+        if (isCompTask) {
+          frecuenciaText = t.frecuenciaHrs ? `${t.frecuenciaHrs} Hrs` : 'Única';
+          proximoText = t.proximoMantenimientoHrs ? `${t.proximoMantenimientoHrs} Hrs` : '-';
+        } else {
+          if (t.frecuenciaMeses && t.esRecurrente !== false) {
+            const targetDate = t.fechaCulminado ? addMonths(t.fechaCulminado, t.frecuenciaMeses) : (t.estado === 'CULMINADO' || t.estado === 'HECHO' ? t.proximaEjecucion : t.fecha);
+            proximoText = targetDate ? formatSmallDate(targetDate) : '-';
+          }
+        }
+
+        rowsHtml += `
+          <tr style="background-color:${rowBgColor}; height: 24px;">
+            <!-- ITEM -->
+            <td style="padding:10px; border:1px solid #D9D9D9; font-size:10pt; text-align:center; font-family:'Calibri', sans-serif; vertical-align:middle;">${itemNum}</td>
+            
+            <!-- RESPONSABLE (WITH MERGE CELLS) -->
+            ${rowspanMap[idx] > 0 ? `
+              <td rowspan="${rowspanMap[idx]}" style="padding:10px; border:1px solid #D9D9D9; font-size:10pt; text-align:center; font-family:'Calibri', sans-serif; vertical-align:middle; font-weight: 500;">
+                ${escapeHtml(t.responsable)}
+              </td>
+            ` : ''}
+            
+            <!-- EQUIPO / MÁQUINA -->
+            <td style="padding:10px; border:1px solid #D9D9D9; font-size:10pt; font-weight:bold; text-align:left; font-family:'Calibri', sans-serif; vertical-align:middle;">${escapeHtml(t.equipo || '')}</td>
+            
+            <!-- SEDE -->
+            <td style="padding:10px; border:1px solid #D9D9D9; font-size:10pt; text-align:center; font-family:'Calibri', sans-serif; vertical-align:middle; text-transform:uppercase;">${escapeHtml(t.sede || '-')}</td>
+            
+            <!-- FALLA REPORTADA -->
+            <td style="padding:10px; border:1px solid #D9D9D9; font-size:10pt; text-align:left; font-family:'Calibri', sans-serif; vertical-align:middle; white-space:normal; word-wrap:break-word;">${escapeHtml(t.falla || '-')}</td>
+            
+            <!-- TIPO MANT. -->
+            <td style="padding:10px; border:1px solid #D9D9D9; font-size:10pt; text-align:center; font-family:'Calibri', sans-serif; vertical-align:middle; text-transform:uppercase; font-weight:bold;">${escapeHtml(t.tipo || '')}</td>
+            
+            <!-- DESCRIPCIÓN DE ACTIVIDAD -->
+            <td style="padding:10px; border:1px solid #D9D9D9; font-size:10pt; text-align:left; font-family:'Calibri', sans-serif; vertical-align:middle; white-space:normal; word-wrap:break-word;">${escapeHtml(t.descripcion)}</td>
+            
+            <!-- FECHA CULMINADO -->
+            <td style="padding:10px; border:1px solid #D9D9D9; font-size:10pt; text-align:center; font-family:'Calibri', sans-serif; vertical-align:middle; mso-number-format:'dd\\/mm\\/yyyy';">${t.fechaCulminado ? formatSmallDate(t.fechaCulminado) : '--/--/----'}</td>
+            
+            <!-- ESTADO -->
+            <td style="padding:10px; border:1px solid #D9D9D9; font-size:10pt; text-align:center; font-family:'Calibri', sans-serif; vertical-align:middle; ${stateStyle}">${stateLabel}</td>
+            
+            <!-- FRECUENCIA -->
+            <td style="padding:10px; border:1px solid #D9D9D9; font-size:10pt; text-align:center; font-family:'Calibri', sans-serif; vertical-align:middle;">${escapeHtml(frecuenciaText)}</td>
+            
+            <!-- PROX. MANT. -->
+            <td style="padding:10px; border:1px solid #D9D9D9; font-size:10pt; text-align:center; font-weight:bold; font-family:'Calibri', sans-serif; vertical-align:middle; ${proximoFormatStyle}">${escapeHtml(proximoText)}</td>
+          </tr>
+        `;
+      });
+    });
+
+    // Date Range Formatting
+    let rangeTextStr = '(RANGO DE FECHAS: Completo)';
+    if (fromDate || toDate) {
+      rangeTextStr = `(RANGO DE FECHAS: Del ${fromDate ? formatSmallDate(fromDate) : 'Inicio'} al ${toDate ? formatSmallDate(toDate) : 'Fin'})`;
+    } else if (sortedTareas.length > 0) {
+      // Automatic fallback from data bounds
+      const taskDates = sortedTareas.map(t => getTaskDate(t)).filter(Boolean).sort();
+      if (taskDates.length > 0) {
+        rangeTextStr = `(RANGO DE FECHAS: Del ${formatSmallDate(taskDates[0])} al ${formatSmallDate(taskDates[taskDates.length - 1])})`;
+      }
+    }
 
     const html = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
@@ -1432,9 +1505,9 @@ export default function Dashboard() {
         <style>
           body { font-family: 'Calibri', Arial, sans-serif; color: #0D1B2A; }
           table { border-collapse: collapse; width: 100%; }
-          td, th { border: 1px solid #cbd5e1; padding: 10px; font-family: 'Calibri', Arial, sans-serif; }
-          th { background-color: #0D1B2A; color: #ffffff; text-align: center; font-weight: bold; font-size: 11pt; text-transform: uppercase; }
-          .title { font-size: 16pt; font-weight: bold; color: #0D1B2A; font-family: 'Calibri', Arial, sans-serif; }
+          td, th { border: 1px solid #D9D9D9; padding: 10px; font-family: 'Calibri', Arial, sans-serif; }
+          th { background-color: #1B2A4A; color: #ffffff; text-align: center; font-weight: bold; font-size: 11pt; text-transform: uppercase; }
+          .title { font-size: 16pt; font-weight: bold; color: #1B2A4A; font-family: 'Calibri', Arial, sans-serif; }
           .subtitle { font-size: 11pt; color: #475569; font-family: 'Calibri', Arial, sans-serif; }
           .meta { font-size: 10pt; color: #475569; text-align: right; font-family: 'Calibri', Arial, sans-serif; }
           .kpi-title { font-size: 10pt; text-transform: uppercase; font-weight: bold; text-align: center; font-family: 'Calibri', Arial, sans-serif; }
@@ -1445,61 +1518,58 @@ export default function Dashboard() {
         <!-- Header Section -->
         <table>
           <tr>
-            <td colspan="8" class="title" style="border:none; padding-bottom:5px;">Control de Reportes de Mantenimiento</td>
+            <td colspan="7" class="title" style="border:none; padding-bottom:5px; font-weight: bold;">Control de Reportes de Mantenimiento</td>
             <td colspan="4" class="meta" style="border:none; padding-bottom:5px;">
               <strong>Generado por:</strong> ${escapeHtml(user?.name || 'Administrador')}<br/>
               <strong>Fecha:</strong> ${new Date().toLocaleString('es-PE')}
             </td>
           </tr>
           <tr>
-            <td colspan="8" class="subtitle" style="border:none; padding-bottom:15px; font-style:italic;">Módulo CMMS Empresarial • T&CH ASEPSIS S.A.C.</td>
+            <td colspan="4" class="subtitle" style="border:none; padding-bottom:15px; font-weight: normal;">Módulo CMMS Empresarial • T&CH ASEPSIS S.A.C.</td>
+            <td colspan="3" style="border:none; font-size:10pt; color:#1B2A4A; font-weight:bold; text-align:center; vertical-align:middle; font-style: italic;">
+              ${escapeHtml(rangeTextStr)}
+            </td>
             <td colspan="4" style="border:none;"></td>
           </tr>
-          ${activeRangeText || activeSearchText || activeEquipoText ? `
-          <tr>
-            <td colspan="12" style="border:none; font-size:11px; background-color:#f8fafc; padding:10px; color:#0D1B2A; font-weight:600;">
-              ${activeRangeText}${activeRangeText && activeSearchText ? ' | ' : ''}${activeSearchText}${(activeRangeText || activeSearchText) && activeEquipoText ? ' | ' : ''}${activeEquipoText}
-            </td>
-          </tr>
-          ` : ''}
-          <tr><td colspan="12" style="border:none; height:10px;"></td></tr>
+          <tr><td colspan="11" style="border:none; height:10px;"></td></tr>
           
           <!-- KPI Section -->
           <tr>
-            <td colspan="3" class="kpi-title" style="background-color:#dbeafe; color:#1e40af; border:1px solid #cbd5e1; font-weight:bold;">TOTAL TAREAS</td>
-            <td colspan="3" class="kpi-title" style="background-color:#fee2e2; color:#991b1b; border:1px solid #cbd5e1; font-weight:bold;">PENDIENTES</td>
-            <td colspan="3" class="kpi-title" style="background-color:#fef3c7; color:#92400e; border:1px solid #cbd5e1; font-weight:bold;">EN PROCESO</td>
-            <td colspan="3" class="kpi-title" style="background-color:#d1fae5; color:#065f46; border:1px solid #cbd5e1; font-weight:bold;">CULMINADAS</td>
+            <td colspan="2" class="kpi-title" style="background-color:#D9E1F2; color:#1F4E79; border:1px solid #D9D9D9; font-weight:bold;">TOTAL TAREAS</td>
+            <td colspan="2" class="kpi-title" style="background-color:#FCE4D6; color:#C00000; border:1px solid #D9D9D9; font-weight:bold;">PENDIENTES</td>
+            <td colspan="2" class="kpi-title" style="background-color:#FFF2CC; color:#B25900; border:1px solid #D9D9D9; font-weight:bold;">EN PROCESO</td>
+            <td colspan="3" class="kpi-title" style="background-color:#E2EFDA; color:#385723; border:1px solid #D9D9D9; font-weight:bold;">CULMINADAS</td>
+            <td colspan="2" style="border:none; background-color: transparent;"></td>
           </tr>
           <tr>
-            <td colspan="3" class="kpi-value" style="background-color:#f0f9ff; color:#1d4ed8; border:1px solid #cbd5e1; font-weight:bold;">${totalCount}</td>
-            <td colspan="3" class="kpi-value" style="background-color:#fef2f2; color:#dc2626; border:1px solid #cbd5e1; font-weight:bold;">${pendientesCount}</td>
-            <td colspan="3" class="kpi-value" style="background-color:#fffbeb; color:#d97706; border:1px solid #cbd5e1; font-weight:bold;">${enProcesoCount}</td>
-            <td colspan="3" class="kpi-value" style="background-color:#f0fdf4; color:#16a34a; border:1px solid #cbd5e1; font-weight:bold;">${culminadasCount}</td>
+            <td colspan="2" class="kpi-value" style="background-color:#D9E1F2; color:#1F4E79; border:1px solid #D9D9D9; font-weight:bold; font-size:16pt;">${totalCount}</td>
+            <td colspan="2" class="kpi-value" style="background-color:#FCE4D6; color:#C00000; border:1px solid #D9D9D9; font-weight:bold; font-size:16pt;">${pendientesCount}</td>
+            <td colspan="2" class="kpi-value" style="background-color:#FFF2CC; color:#B25900; border:1px solid #D9D9D9; font-weight:bold; font-size:16pt;">${enProcesoCount}</td>
+            <td colspan="3" class="kpi-value" style="background-color:#E2EFDA; color:#385723; border:1px solid #D9D9D9; font-weight:bold; font-size:16pt;">${culminadasCount}</td>
+            <td colspan="2" style="border:none; background-color: transparent;"></td>
           </tr>
-          <tr><td colspan="12" style="border:none; height:15px;"></td></tr>
+          <tr><td colspan="11" style="border:none; height:15px;"></td></tr>
           
           <!-- Table Header -->
           <thead>
             <tr>
-              <th style="width:60px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">ITEM</th>
-              <th style="width:160px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:left; padding:10px;">RESPONSABLE</th>
-              <th style="width:180px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:left; padding:10px;">EQUIPO / MÁQUINA</th>
-              <th style="width:100px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">SEDE</th>
-              <th style="width:280px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:left; padding:10px;">FALLA REPORTADA</th>
-              <th style="width:130px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">TIPO MANT.</th>
-              <th style="width:320px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:left; padding:10px;">DESCRIPCIÓN DE ACTIVIDAD</th>
-              <th style="width:150px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">CERTIF. OPERATIVIDAD</th>
-              <th style="width:140px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">FECHA CULMINADO</th>
-              <th style="width:120px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">ESTADO</th>
-              <th style="width:120px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">FRECUENCIA</th>
-              <th style="width:140px; background-color:#0D1B2A; color:#ffffff; font-weight:bold; border:1px solid #cbd5e1; text-align:center; padding:10px;">PROX. MANT.</th>
+              <th style="width:60px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">ITEM</th>
+              <th style="width:160px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:left; padding:10px;">RESPONSABLE</th>
+              <th style="width:180px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:left; padding:10px;">EQUIPO / MÁQUINA</th>
+              <th style="width:100px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">SEDE</th>
+              <th style="width:280px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:left; padding:10px;">FALLA REPORTADA</th>
+              <th style="width:130px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">TIPO MANT.</th>
+              <th style="width:320px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:left; padding:10px;">DESCRIPCIÓN DE ACTIVIDAD</th>
+              <th style="width:140px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">FECHA CULMINADO</th>
+              <th style="width:120px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">ESTADO</th>
+              <th style="width:120px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">FRECUENCIA</th>
+              <th style="width:140px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">PROX. MANT.</th>
             </tr>
           </thead>
           
           <!-- Table Body -->
           <tbody>
-            ${rowsHtml || '<tr><td colspan="12" style="text-align:center;padding:20px;color:#cbd5e1;font-family:\'Calibri\', Arial, sans-serif;">No se encontraron registros para los filtros seleccionados.</td></tr>'}
+            ${rowsHtml || '<tr><td colspan="11" style="text-align:center;padding:20px;color:#cbd5e1;font-family:\'Calibri\', Arial, sans-serif;">No se encontraron registros para los filtros seleccionados.</td></tr>'}
           </tbody>
         </table>
       </body>
