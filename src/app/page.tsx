@@ -1431,7 +1431,7 @@ export default function Dashboard() {
       }
 
       rowsHtml += `
-        <tr style="background-color:${rowBgColor}; height: 24px;">
+        <tr style="background-color:${rowBgColor};">
           <!-- FECHA REPORTE (WITH DAY MERGE) -->
           ${dateRowspanMap[idx] > 0 ? `
             <td rowspan="${dateRowspanMap[idx]}" style="padding:10px; border:1px solid #D9D9D9; font-size:10pt; text-align:center; font-family:'Calibri', sans-serif; vertical-align:middle; mso-number-format:'dd\\/mm\\/yyyy';">
