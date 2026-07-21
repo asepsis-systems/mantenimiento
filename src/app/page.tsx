@@ -970,9 +970,9 @@ export default function Dashboard() {
   const enProcesoCount = filteredTareas.filter(t => t.estado === 'EN_PROCESO').length;
   const culminadasCount = filteredTareas.filter(t => t.estado === 'CULMINADO' || t.estado === 'HECHO').length;
 
-  // CMMS KPI Counters
-  const conDocsProximosCount = filteredTareas.filter(t => t.fecha && getDaysDiff(todayStr, t.fecha) >= 0 && getDaysDiff(todayStr, t.fecha) <= 30 && t.certificadoPath).length;
-  const sinDocsProximosCount = filteredTareas.filter(t => t.fecha && getDaysDiff(todayStr, t.fecha) >= 0 && getDaysDiff(todayStr, t.fecha) <= 30 && !t.certificadoPath).length;
+  // CMMS KPI Counters (calculated over all dates to support arbitrary task years like 2028)
+  const conDocsProximosCount = filteredTareas.filter(t => t.certificadoPath).length;
+  const sinDocsProximosCount = filteredTareas.filter(t => !t.certificadoPath).length;
   const estaSemanaCount = filteredTareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getDaysDiff(todayStr, t.fecha) >= 0 && getDaysDiff(todayStr, t.fecha) <= 7).length;
   const esteMesCount = filteredTareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getIsCurrentMonth(t.fecha)).length;
 
@@ -1778,17 +1778,8 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={() => {
-              const today = new Date();
-              const future30 = new Date();
-              future30.setDate(today.getDate() + 30);
-              const formatDate = (date: Date) => {
-                const yyyy = date.getFullYear();
-                const mm = String(date.getMonth() + 1).padStart(2, '0');
-                const dd = String(date.getDate()).padStart(2, '0');
-                return `${yyyy}-${mm}-${dd}`;
-              };
-              setFromDate(formatDate(today));
-              setToDate(formatDate(future30));
+              setFromDate('');
+              setToDate('');
               setSelectedDocFilter('CON_DOC');
               setQuickRange('ALL');
               setCurrentPage(1);
@@ -1802,7 +1793,7 @@ export default function Dashboard() {
             <div>
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Con Documentos</span>
               <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600 tracking-tight block mt-1">{conDocsProximosCount}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Próximos 30 días</span>
+              <span className="text-[10px] text-slate-500 mt-1 block">Registros totales</span>
             </div>
             <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
               selectedDocFilter === 'CON_DOC' ? 'bg-emerald-100 text-emerald-600 scale-110' : 'bg-emerald-50 text-emerald-500 group-hover/card:bg-emerald-100 group-hover/card:text-emerald-600 group-hover/card:scale-110'
@@ -1815,17 +1806,8 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={() => {
-              const today = new Date();
-              const future30 = new Date();
-              future30.setDate(today.getDate() + 30);
-              const formatDate = (date: Date) => {
-                const yyyy = date.getFullYear();
-                const mm = String(date.getMonth() + 1).padStart(2, '0');
-                const dd = String(date.getDate()).padStart(2, '0');
-                return `${yyyy}-${mm}-${dd}`;
-              };
-              setFromDate(formatDate(today));
-              setToDate(formatDate(future30));
+              setFromDate('');
+              setToDate('');
               setSelectedDocFilter('SIN_DOC');
               setQuickRange('ALL');
               setCurrentPage(1);
@@ -1839,7 +1821,7 @@ export default function Dashboard() {
             <div>
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Sin Documentos</span>
               <span className="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight block mt-1">{sinDocsProximosCount}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Próximos 30 días</span>
+              <span className="text-[10px] text-slate-500 mt-1 block">Registros totales</span>
             </div>
             <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
               selectedDocFilter === 'SIN_DOC' ? 'bg-rose-100 text-rose-600 scale-110' : 'bg-rose-50 text-rose-500 group-hover/card:bg-rose-100 group-hover/card:text-rose-600 group-hover/card:scale-110'
