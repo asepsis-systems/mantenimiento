@@ -23,6 +23,9 @@ interface FormValues {
   horaInicio?: number | null;
   frecuenciaHrs?: number | null;
   proximoMantenimientoHrs?: number | null;
+  sparePartId?: string | null;
+  cantidadUsada?: number | null;
+  unidadMedida?: string | null;
 }
 
 interface TaskFormProps {
@@ -81,6 +84,61 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   });
   const [customResponsable, setCustomResponsable] = useState('');
   const [customTipo, setCustomTipo] = useState('');
+
+  // Estados para Integración con Inventario de Repuestos
+  const [spareParts, setSpareParts] = useState<any[]>([]);
+  const [loadingParts, setLoadingParts] = useState(false);
+  const [useInventory, setUseInventory] = useState(() => {
+    // Si ya tiene repuestos asignados como texto libre, no forzar inventario por defecto
+    if (initialValues.repuestos) return false;
+    return true;
+  });
+  const [selectedSparePart, setSelectedSparePart] = useState<any | null>(null);
+  const [partSearchQuery, setPartSearchQuery] = useState('');
+  const [showPartsDropdown, setShowPartsDropdown] = useState(false);
+  const [stockError, setStockError] = useState('');
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Cargar repuestos desde el backend al montar el componente
+  React.useEffect(() => {
+    setLoadingParts(true);
+    fetch('/api/repuestos')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.spareParts)) {
+          setSpareParts(data.spareParts);
+        }
+      })
+      .catch((err) => console.error('Error fetching spare parts:', err))
+      .finally(() => setLoadingParts(false));
+  }, []);
+
+  // Cerrar el dropdown al hacer click fuera
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowPartsDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Validación de stock en tiempo real
+  React.useEffect(() => {
+    if (useInventory && selectedSparePart) {
+      const numQty = Number(qty);
+      if (isNaN(numQty) || numQty <= 0) {
+        setStockError('');
+      } else if (numQty > selectedSparePart.stock) {
+        setStockError(`⚠️ Stock insuficiente. Solo hay ${selectedSparePart.stock} unidades disponibles.`);
+      } else {
+        setStockError('');
+      }
+    } else {
+      setStockError('');
+    }
+  }, [qty, selectedSparePart, useInventory]);
   
   // Estados para Mantenimiento Preventivo (CMMS)
   const [frecuenciaType, setFrecuenciaType] = useState<string>(() => {
@@ -171,6 +229,18 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   const tipoOptions = ['', 'Preventivo', 'Correctivo', 'Predictivo', 'Otro'];
 
+  const filteredParts = spareParts.filter((part) => {
+    const q = partSearchQuery.toLowerCase();
+    return (
+      (part.name || '').toLowerCase().includes(q) ||
+      (part.code || '').toLowerCase().includes(q) ||
+      (part.codigoMarca || '').toLowerCase().includes(q) ||
+      (part.marca1 || '').toLowerCase().includes(q) ||
+      (part.almacenado || '').toLowerCase().includes(q) ||
+      (part.seccion || '').toLowerCase().includes(q)
+    );
+  });
+
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!responsable.trim()) {
@@ -181,6 +251,15 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     }
     if (!descripcion.trim()) {
       newErrors.descripcion = 'La descripción es obligatoria.';
+    }
+    if (useInventory && !selectedSparePart) {
+      newErrors.repuestos = 'Debe seleccionar un repuesto del inventario.';
+    }
+    if (useInventory && (!qty.trim() || Number(qty) <= 0)) {
+      newErrors.qty = 'Debe ingresar una cantidad válida mayor a 0.';
+    }
+    if (stockError) {
+      newErrors.stock = stockError;
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -213,13 +292,17 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         sede: sede || undefined,
         falla: falla || undefined,
         tipo: tipo === 'Otro' ? customTipo || undefined : tipo || undefined,
-        repuestos: repuestos || undefined,
+        repuestos: useInventory ? selectedSparePart?.name : repuestos || undefined,
         cantidad: finalCantidad || undefined,
         frecuenciaMeses: finalFrecuenciaMeses,
         esRecurrente: finalEsRecurrente,
         horaInicio: isCompresor() ? (horaInicio === '' ? null : Number(horaInicio)) : null,
         frecuenciaHrs: isCompresor() ? (frecuenciaHrs === '' ? null : Number(frecuenciaHrs)) : null,
-        proximoMantenimientoHrs: isCompresor() ? (proximoMantenimientoHrs === '' ? null : Number(proximoMantenimientoHrs)) : null
+        proximoMantenimientoHrs: isCompresor() ? (proximoMantenimientoHrs === '' ? null : Number(proximoMantenimientoHrs)) : null,
+        // Campos para registrar stock de repuesto en el backend
+        sparePartId: useInventory ? selectedSparePart?.id : null,
+        cantidadUsada: useInventory ? Number(qty) : null,
+        unidadMedida: useInventory ? unit || null : null
       });
     }
   };
@@ -452,7 +535,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="text-xs font-semibold text-slate-400 block mb-1">Tipo de Mantenimiento</label>
           <select
@@ -479,39 +562,232 @@ export const TaskForm: React.FC<TaskFormProps> = ({
             />
           )}
         </div>
-        <div>
-          <label className="text-xs font-semibold text-slate-400 block mb-1">Repuestos / Insumos</label>
-        <textarea
-          rows={3}
-          value={repuestos}
-          onChange={(e) => setRepuestos(e.target.value)}
-          placeholder="Describe los repuestos o insumos..."
-          className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm resize-none"
-        />
-        </div>
-        <div>
-          <label className="text-xs font-semibold text-slate-400 block mb-1">Cantidad</label>
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              type="number"
-              value={qty}
-              min={0}
-              onChange={(e) => setQty(e.target.value)}
-              placeholder="ej. 1"
-              className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
-            />
-            <select
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm cursor-pointer"
+      </div>
+
+      <div className="border-t border-white/5 pt-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-bold text-brand-400 uppercase tracking-wider flex items-center gap-1.5">
+            <span>🔧 Repuestos, Insumos y Materiales</span>
+          </h4>
+          <div className="flex bg-slate-950/65 p-0.5 rounded-xl border border-white/5">
+            <button
+              type="button"
+              onClick={() => {
+                setUseInventory(true);
+                setRepuestos('');
+              }}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
+                useInventory
+                  ? 'bg-brand-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
             >
-              <option value="">-- Unidad (opcional) --</option>
-              <option value="metros">metros</option>
-              <option value="kilogramo">kilogramo</option>
-              <option value="unidades">unidades</option>
-            </select>
+              📦 Catálogo
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setUseInventory(false);
+                setSelectedSparePart(null);
+                setPartSearchQuery('');
+              }}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
+                !useInventory
+                  ? 'bg-brand-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              ✍️ Texto Libre
+            </button>
           </div>
         </div>
+
+        {useInventory ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2 relative" ref={dropdownRef}>
+                <label className="text-xs font-semibold text-slate-400 block mb-1">Buscar Repuesto en Inventario</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={partSearchQuery}
+                    onChange={(e) => {
+                      setPartSearchQuery(e.target.value);
+                      setShowPartsDropdown(true);
+                    }}
+                    onFocus={() => setShowPartsDropdown(true)}
+                    placeholder="Buscar por nombre, código o ubicación..."
+                    className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm focus:outline-none focus:border-brand-500 font-medium placeholder-slate-500"
+                  />
+                  {partSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPartSearchQuery('');
+                        setSelectedSparePart(null);
+                        setShowPartsDropdown(false);
+                      }}
+                      className="absolute right-4 top-3 text-slate-400 hover:text-slate-200 text-xs"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {showPartsDropdown && (
+                  <div className="absolute z-50 mt-1 w-full bg-slate-950 border border-slate-800 rounded-2xl shadow-xl max-h-60 overflow-y-auto divide-y divide-slate-900/50">
+                    {loadingParts ? (
+                      <div className="p-4 text-center text-xs text-slate-400">Cargando repuestos...</div>
+                    ) : filteredParts.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-slate-400">No se encontraron repuestos.</div>
+                    ) : (
+                      filteredParts.map((part) => (
+                        <button
+                          key={part.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedSparePart(part);
+                            setPartSearchQuery(part.name);
+                            setShowPartsDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex flex-col gap-0.5"
+                        >
+                          <div className="text-sm font-semibold text-slate-200">{part.name}</div>
+                          <div className="flex items-center justify-between text-[11px] text-slate-400">
+                            <span>Código: <strong className="text-slate-300">{part.code || '-'}</strong></span>
+                            <span>Stock: <strong className={part.stock > 0 ? 'text-emerald-400' : 'text-rose-400'}>{part.stock} disp.</strong></span>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+                {errors.repuestos && (
+                  <p className="text-rose-450 text-[10px] mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    <span>{errors.repuestos}</span>
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-400 block mb-1">Cantidad Utilizada</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="number"
+                    value={qty}
+                    min={1}
+                    onChange={(e) => setQty(e.target.value)}
+                    placeholder="ej. 1"
+                    className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm focus:outline-none focus:border-brand-500 font-medium"
+                  />
+                  <select
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value)}
+                    className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm cursor-pointer focus:outline-none focus:border-brand-500"
+                  >
+                    <option value="">-- Unidad --</option>
+                    <option value="unidades">unidades</option>
+                    <option value="piezas">piezas</option>
+                    <option value="kg">kg</option>
+                    <option value="litros">litros</option>
+                    <option value="metros">metros</option>
+                  </select>
+                </div>
+                {errors.qty && (
+                  <p className="text-rose-450 text-[10px] mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    <span>{errors.qty}</span>
+                  </p>
+                )}
+                {stockError && (
+                  <p className="text-rose-450 text-[10px] mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 animate-pulse" />
+                    <span>{stockError}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {selectedSparePart && (
+              <div className="bg-slate-950/40 border border-slate-800/80 rounded-2xl p-4.5 space-y-3 text-slate-350 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between border-b border-slate-800/50 pb-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                    <h5 className="text-[10px] font-bold text-brand-400 uppercase tracking-wider">Ficha Técnica e Inventario</h5>
+                  </div>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    selectedSparePart.stock > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                  }`}>
+                    {selectedSparePart.stock > 0 ? `Stock: ${selectedSparePart.stock} unidades` : 'Sin Stock Disponible'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 block uppercase">Código</span>
+                    <span className="font-semibold text-slate-300">{selectedSparePart.codigoMarca || selectedSparePart.code || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 block uppercase">Marca</span>
+                    <span className="font-semibold text-slate-300">{selectedSparePart.marca1 || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 block uppercase">Ubicación</span>
+                    <span className="font-semibold text-slate-300">
+                      {[selectedSparePart.almacenado, selectedSparePart.seccion].filter(Boolean).join(' / ') || '-'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 block uppercase">Método</span>
+                    <span className="font-semibold text-slate-300">{selectedSparePart.metodo || '-'}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-[10px] font-bold text-slate-500 block uppercase">Comentario</span>
+                    <p className="text-slate-300 italic leading-snug">{selectedSparePart.comentario || 'Sin comentarios.'}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in duration-200">
+            <div className="md:col-span-2">
+              <label className="text-xs font-semibold text-slate-400 block mb-1">Repuestos / Insumos (Texto Libre)</label>
+              <textarea
+                rows={2}
+                value={repuestos}
+                onChange={(e) => setRepuestos(e.target.value)}
+                placeholder="Describe libremente los repuestos o insumos utilizados..."
+                className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm resize-none focus:outline-none focus:border-brand-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-400 block mb-1">Cantidad</label>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="number"
+                  value={qty}
+                  min={0}
+                  onChange={(e) => setQty(e.target.value)}
+                  placeholder="ej. 1"
+                  className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm focus:outline-none focus:border-brand-500"
+                />
+                <select
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm cursor-pointer focus:outline-none focus:border-brand-500"
+                >
+                  <option value="">-- Unidad --</option>
+                  <option value="metros">metros</option>
+                  <option value="kilogramo">kilogramo</option>
+                  <option value="unidades">unidades</option>
+                  <option value="piezas">piezas</option>
+                  <option value="litros">litros</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Programación por Uso (Horómetro) - Solo para compresoras */}

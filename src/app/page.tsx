@@ -1671,10 +1671,15 @@ export default function Dashboard() {
             type="button"
             onClick={() => {
               setStatusFilter('ALL');
+              setSelectedDocFilter('ALL');
+              setQuickRange('ALL');
+              setFromDate('');
+              setToDate('');
               setCurrentPage(1);
+              handleSearchTrigger();
             }}
             className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
-              statusFilter === 'ALL'
+              statusFilter === 'ALL' && selectedDocFilter === 'ALL' && quickRange === 'ALL'
                 ? 'bg-blue-50/25 border-blue-500 shadow-md shadow-blue-500/5 ring-2 ring-blue-500/10 scale-[1.02]'
                 : 'bg-white border-slate-100 shadow-xs hover:border-blue-200 hover:scale-[1.02] hover:shadow-sm'
             }`}
@@ -1685,7 +1690,7 @@ export default function Dashboard() {
               <span className="text-[10px] text-slate-500 mt-1 block">Filtradas actualmente</span>
             </div>
             <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
-              statusFilter === 'ALL' ? 'bg-blue-100 text-blue-600 scale-110' : 'bg-blue-50 text-blue-500 group-hover/card:bg-blue-100 group-hover/card:text-blue-600 group-hover/card:scale-110'
+              statusFilter === 'ALL' && selectedDocFilter === 'ALL' && quickRange === 'ALL' ? 'bg-blue-100 text-blue-600 scale-110' : 'bg-blue-50 text-blue-500 group-hover/card:bg-blue-100 group-hover/card:text-blue-600 group-hover/card:scale-110'
             }`}>
               <ClipboardList className="w-6 h-6" />
             </div>
@@ -1696,7 +1701,12 @@ export default function Dashboard() {
             type="button"
             onClick={() => {
               setStatusFilter('PENDIENTE');
+              setSelectedDocFilter('ALL');
+              setQuickRange('ALL');
+              setFromDate('');
+              setToDate('');
               setCurrentPage(1);
+              handleSearchTrigger();
             }}
             className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
               statusFilter === 'PENDIENTE'
@@ -1721,7 +1731,12 @@ export default function Dashboard() {
             type="button"
             onClick={() => {
               setStatusFilter('EN_PROCESO');
+              setSelectedDocFilter('ALL');
+              setQuickRange('ALL');
+              setFromDate('');
+              setToDate('');
               setCurrentPage(1);
+              handleSearchTrigger();
             }}
             className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
               statusFilter === 'EN_PROCESO'
@@ -1746,7 +1761,12 @@ export default function Dashboard() {
             type="button"
             onClick={() => {
               setStatusFilter('CULMINADO');
+              setSelectedDocFilter('ALL');
+              setQuickRange('ALL');
+              setFromDate('');
+              setToDate('');
               setCurrentPage(1);
+              handleSearchTrigger();
             }}
             className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
               statusFilter === 'CULMINADO'
@@ -1778,11 +1798,13 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={() => {
-              setFromDate('');
-              setToDate('');
+              setStatusFilter('ALL');
               setSelectedDocFilter('CON_DOC');
               setQuickRange('ALL');
+              setFromDate('');
+              setToDate('');
               setCurrentPage(1);
+              handleSearchTrigger();
             }}
             className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
               selectedDocFilter === 'CON_DOC'
@@ -1806,11 +1828,13 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={() => {
-              setFromDate('');
-              setToDate('');
+              setStatusFilter('ALL');
               setSelectedDocFilter('SIN_DOC');
               setQuickRange('ALL');
+              setFromDate('');
+              setToDate('');
               setCurrentPage(1);
+              handleSearchTrigger();
             }}
             className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
               selectedDocFilter === 'SIN_DOC'
@@ -1834,6 +1858,8 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={() => {
+              setStatusFilter('ALL');
+              setSelectedDocFilter('ALL');
               handleQuickRangeChange('ESTA_SEMANA');
               setCurrentPage(1);
             }}
@@ -1859,6 +1885,8 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={() => {
+              setStatusFilter('ALL');
+              setSelectedDocFilter('ALL');
               handleQuickRangeChange('ESTE_MES');
               setCurrentPage(1);
             }}

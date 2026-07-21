@@ -116,7 +116,10 @@ export async function POST(request: NextRequest) {
       certificadoPath,
       horaInicio,
       frecuenciaHrs,
-      proximoMantenimientoHrs
+      proximoMantenimientoHrs,
+      sparePartId,
+      cantidadUsada,
+      unidadMedida
     } = body;
 
     if (!descripcion || !descripcion.trim()) {
@@ -192,31 +195,92 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const tarea = await db.tarea.create({
-      data: {
-        responsable: responsable.trim(),
-        descripcion: descripcion.trim(),
-        estado: cleanEstado,
-        itemNumber: calculatedItemNumber,
-        fecha: taskFecha,
-        equipo: equipo || null,
-        sede: sede || null,
-        falla: falla || null,
-        tipo: tipo || null,
-        repuestos: repuestos || null,
-        cantidad: cantidad || null,
-        frecuenciaMeses: finalFrecuenciaMeses,
-        esRecurrente: finalEsRecurrente,
-        fechaUltimaEjecucion: finalFechaUltimaEjecucion,
-        proximaEjecucion: finalProximaEjecucion,
-        tareaPadreId: tareaPadreId || null,
-        fechaCulminado: finalFechaCulminado,
-        certificadoNombre: finalCertificadoNombre,
-        certificadoPath: finalCertificadoPath,
-        horaInicio: horaInicio !== undefined && horaInicio !== null && horaInicio !== '' ? Number(horaInicio) : null,
-        frecuenciaHrs: frecuenciaHrs !== undefined && frecuenciaHrs !== null && frecuenciaHrs !== '' ? Number(frecuenciaHrs) : null,
-        proximoMantenimientoHrs: proximoMantenimientoHrs !== undefined && proximoMantenimientoHrs !== null && proximoMantenimientoHrs !== '' ? Number(proximoMantenimientoHrs) : null
+    // Lógica de validación de Inventario y descuento de Stock
+    let finalRepuestos = repuestos;
+    let finalCantidad = cantidad;
+
+    if (sparePartId) {
+      const part = await db.sparePart.findUnique({
+        where: { id: sparePartId }
+      });
+      if (!part) {
+        return NextResponse.json({ success: false, error: 'El repuesto seleccionado no existe en el inventario.' }, { status: 404 });
       }
+
+      const qtyToUse = Number(cantidadUsada);
+      if (isNaN(qtyToUse) || qtyToUse <= 0) {
+        return NextResponse.json({ success: false, error: 'La cantidad utilizada debe ser un número mayor a cero.' }, { status: 400 });
+      }
+
+      if (part.stock < qtyToUse) {
+        return NextResponse.json({ 
+          success: false, 
+          error: `Stock insuficiente en inventario para "${part.name}". Solicitado: ${qtyToUse}, Disponible: ${part.stock}` 
+        }, { status: 400 });
+      }
+
+      // Autogenerar la descripción detallada del repuesto e historial
+      const locText = [part.almacenado, part.seccion].filter(Boolean).join(' / ');
+      const locSuffix = locText ? ` [Ubicación: ${locText}]` : '';
+      const brandSuffix = part.marca1 ? ` - Marca: ${part.marca1}` : '';
+      const methodSuffix = part.metodo ? ` [Método: ${part.metodo}]` : '';
+      
+      finalRepuestos = `${part.name} (Cód: ${part.code}${brandSuffix}${methodSuffix}${locSuffix})`;
+      finalCantidad = `${qtyToUse} ${unidadMedida || 'unidades'}`;
+    }
+
+    // Ejecutar creación y descuento dentro de una transacción atómica segura
+    const tarea = await db.$transaction(async (tx) => {
+      if (sparePartId) {
+        const qtyToUse = Number(cantidadUsada);
+        // Validar stock dentro de la transacción para evitar condiciones de carrera (Race Conditions)
+        const part = await tx.sparePart.findUnique({
+          where: { id: sparePartId }
+        });
+        if (!part || part.stock < qtyToUse) {
+          throw new Error(`Stock insuficiente para el repuesto "${part?.name || 'Desconocido'}"`);
+        }
+
+        // Descontar del inventario
+        await tx.sparePart.update({
+          where: { id: sparePartId },
+          data: {
+            stock: {
+              decrement: qtyToUse
+            }
+          }
+        });
+      }
+
+      // Crear la tarea en la base de datos
+      const nuevaTarea = await tx.tarea.create({
+        data: {
+          responsable: responsable.trim(),
+          descripcion: descripcion.trim(),
+          estado: cleanEstado,
+          itemNumber: calculatedItemNumber,
+          fecha: taskFecha,
+          equipo: equipo || null,
+          sede: sede || null,
+          falla: falla || null,
+          tipo: tipo || null,
+          repuestos: finalRepuestos || null,
+          cantidad: finalCantidad || null,
+          frecuenciaMeses: finalFrecuenciaMeses,
+          esRecurrente: finalEsRecurrente,
+          fechaUltimaEjecucion: finalFechaUltimaEjecucion,
+          proximaEjecucion: finalProximaEjecucion,
+          tareaPadreId: tareaPadreId || null,
+          fechaCulminado: finalFechaCulminado,
+          certificadoNombre: finalCertificadoNombre,
+          certificadoPath: finalCertificadoPath,
+          horaInicio: horaInicio !== undefined && horaInicio !== null && horaInicio !== '' ? Number(horaInicio) : null,
+          frecuenciaHrs: frecuenciaHrs !== undefined && frecuenciaHrs !== null && frecuenciaHrs !== '' ? Number(frecuenciaHrs) : null,
+          proximoMantenimientoHrs: proximoMantenimientoHrs !== undefined && proximoMantenimientoHrs !== null && proximoMantenimientoHrs !== '' ? Number(proximoMantenimientoHrs) : null
+        }
+      });
+
+      return nuevaTarea;
     });
 
     return NextResponse.json({ success: true, tarea });
