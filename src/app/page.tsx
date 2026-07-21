@@ -964,17 +964,17 @@ export default function Dashboard() {
     return true;
   });
 
-  // KPI counters calculated strictly over the filtered dataset
-  const totalCount = filteredTareas.length;
-  const pendientesCount = filteredTareas.filter(t => t.estado === 'PENDIENTE').length;
-  const enProcesoCount = filteredTareas.filter(t => t.estado === 'EN_PROCESO').length;
-  const culminadasCount = filteredTareas.filter(t => t.estado === 'CULMINADO' || t.estado === 'HECHO').length;
+  // KPI counters calculated over the entire dataset (tareas) so they remain stable and represent the full system state
+  const totalCount = tareas.length;
+  const pendientesCount = tareas.filter(t => t.estado === 'PENDIENTE').length;
+  const enProcesoCount = tareas.filter(t => t.estado === 'EN_PROCESO').length;
+  const culminadasCount = tareas.filter(t => t.estado === 'CULMINADO' || t.estado === 'HECHO').length;
 
-  // CMMS KPI Counters (calculated over all dates to support arbitrary task years like 2028)
-  const conDocsProximosCount = filteredTareas.filter(t => t.certificadoPath).length;
-  const sinDocsProximosCount = filteredTareas.filter(t => !t.certificadoPath).length;
-  const estaSemanaCount = filteredTareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getDaysDiff(todayStr, t.fecha) >= 0 && getDaysDiff(todayStr, t.fecha) <= 7).length;
-  const esteMesCount = filteredTareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getIsCurrentMonth(t.fecha)).length;
+  // CMMS KPI Counters (calculated over the entire dataset to support arbitrary task years and stay stable)
+  const conDocsProximosCount = tareas.filter(t => t.certificadoPath).length;
+  const sinDocsProximosCount = tareas.filter(t => !t.certificadoPath).length;
+  const estaSemanaCount = tareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getDaysDiff(todayStr, t.fecha) >= 0 && getDaysDiff(todayStr, t.fecha) <= 7).length;
+  const esteMesCount = tareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getIsCurrentMonth(t.fecha)).length;
 
   // Apply quick status filter
   const finalFilteredTareas = filteredTareas.filter(t => {
