@@ -1031,33 +1031,41 @@ export default function Dashboard() {
     return new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime(); // Descending creation date
   });
 
-  // Stable daily correlatives computation starting from count down to 1 (render-time sequential)
-  // Maps task.id to its index within its date group
+  // Stable monthly correlatives computation starting from 1 up to N (render-time sequential)
+  // Maps task.id to its index within its month group (YYYY-MM)
   const getStableItemNumbers = () => {
     const groups: Record<string, string[]> = {};
     
-    // Group all task IDs by date
+    // Group all task IDs by month
     sortedTareas.forEach(t => {
       const d = getTaskDate(t);
-      if (!groups[d]) groups[d] = [];
-      groups[d].push(t.id);
+      if (d) {
+        const monthStr = d.substring(0, 7);
+        if (!groups[monthStr]) groups[monthStr] = [];
+        groups[monthStr].push(t.id);
+      }
     });
 
     const itemMap: Record<string, number> = {};
-    Object.keys(groups).forEach(d => {
-      // Sort tasks within this day by their original itemNumber (descending) or creation time (descending) to keep order stable
-      const dayTasks = groups[d].map(id => tareas.find(x => x.id === id)!);
-      dayTasks.sort((a, b) => {
+    Object.keys(groups).forEach(monthStr => {
+      // Sort tasks within this month descending (newest first) to keep order stable
+      const monthTasks = groups[monthStr].map(id => tareas.find(x => x.id === id)!);
+      monthTasks.sort((a, b) => {
+        const dateA = getTaskDate(a);
+        const dateB = getTaskDate(b);
+        if (dateA !== dateB) {
+          return dateB.localeCompare(dateA); // Newest date first
+        }
         const itemA = a.itemNumber || 0;
         const itemB = b.itemNumber || 0;
         if (itemA !== itemB) {
-          return itemB - itemA;
+          return itemB - itemA; // Highest original itemNumber first
         }
-        return new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime();
+        return new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime(); // Newest creation date first
       });
 
-      dayTasks.forEach((t, idx) => {
-        itemMap[t.id] = dayTasks.length - idx; // descending count (e.g., 3, 2, 1)
+      monthTasks.forEach((t, idx) => {
+        itemMap[t.id] = monthTasks.length - idx; // Ascending chronological monthly count (1, 2, 3, ..., N)
       });
     });
 
