@@ -1555,17 +1555,16 @@ export default function Dashboard() {
           </tr>
           <tr><td colspan="12" style="border:none; height:15px;"></td></tr>
           
-          <!-- Table Header -->
           <thead>
             <tr>
-              <th style="width:110px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">FECHA REPORTE</th>
+              <th style="width:120px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">FECHA REPORTE</th>
               <th style="width:60px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">ITEM</th>
-              <th style="width:160px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:left; padding:10px;">RESPONSABLE</th>
-              <th style="width:180px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:left; padding:10px;">EQUIPO / MÁQUINA</th>
+              <th style="width:180px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:left; padding:10px;">RESPONSABLE</th>
+              <th style="width:200px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:left; padding:10px;">EQUIPO / MÁQUINA</th>
               <th style="width:100px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">SEDE</th>
-              <th style="width:280px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:left; padding:10px;">FALLA REPORTADA</th>
+              <th style="width:380px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:left; padding:10px;">FALLA REPORTADA</th>
               <th style="width:130px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">TIPO MANT.</th>
-              <th style="width:320px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:left; padding:10px;">DESCRIPCIÓN DE ACTIVIDAD</th>
+              <th style="width:450px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:left; padding:10px;">DESCRIPCIÓN DE ACTIVIDAD</th>
               <th style="width:140px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">FECHA CULMINADO</th>
               <th style="width:120px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">ESTADO</th>
               <th style="width:120px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">FRECUENCIA</th>
