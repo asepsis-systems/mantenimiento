@@ -229,11 +229,17 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     'COMPRESOR 25HP', 'COMPRESOR 10HP'
   ];
 
-  // Combinación inteligente de la lista base y los equipos dinámicos provenientes de la base de datos
+  const obsoleteEquipos = new Set([
+    '4XL 1', '5XL 2', '4XL 3', '5XL 4', '5XL 5', '5XL 6',
+    '8XL 7', '8XL 8', '4XL 9', '5XL 10',
+    '4 XL TRUJILLO', '5 XL TRUJILLO'
+  ]);
+
+  // Combinación inteligente de la lista base y los equipos dinámicos provenientes de la base de datos (filtrando obsoletos)
   const mergedEquipos = Array.from(
     new Set([
       ...defaultEquipoOptions,
-      ...existingEquipos
+      ...existingEquipos.filter(eq => !obsoleteEquipos.has(eq))
     ])
   )
     .filter((e): e is string => typeof e === 'string' && e.trim() !== '')
