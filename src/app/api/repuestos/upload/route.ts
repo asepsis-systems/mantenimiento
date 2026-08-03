@@ -15,6 +15,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validar límite máximo de 50MB (50 * 1024 * 1024 bytes)
+    if (file.size > 50 * 1024 * 1024) {
+      return NextResponse.json(
+        { success: false, error: 'La imagen excede el límite máximo permitido de 50MB.' },
+        { status: 400 }
+      );
+    }
+
     const originalName = file.name;
     const extension = path.extname(originalName).toLowerCase();
     

@@ -1545,8 +1545,13 @@ export default function LicensesPage() {
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png"
                   onChange={(e) => {
-                    if (e.target.files && e.target.files.length > 0) {
-                      setUploadFile(e.target.files[0]);
+                    const file = e.target.files?.[0] || null;
+                    if (file && file.size > 50 * 1024 * 1024) {
+                      alert('El archivo excede el límite máximo permitido de 50MB.');
+                      e.target.value = '';
+                      setUploadFile(null);
+                    } else if (file) {
+                      setUploadFile(file);
                     } else {
                       setUploadFile(null);
                     }

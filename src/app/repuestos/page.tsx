@@ -328,6 +328,10 @@ export default function SparePartsPage() {
   };
 
   const handlePhotoUpload = async (file: File) => {
+    if (file.size > 50 * 1024 * 1024) {
+      setError('La imagen excede el límite máximo permitido de 50MB.');
+      return;
+    }
     setUploadingFile(true);
     setError('');
     

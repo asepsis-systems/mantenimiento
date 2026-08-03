@@ -24,6 +24,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validar límite máximo de 50MB (50 * 1024 * 1024 bytes)
+    if (file && file.size > 50 * 1024 * 1024) {
+      return NextResponse.json(
+        { success: false, error: 'El archivo excede el límite máximo permitido de 50MB.' },
+        { status: 400 }
+      );
+    }
+
     const allowedDocTypes = ['certificado', 'protocolo', 'informeTecnico', 'factura', 'presupuesto', 'checklist'];
     if (!allowedDocTypes.includes(docType)) {
       return NextResponse.json(

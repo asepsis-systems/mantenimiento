@@ -3342,6 +3342,11 @@ export default function Dashboard() {
                         className="hidden"
                         onChange={(e) => {
                           const file = e.target.files?.[0] || null;
+                          if (file && file.size > 50 * 1024 * 1024) {
+                            alert('El archivo excede el límite máximo permitido de 50MB.');
+                            e.target.value = '';
+                            return;
+                          }
                           const newSlots = [...multiUploadSlots];
                           newSlots[idx].file = file;
                           if (file && !newSlots[idx].name) newSlots[idx].name = file.name;
