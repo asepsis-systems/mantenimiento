@@ -7,6 +7,7 @@ interface Responsable {
 }
 
 interface FormValues {
+  id?: string;
   responsable: string;
   descripcion: string;
   estado: string;
@@ -903,6 +904,14 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
       {/* Form Buttons */}
       <div className="flex items-center justify-end gap-2.5 pt-4">
+        {initialValues.id && estado === 'CULMINADO' && (
+          <a
+            href={`/api/tareas/export/excel?id=${initialValues.id}`}
+            className="mr-auto py-2.5 px-4 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>📥 Descargar Excel</span>
+          </a>
+        )}
         <button
           type="button"
           onClick={onCancel}

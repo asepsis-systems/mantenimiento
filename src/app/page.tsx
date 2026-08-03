@@ -2526,6 +2526,20 @@ export default function Dashboard() {
                                       <span>📂 Ver ({ (t as any).archivos?.length || (t.certificadoPath ? 1 : 0) })</span>
                                     </button>
                                   )}
+
+                                  {(t.estado === 'CULMINADO' || t.estado === 'HECHO') && (
+                                    <a
+                                      href={`/api/tareas/export/excel?id=${t.id}`}
+                                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold rounded-full transition-colors cursor-pointer ${
+                                        isPremiumDarkMode
+                                          ? 'bg-emerald-500/10 border border-emerald-400/30 text-emerald-400 hover:bg-emerald-500/20'
+                                          : 'bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 text-emerald-700'
+                                      }`}
+                                      title="Descargar Conformidad (Excel)"
+                                    >
+                                      <span>📊 Excel</span>
+                                    </a>
+                                  )}
                                 </>
                               )}
                             </div>
