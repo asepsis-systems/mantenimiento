@@ -1431,7 +1431,7 @@ export default function Dashboard() {
       }
 
       rowsHtml += `
-        <tr style="background-color:${rowBgColor};">
+        <tr style="height:40px; background-color:${rowBgColor};">
           <!-- FECHA REPORTE (WITH DAY MERGE) -->
           ${dateRowspanMap[idx] > 0 ? `
             <td rowspan="${dateRowspanMap[idx]}" style="padding:10px; border:1px solid #D9D9D9; font-size:10pt; text-align:center; font-family:'Calibri', sans-serif; vertical-align:middle; mso-number-format:'dd\\/mm\\/yyyy';">
@@ -1541,13 +1541,13 @@ export default function Dashboard() {
           <tr><td colspan="12" style="border:none; height:10px;"></td></tr>
           
           <!-- KPI Section -->
-          <tr>
+          <tr style="height:25px;">
             <td colspan="3" class="kpi-title" style="background-color:#D9E1F2; color:#1F4E79; border:1px solid #D9D9D9; font-weight:bold;">TOTAL TAREAS</td>
             <td colspan="3" class="kpi-title" style="background-color:#FCE4D6; color:#C00000; border:1px solid #D9D9D9; font-weight:bold;">PENDIENTES</td>
             <td colspan="3" class="kpi-title" style="background-color:#FFF2CC; color:#B25900; border:1px solid #D9D9D9; font-weight:bold;">EN PROCESO</td>
             <td colspan="3" class="kpi-title" style="background-color:#E2EFDA; color:#385723; border:1px solid #D9D9D9; font-weight:bold;">CULMINADAS</td>
           </tr>
-          <tr>
+          <tr style="height:35px;">
             <td colspan="3" class="kpi-value" style="background-color:#D9E1F2; color:#1F4E79; border:1px solid #D9D9D9; font-weight:bold; font-size:16pt;">${totalCount}</td>
             <td colspan="3" class="kpi-value" style="background-color:#FCE4D6; color:#C00000; border:1px solid #D9D9D9; font-weight:bold; font-size:16pt;">${pendientesCount}</td>
             <td colspan="3" class="kpi-value" style="background-color:#FFF2CC; color:#B25900; border:1px solid #D9D9D9; font-weight:bold; font-size:16pt;">${enProcesoCount}</td>
@@ -1556,7 +1556,7 @@ export default function Dashboard() {
           <tr><td colspan="12" style="border:none; height:15px;"></td></tr>
           
           <thead>
-            <tr>
+            <tr style="height:35px;">
               <th style="width:120px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">FECHA REPORTE</th>
               <th style="width:60px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:center; padding:10px;">ITEM</th>
               <th style="width:180px; background-color:#1B2A4A; color:#ffffff; font-weight:bold; border:1px solid #D9D9D9; text-align:left; padding:10px;">RESPONSABLE</th>

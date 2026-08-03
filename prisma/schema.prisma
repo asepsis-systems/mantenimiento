@@ -255,6 +255,7 @@ model AsepsisUser {
   verifiers  Verifier[]
   documents  Document[]     @relation("CreatorRelation")
   signatures Signature[]
+  incidents  Incident[]  @relation("UserIncidents")
 
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
@@ -349,3 +350,19 @@ model Audit {
   detail    String   @db.Text
   createdAt DateTime @default(now())
 }
+
+model Incident {
+  id          String   @id @default(uuid())
+  title       String
+  area        String
+  description String   @db.Text
+  imageUrl    String?  @db.Text
+  userId      String
+  status      String   @default("Pendiente")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        AsepsisUser @relation("UserIncidents", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+

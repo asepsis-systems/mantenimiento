@@ -241,12 +241,15 @@ export async function POST(request: NextRequest) {
           throw new Error(`Stock insuficiente para el repuesto "${part?.name || 'Desconocido'}"`);
         }
 
-        // Descontar del inventario
+        // Descontar del inventario e incrementar usados
         await tx.sparePart.update({
           where: { id: sparePartId },
           data: {
             stock: {
               decrement: qtyToUse
+            },
+            usados: {
+              increment: qtyToUse
             }
           }
         });

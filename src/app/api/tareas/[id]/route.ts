@@ -67,7 +67,10 @@ export async function PUT(
       certificadoPath,
       horaInicio,
       frecuenciaHrs,
-      proximoMantenimientoHrs
+      proximoMantenimientoHrs,
+      sparePartId,
+      cantidadUsada,
+      unidadMedida
     } = body;
 
     // Check if task exists
@@ -229,12 +232,72 @@ export async function PUT(
       }
     }
 
-    const tarea = await db.tarea.update({
-      where: { id },
-      data: updateData
+    let finalRepuestos = repuestos;
+    let finalCantidad = cantidad;
+
+    if (sparePartId) {
+      const part = await db.sparePart.findUnique({
+        where: { id: sparePartId }
+      });
+      if (!part) {
+        return NextResponse.json({ success: false, error: 'El repuesto seleccionado no existe en el inventario.' }, { status: 404 });
+      }
+
+      const qtyToUse = Number(cantidadUsada);
+      if (isNaN(qtyToUse) || qtyToUse <= 0) {
+        return NextResponse.json({ success: false, error: 'La cantidad utilizada debe ser un número mayor a cero.' }, { status: 400 });
+      }
+
+      if (part.stock < qtyToUse) {
+        return NextResponse.json({ 
+          success: false, 
+          error: `Stock insuficiente en inventario para "${part.name}". Solicitado: ${qtyToUse}, Disponible: ${part.stock}` 
+        }, { status: 400 });
+      }
+
+      const locText = [part.almacenado, part.seccion].filter(Boolean).join(' / ');
+      const locSuffix = locText ? ` [Ubicación: ${locText}]` : '';
+      const brandSuffix = part.marca1 ? ` - Marca: ${part.marca1}` : '';
+      const methodSuffix = part.metodo ? ` [Método: ${part.metodo}]` : '';
+      
+      finalRepuestos = `${part.name} (Cód: ${part.code}${brandSuffix}${methodSuffix}${locSuffix})`;
+      finalCantidad = `${qtyToUse} ${unidadMedida || 'unidades'}`;
+    }
+
+    if (finalRepuestos !== undefined) updateData.repuestos = finalRepuestos === '' ? null : finalRepuestos;
+    if (finalCantidad !== undefined) updateData.cantidad = finalCantidad === '' ? null : finalCantidad;
+
+    const TareaResult = await db.$transaction(async (tx) => {
+      if (sparePartId) {
+        const qtyToUse = Number(cantidadUsada);
+        const part = await tx.sparePart.findUnique({
+          where: { id: sparePartId }
+        });
+        if (!part || part.stock < qtyToUse) {
+          throw new Error(`Stock insuficiente para el repuesto "${part?.name || 'Desconocido'}"`);
+        }
+
+        await tx.sparePart.update({
+          where: { id: sparePartId },
+          data: {
+            stock: {
+              decrement: qtyToUse
+            },
+            usados: {
+              increment: qtyToUse
+            }
+          }
+        });
+      }
+
+      const updated = await tx.tarea.update({
+        where: { id },
+        data: updateData
+      });
+      return updated;
     });
 
-    return NextResponse.json({ success: true, tarea });
+    return NextResponse.json({ success: true, tarea: TareaResult });
   } catch (error: any) {
     console.error(`Error updating tarea ${id}:`, error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

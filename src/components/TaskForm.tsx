@@ -99,7 +99,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [stockError, setStockError] = useState('');
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
-  // Cargar repuestos desde el backend al montar el componente
+  // Cargar repuestos desde el backend al montar el componente y autodetectar selección
   React.useEffect(() => {
     setLoadingParts(true);
     fetch('/api/repuestos')
@@ -107,11 +107,27 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       .then((data) => {
         if (data.success && Array.isArray(data.spareParts)) {
           setSpareParts(data.spareParts);
+          
+          // Auto-detectar si el valor inicial coincide con un repuesto del catálogo
+          const initialRep = initialValues.repuestos;
+          if (initialRep) {
+            const matchedPart = data.spareParts.find((part: any) => {
+              if (initialRep === part.name) return true;
+              if (part.code && initialRep.includes(`Cód: ${part.code}`)) return true;
+              if (initialRep.startsWith(part.name + ' (Cód:')) return true;
+              return false;
+            });
+            if (matchedPart) {
+              setSelectedSparePart(matchedPart);
+              setPartSearchQuery(matchedPart.name);
+              setUseInventory(true);
+            }
+          }
         }
       })
       .catch((err) => console.error('Error fetching spare parts:', err))
       .finally(() => setLoadingParts(false));
-  }, []);
+  }, [initialValues.repuestos]);
 
   // Cerrar el dropdown al hacer click fuera
   React.useEffect(() => {
@@ -201,9 +217,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   // Lista base ampliada de Equipos/Máquinas estándar en planta
   const defaultEquipoOptions = [
-    '4XL 1', '5XL 2', '4XL 3', '5XL 4', '5XL 5', '5XL 6',
-    '8XL 7', '8XL 8', '4XL 9', '5XL 10',
-    '4 XL TRUJILLO', '5 XL TRUJILLO',
+    'OE 4XL 1', 'OE 5XL 2', 'OE 4XL 3', 'OE 5XL 4', 'OE 5XL 5', 'OE 5XL 6',
+    'OE 8XL 7', 'OE 8XL 8', 'OE 4XL 9', 'OE 5XL 10',
+    'OE 4 XL TRUJILLO', 'OE 5 XL TRUJILLO',
     'AUTOCLAVE V1', 'AUTOCLAVE V2', 'AUTOCLAVE V3', 'AUTOCLAVE V4', 'AUTOCLAVE V5', 'AUTOCLAVE V6',
     'PLASMA P1', 'PLASMA P2', 'PLASMA P3',
     'FORMALDEHIDO F01',
@@ -252,11 +268,13 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     if (!descripcion.trim()) {
       newErrors.descripcion = 'La descripción es obligatoria.';
     }
-    if (useInventory && !selectedSparePart) {
-      newErrors.repuestos = 'Debe seleccionar un repuesto del inventario.';
-    }
-    if (useInventory && (!qty.trim() || Number(qty) <= 0)) {
-      newErrors.qty = 'Debe ingresar una cantidad válida mayor a 0.';
+
+    if (useInventory) {
+      if (selectedSparePart) {
+        if (!qty.trim() || Number(qty) <= 0) {
+          newErrors.qty = 'Debe ingresar una cantidad válida mayor a 0.';
+        }
+      }
     }
     if (stockError) {
       newErrors.stock = stockError;
@@ -281,6 +299,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       }
 
       const finalCantidad = qty.trim() ? (unit ? `${qty.trim()} ${unit}` : qty.trim()) : '';
+      const hasPartSelected = useInventory && selectedSparePart;
 
       onSubmit({
         responsable: responsable === 'Otro' ? customResponsable || '' : responsable,
@@ -292,17 +311,17 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         sede: sede || undefined,
         falla: falla || undefined,
         tipo: tipo === 'Otro' ? customTipo || undefined : tipo || undefined,
-        repuestos: useInventory ? selectedSparePart?.name : repuestos || undefined,
-        cantidad: finalCantidad || undefined,
+        repuestos: hasPartSelected ? selectedSparePart.name : (useInventory ? undefined : repuestos || undefined),
+        cantidad: hasPartSelected ? finalCantidad : (useInventory ? undefined : finalCantidad || undefined),
         frecuenciaMeses: finalFrecuenciaMeses,
         esRecurrente: finalEsRecurrente,
         horaInicio: isCompresor() ? (horaInicio === '' ? null : Number(horaInicio)) : null,
         frecuenciaHrs: isCompresor() ? (frecuenciaHrs === '' ? null : Number(frecuenciaHrs)) : null,
         proximoMantenimientoHrs: isCompresor() ? (proximoMantenimientoHrs === '' ? null : Number(proximoMantenimientoHrs)) : null,
         // Campos para registrar stock de repuesto en el backend
-        sparePartId: useInventory ? selectedSparePart?.id : null,
-        cantidadUsada: useInventory ? Number(qty) : null,
-        unidadMedida: useInventory ? unit || null : null
+        sparePartId: hasPartSelected ? selectedSparePart.id : null,
+        cantidadUsada: hasPartSelected ? Number(qty) : null,
+        unidadMedida: hasPartSelected ? unit || null : null
       });
     }
   };

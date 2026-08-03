@@ -169,6 +169,18 @@ export function exportReportToExcel(report: ExcelReport) {
     { wch: 15 }  // Estado
   ];
 
+  // Set row heights
+  const rowHeights = [];
+  rowHeights.push({ hpx: 35 }); // Title 1 (row 1)
+  rowHeights.push({ hpx: 25 }); // Title 2 (row 2)
+  rowHeights.push({ hpx: 15 }); // Blank (row 3)
+  rowHeights.push({ hpx: 30 }); // Headers (row 4)
+  
+  for (let i = 4; i < wsData.length; i++) {
+    rowHeights.push({ hpx: 35 }); // Taller data rows for extreme readability!
+  }
+  ws['!rows'] = rowHeights;
+
   // Append worksheet to workbook
   XLSX.utils.book_append_sheet(wb, ws, 'Mantenimiento');
 
