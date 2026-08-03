@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     // Configurar el diseño de la hoja (mostrar líneas de cuadrícula)
     worksheet.views = [{ showGridLines: true }];
 
-    // Definir el ancho de las columnas
+    // Definir el ancho de las columnas (A-L)
     worksheet.columns = [
       { header: '', key: 'A', width: 6 },   // Item
       { header: '', key: 'B', width: 55 },  // Descripción de Actividad
@@ -38,7 +38,9 @@ export async function GET(request: NextRequest) {
       { header: '', key: 'G', width: 6 },   // V-5
       { header: '', key: 'H', width: 6 },   // V-6
       { header: '', key: 'I', width: 3 },   // Espaciador
-      { header: '', key: 'J', width: 40 },  // Columna derecha (Herramientas, etc.)
+      { header: '', key: 'J', width: 14 },  // Columna derecha bloque 1 (Herramientas, etc.)
+      { header: '', key: 'K', width: 14 },  // Columna derecha bloque 2
+      { header: '', key: 'L', width: 14 },  // Columna derecha bloque 3
     ];
 
     // Estilos de bordes comunes
@@ -55,6 +57,24 @@ export async function GET(request: NextRequest) {
       fgColor: { argb: 'FFF2F2F2' },
     };
 
+    // Helper para aplicar bordes y fondos a rangos completos (incluyendo celdas combinadas)
+    const borderRange = (sheet: ExcelJS.Worksheet, startCell: string, endCell: string, border: any, fill?: any) => {
+      const start = sheet.getCell(startCell);
+      const end = sheet.getCell(endCell);
+      const startRow = Math.min(Number(start.row), Number(end.row));
+      const endRow = Math.max(Number(start.row), Number(end.row));
+      const startCol = Math.min(Number(start.col), Number(end.col));
+      const endCol = Math.max(Number(start.col), Number(end.col));
+
+      for (let r = startRow; r <= endRow; r++) {
+        for (let c = startCol; c <= endCol; c++) {
+          const cell = sheet.getCell(r, c);
+          cell.border = border;
+          if (fill) cell.fill = fill;
+        }
+      }
+    };
+
     // ─── 1. DISEÑO DE CABECERA (LOGOS, TÍTULOS Y REVISIÓN) ─────────────────
     
     // Unir A1:B3 para los logos / empresa
@@ -63,29 +83,31 @@ export async function GET(request: NextRequest) {
     cellLogo.value = 'T&CH  |  ASEPSIS';
     cellLogo.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FF0A2540' } };
     cellLogo.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-    cellLogo.border = borderThin;
+    borderRange(worksheet, 'A1', 'B3', borderThin);
 
-    // Unir C1:H2 para el Título Principal del Informe
-    worksheet.mergeCells('C1:H2');
+    // Unir C1:I3 para el Título Principal del Informe (Abarca hasta la columna espaciadora I)
+    worksheet.mergeCells('C1:I3');
     const cellTitle = worksheet.getCell('C1');
     cellTitle.value = 'INFORME DE CONFORMIDAD DE MANTENIMIENTO\nPREVENTIVO PARA AUTOCLAVES';
     cellTitle.font = { name: 'Arial', size: 10, bold: true };
     cellTitle.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-    cellTitle.border = borderThin;
+    borderRange(worksheet, 'C1', 'I3', borderThin);
 
-    // Unir J1:J2 para Revisión (en la columna J que es la de herramientas)
+    // Unir J1:L2 para Revisión (en la columna J-L que es la de herramientas)
+    worksheet.mergeCells('J1:L2');
     const cellRevision = worksheet.getCell('J1');
     cellRevision.value = 'REVISION: 02\n';
     cellRevision.font = { name: 'Arial', size: 8, bold: true };
     cellRevision.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
-    cellRevision.border = borderThin;
+    borderRange(worksheet, 'J1', 'L2', borderThin);
 
-    // J3 para Página 1 de 1
-    const cellPagina = worksheet.getCell('J2');
+    // J3:L3 para Página 1 de 1
+    worksheet.mergeCells('J3:L3');
+    const cellPagina = worksheet.getCell('J3');
     cellPagina.value = 'Pagina 1 de 1';
     cellPagina.font = { name: 'Arial', size: 8 };
     cellPagina.alignment = { vertical: 'middle', horizontal: 'left' };
-    cellPagina.border = borderThin;
+    borderRange(worksheet, 'J3', 'L3', borderThin);
 
     // ─── 2. SECCIÓN FECHA Y AUTOCLAVES (FILA 5) ──────────────────────────
     
@@ -196,15 +218,15 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // ─── 4. CONTENIDO COLUMNA DERECHA (HERRAMIENTAS, MEDIDORES, CONCLUSIONES) ───
+    // ─── 4. CONTENIDO COLUMNA DERECHA COMBINADA J:L (HERRAMIENTAS, MEDIDORES, CONCLUSIONES) ───
     
-    // A) HERRAMIENTAS A UTILIZAR (Filas 6 a 11)
+    // A) HERRAMIENTAS A UTILIZAR (Filas 6 a 12)
+    worksheet.mergeCells('J6:L6');
     const cellHertTitle = worksheet.getCell('J6');
     cellHertTitle.value = 'HERRAMIENTAS A UTILIZAR';
     cellHertTitle.font = { name: 'Arial', size: 9, bold: true };
     cellHertTitle.alignment = { vertical: 'middle', horizontal: 'center' };
-    cellHertTitle.fill = fillGrayHeader;
-    cellHertTitle.border = borderThin;
+    borderRange(worksheet, 'J6', 'L6', borderThin, fillGrayHeader);
 
     const herramientas = [
       'Destornilladores.',
@@ -215,25 +237,27 @@ export async function GET(request: NextRequest) {
 
     herramientas.forEach((herr, idx) => {
       const row = 7 + idx;
+      worksheet.mergeCells(`J${row}:L${row}`);
       const cell = worksheet.getCell(`J${row}`);
       cell.value = herr;
       cell.font = { name: 'Arial', size: 9 };
       cell.alignment = { vertical: 'middle', horizontal: 'left' };
-      cell.border = borderThin;
+      borderRange(worksheet, `J${row}`, `L${row}`, borderThin);
     });
 
-    // Bordes vacíos hasta fila 11 para cerrar el bloque de Herramientas de forma limpia
+    // Bordes vacíos hasta fila 12 para cerrar el bloque de Herramientas de forma limpia
     for (let row = 11; row <= 12; row++) {
-      worksheet.getCell(`J${row}`).border = borderThin;
+      worksheet.mergeCells(`J${row}:L${row}`);
+      borderRange(worksheet, `J${row}`, `L${row}`, borderThin);
     }
 
-    // B) EQUIPO DE MEDICION A USAR (Filas 14 a 17)
+    // B) EQUIPO DE MEDICION A USAR (Filas 14 a 18)
+    worksheet.mergeCells('J14:L14');
     const cellMedTitle = worksheet.getCell('J14');
     cellMedTitle.value = 'EQUIPO DE MEDICION A USAR';
     cellMedTitle.font = { name: 'Arial', size: 9, bold: true };
     cellMedTitle.alignment = { vertical: 'middle', horizontal: 'center' };
-    cellMedTitle.fill = fillGrayHeader;
-    cellMedTitle.border = borderThin;
+    borderRange(worksheet, 'J14', 'L14', borderThin, fillGrayHeader);
 
     const equiposMedicion = [
       'Multimetro marca Sperry-modelo DSA500',
@@ -242,25 +266,27 @@ export async function GET(request: NextRequest) {
 
     equiposMedicion.forEach((eq, idx) => {
       const row = 15 + idx;
+      worksheet.mergeCells(`J${row}:L${row}`);
       const cell = worksheet.getCell(`J${row}`);
       cell.value = eq;
       cell.font = { name: 'Arial', size: 9 };
       cell.alignment = { vertical: 'middle', horizontal: 'left' };
-      cell.border = borderThin;
+      borderRange(worksheet, `J${row}`, `L${row}`, borderThin);
     });
 
     // Bordes vacíos hasta fila 18
     for (let row = 17; row <= 18; row++) {
-      worksheet.getCell(`J${row}`).border = borderThin;
+      worksheet.mergeCells(`J${row}:L${row}`);
+      borderRange(worksheet, `J${row}`, `L${row}`, borderThin);
     }
 
-    // C) CONCLUSIONES/RECOMENDACIONES (Filas 20 a 24)
+    // C) CONCLUSIONES/RECOMENDACIONES (Filas 20 a 25)
+    worksheet.mergeCells('J20:L20');
     const cellConcTitle = worksheet.getCell('J20');
     cellConcTitle.value = 'CONCLUSIONES/RECOMENDACIONES';
     cellConcTitle.font = { name: 'Arial', size: 9, bold: true };
     cellConcTitle.alignment = { vertical: 'middle', horizontal: 'center' };
-    cellConcTitle.fill = fillGrayHeader;
-    cellConcTitle.border = borderThin;
+    borderRange(worksheet, 'J20', 'L20', borderThin, fillGrayHeader);
 
     const conclusiones = [
       'Prueba en vacio y con carga',
@@ -270,16 +296,18 @@ export async function GET(request: NextRequest) {
 
     conclusiones.forEach((conc, idx) => {
       const row = 21 + idx;
+      worksheet.mergeCells(`J${row}:L${row}`);
       const cell = worksheet.getCell(`J${row}`);
       cell.value = conc;
       cell.font = { name: 'Arial', size: 9 };
       cell.alignment = { vertical: 'middle', horizontal: 'left' };
-      cell.border = borderThin;
+      borderRange(worksheet, `J${row}`, `L${row}`, borderThin);
     });
 
     // Bordes vacíos hasta fila 25
     for (let row = 24; row <= 25; row++) {
-      worksheet.getCell(`J${row}`).border = borderThin;
+      worksheet.mergeCells(`J${row}:L${row}`);
+      borderRange(worksheet, `J${row}`, `L${row}`, borderThin);
     }
 
     // Ajustar alturas de filas de forma general para comodidad visual premium
