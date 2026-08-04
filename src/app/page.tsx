@@ -1751,7 +1751,7 @@ export default function Dashboard() {
               onClick={() => router.push('/licencias')}
               className="py-1.5 px-4 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer"
             >
-              Licencias
+              Registros Generales
             </button>
           </nav>
 

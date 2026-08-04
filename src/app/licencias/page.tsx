@@ -95,7 +95,7 @@ interface User {
   role: string;
 }
 
-const sectionNames = ['EQUIPOS', 'COMPLEMENTARIO1', 'COMPLEMENTARIO2'] as const;
+const sectionNames = ['EQUIPOS', 'ELÉCTRICO', 'PLANTA'] as const;
 
 type SectionName = (typeof sectionNames)[number];
 
@@ -130,8 +130,8 @@ const sectionMachines: Record<SectionName, string[]> = {
     'COMPRESOR 25HP',
     'COMPRESOR 10HP'
   ],
-  COMPLEMENTARIO1: [],
-  COMPLEMENTARIO2: []
+  'ELÉCTRICO': [],
+  PLANTA: []
 };
 
 const parseDetails = (details: string | null): Record<string, string> => {
@@ -911,7 +911,7 @@ export default function LicensesPage() {
               onClick={() => router.push('/licencias')}
               className="py-1.5 px-3.5 rounded-xl text-xs font-semibold text-white bg-white/10 transition-all"
             >
-              Licencias
+              Registros Generales
             </button>
           </nav>
 
@@ -950,8 +950,8 @@ export default function LicensesPage() {
       <main className="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">Licencias y Permisos</h2>
-            <p className="text-sm text-slate-500">Control de vigencia, fechas de vencimiento y renovación de autorizaciones legales.</p>
+            <h2 className="text-2xl font-bold text-slate-800">Registros Generales</h2>
+            <p className="text-sm text-slate-500">Control de vigencia, fechas de vencimiento y renovación de documentos de equipos y planta.</p>
           </div>
 
           {user?.role !== 'VIEWER' && (
@@ -973,7 +973,7 @@ export default function LicensesPage() {
               <FileCheck className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-400">Total Licencias</p>
+              <p className="text-sm font-semibold text-slate-400">Total Registros</p>
               <p className="text-2xl font-bold text-slate-800 mt-0.5">{totalLic} registros</p>
             </div>
           </div>
@@ -982,7 +982,7 @@ export default function LicensesPage() {
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-400">Licencias Vencidas</p>
+              <p className="text-sm font-semibold text-slate-400">Registros Vencidos</p>
               <p className={`text-2xl font-bold mt-0.5 ${expiredLic > 0 ? 'text-rose-600' : 'text-slate-800'}`}>{expiredLic} críticas</p>
             </div>
           </div>
@@ -1006,14 +1006,14 @@ export default function LicensesPage() {
               // inactive styles per section
               const inactiveStyle = section === 'EQUIPOS'
                 ? 'bg-slate-100 border-slate-200 text-slate-900'
-                : section === 'COMPLEMENTARIO1'
+                : section === 'ELÉCTRICO'
                   ? 'bg-pink-50 border-pink-200 text-pink-700'
                   : 'bg-amber-50 border-amber-200 text-amber-700';
 
               // active styles per section (keep distinct colors instead of always dark)
               const activeStyle = section === 'EQUIPOS'
                 ? 'bg-blue-600 text-white shadow-sm border-blue-600'
-                : section === 'COMPLEMENTARIO1'
+                : section === 'ELÉCTRICO'
                   ? 'bg-pink-600 text-white shadow-sm border-pink-600'
                   : 'bg-amber-600 text-white shadow-sm border-amber-600';
 
@@ -1021,7 +1021,7 @@ export default function LicensesPage() {
                 ? 'text-white'
                 : section === 'EQUIPOS'
                   ? 'text-slate-900'
-                  : section === 'COMPLEMENTARIO1'
+                  : section === 'ELÉCTRICO'
                     ? 'text-pink-500'
                     : 'text-amber-500';
 
@@ -1046,7 +1046,7 @@ export default function LicensesPage() {
           </div>
           <input
             type="text"
-            placeholder="Buscar licencia por nombre, entidad o código..."
+            placeholder="Buscar registro por nombre, entidad o código..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 text-sm transition-all"
@@ -1074,7 +1074,7 @@ export default function LicensesPage() {
                 {displayRows.length === 0 ? (
                   <tr>
                     <td colSpan={10} className="p-12 text-center text-slate-400">
-                      No hay máquinas ni licencias registradas en esta sección. Usa el botón "Crear Máquina" para comenzar.
+                      No hay máquinas ni registros guardados en esta sección. Usa el botón "Crear Máquina" para comenzar.
                     </td>
                   </tr>
                 ) : (
@@ -1248,7 +1248,7 @@ export default function LicensesPage() {
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-md animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-              <h3 className="font-bold text-slate-800 text-base">{editingId ? 'Editar Registro de Autorización' : 'Registrar Nueva Licencia / Permiso'}</h3>
+              <h3 className="font-bold text-slate-800 text-base">{editingId ? 'Editar Registro General' : 'Registrar Nuevo Registro General'}</h3>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
@@ -1458,7 +1458,7 @@ export default function LicensesPage() {
           <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
               <div>
-                <h3 className="font-bold text-slate-800 text-base">Registrar Nueva Licencia / Permiso</h3>
+                <h3 className="font-bold text-slate-800 text-base">Registrar Nuevo Registro General</h3>
                 <p className="text-xs text-slate-500 mt-1">Subir {docTypeLabels[currentDocUploadType]}</p>
               </div>
               <button

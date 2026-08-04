@@ -551,7 +551,7 @@ export default function SparePartsPage() {
               onClick={() => router.push('/licencias')}
               className="py-1.5 px-3.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all"
             >
-              Licencias
+              Registros Generales
             </button>
           </nav>
 
