@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import ExcelJS from 'exceljs';
+import fs from 'fs';
+import path from 'path';
 
 export async function GET(request: NextRequest) {
   try {
@@ -80,10 +82,26 @@ export async function GET(request: NextRequest) {
     // Unir A1:B3 para los logos / empresa
     worksheet.mergeCells('A1:B3');
     const cellLogo = worksheet.getCell('A1');
-    cellLogo.value = 'T&CH  |  ASEPSIS';
-    cellLogo.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FF0A2540' } };
-    cellLogo.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
     borderRange(worksheet, 'A1', 'B3', borderThin);
+
+    // Cargar e insertar Logo en A1:B3 de forma dinámica
+    const logoPath = path.join(process.cwd(), 'public', 'logo2.jpg');
+    if (fs.existsSync(logoPath)) {
+      const logoImage = workbook.addImage({
+        filename: logoPath,
+        extension: 'jpeg',
+      });
+      worksheet.addImage(logoImage, {
+        tl: { col: 0.1, row: 0.1 } as any,
+        br: { col: 1.9, row: 2.9 } as any,
+        editAs: 'oneCell',
+      });
+    } else {
+      // Fallback de texto si no existe el archivo de imagen
+      cellLogo.value = 'T&CH  |  ASEPSIS';
+      cellLogo.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FF0A2540' } };
+      cellLogo.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+    }
 
     // Unir C1:I3 para el Título Principal del Informe (Abarca hasta la columna espaciadora I)
     worksheet.mergeCells('C1:I3');
@@ -310,6 +328,21 @@ export async function GET(request: NextRequest) {
       borderRange(worksheet, `J${row}`, `L${row}`, borderThin);
     }
 
+    // ─── 5. FIRMA Y SELLO CON LOGO DE T&CH (FILA 30 EN ADELANTE) ──────────
+    // Cargar e insertar la Firma Digital de Eddy Montes (Jefe de Mantenimiento)
+    const firmaPath = path.join(process.cwd(), 'public', 'firma_eddy.png');
+    if (fs.existsSync(firmaPath)) {
+      const firmaImage = workbook.addImage({
+        filename: firmaPath,
+        extension: 'png',
+      });
+      worksheet.addImage(firmaImage, {
+        tl: { col: 1.5, row: 30 } as any, // Centrado horizontalmente (Columnas B a F)
+        br: { col: 5.5, row: 35 } as any,
+        editAs: 'oneCell',
+      });
+    }
+
     // Ajustar alturas de filas de forma general para comodidad visual premium
     worksheet.getRow(1).height = 18;
     worksheet.getRow(2).height = 18;
@@ -317,6 +350,11 @@ export async function GET(request: NextRequest) {
     worksheet.getRow(5).height = 24;
     for (let i = 6; i <= 28; i++) {
       worksheet.getRow(i).height = 20;
+    }
+
+    // Ajustar altura de las filas para la firma al final
+    for (let rowNum = 30; rowNum <= 36; rowNum++) {
+      worksheet.getRow(rowNum).height = 20;
     }
 
     // Escribir el buffer y retornar la respuesta como archivo descargable
