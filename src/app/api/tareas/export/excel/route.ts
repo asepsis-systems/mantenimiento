@@ -79,12 +79,12 @@ export async function GET(request: NextRequest) {
 
     // ─── 1. DISEÑO DE CABECERA (LOGOS, TÍTULOS Y REVISIÓN) ─────────────────
     
-    // Unir A1:B3 para los logos / empresa
-    worksheet.mergeCells('A1:B3');
+    // Unir A1:A3 para el logo
+    worksheet.mergeCells('A1:A3');
     const cellLogo = worksheet.getCell('A1');
-    borderRange(worksheet, 'A1', 'B3', borderThin);
+    borderRange(worksheet, 'A1', 'A3', borderThin);
 
-    // Cargar e insertar Logo en A1:B3 de forma dinámica
+    // Cargar e insertar Logo en A1:B3 de forma dinámica (flotando desde A hasta parte de B para el espacio horizontal)
     const logoPath = path.join(process.cwd(), 'public', 'logo2.jpg');
     if (fs.existsSync(logoPath)) {
       const logoImage = workbook.addImage({
@@ -92,8 +92,8 @@ export async function GET(request: NextRequest) {
         extension: 'jpeg',
       });
       worksheet.addImage(logoImage, {
-        tl: { col: 0.1, row: 0.1 } as any,
-        br: { col: 1.9, row: 2.9 } as any,
+        tl: { col: 0.05, row: 0.15 } as any,
+        br: { col: 1.5, row: 2.85 } as any,
         editAs: 'oneCell',
       });
     } else {
@@ -103,13 +103,13 @@ export async function GET(request: NextRequest) {
       cellLogo.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
     }
 
-    // Unir C1:I3 para el Título Principal del Informe (Abarca hasta la columna espaciadora I)
-    worksheet.mergeCells('C1:I3');
-    const cellTitle = worksheet.getCell('C1');
+    // Unir B1:I3 para el Título Principal del Informe
+    worksheet.mergeCells('B1:I3');
+    const cellTitle = worksheet.getCell('B1');
     cellTitle.value = 'INFORME DE CONFORMIDAD DE MANTENIMIENTO\nPREVENTIVO PARA AUTOCLAVES';
     cellTitle.font = { name: 'Arial', size: 10, bold: true };
     cellTitle.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-    borderRange(worksheet, 'C1', 'I3', borderThin);
+    borderRange(worksheet, 'B1', 'I3', borderThin);
 
     // Unir J1:L2 para Revisión (en la columna J-L que es la de herramientas)
     worksheet.mergeCells('J1:L2');
@@ -328,7 +328,7 @@ export async function GET(request: NextRequest) {
       borderRange(worksheet, `J${row}`, `L${row}`, borderThin);
     }
 
-    // ─── 5. FIRMA Y SELLO CON LOGO DE T&CH (FILA 30 EN ADELANTE) ──────────
+    // ─── 5. FIRMA Y SELLO CON LOGO DE T&CH (FILA 31 EN ADELANTE) ──────────
     // Cargar e insertar la Firma Digital de Eddy Montes (Jefe de Mantenimiento)
     const firmaPath = path.join(process.cwd(), 'public', 'firma_eddy.png');
     if (fs.existsSync(firmaPath)) {
@@ -337,8 +337,8 @@ export async function GET(request: NextRequest) {
         extension: 'png',
       });
       worksheet.addImage(firmaImage, {
-        tl: { col: 1.5, row: 30 } as any, // Centrado horizontalmente (Columnas B a F)
-        br: { col: 5.5, row: 35 } as any,
+        tl: { col: 0.1, row: 30 } as any, // Ubicado a la izquierda (A31)
+        br: { col: 3.5, row: 35 } as any, // Se extiende hasta la columna D
         editAs: 'oneCell',
       });
     }
