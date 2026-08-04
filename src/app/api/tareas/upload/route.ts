@@ -31,9 +31,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'No se ha proporcionado ningún archivo.' }, { status: 400 });
     }
 
-    // Validar límite máximo de 50MB (50 * 1024 * 1024 bytes)
-    if (file.size > 50 * 1024 * 1024) {
-      return NextResponse.json({ success: false, error: 'El archivo excede el límite máximo permitido de 50MB.' }, { status: 400 });
+    // Validar límite máximo de 100MB (100 * 1024 * 1024 bytes)
+    if (file.size > 100 * 1024 * 1024) {
+      return NextResponse.json({ success: false, error: 'El archivo excede el límite máximo permitido de 100MB.' }, { status: 400 });
     }
 
     if (!id) {

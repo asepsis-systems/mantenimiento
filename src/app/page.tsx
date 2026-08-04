@@ -3383,8 +3383,8 @@ export default function Dashboard() {
                         className="hidden"
                         onChange={(e) => {
                           const file = e.target.files?.[0] || null;
-                          if (file && file.size > 50 * 1024 * 1024) {
-                            alert('El archivo excede el límite máximo permitido de 50MB.');
+                          if (file && file.size > 100 * 1024 * 1024) {
+                            alert('El archivo excede el límite máximo permitido de 100MB.');
                             e.target.value = '';
                             return;
                           }
