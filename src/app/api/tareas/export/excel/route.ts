@@ -17,7 +17,7 @@ function normalizeString(val: string): string {
 export function isAutoclave(equipo: string): boolean {
   const eqNorm = normalizeString(equipo);
   if (eqNorm.includes('AUTOCLAVE')) return true;
-  return ['V1', 'V2', 'V3', 'V4', 'V5', 'V6'].some(v => eqNorm === v || eqNorm === `V${v.substring(1)}`);
+  return ['V1', 'V2', 'V3', 'V4', 'V5', 'V6'].some(v => eqNorm.includes(v));
 }
 
 export function isSteriVac(equipo: string): boolean {
@@ -25,7 +25,8 @@ export function isSteriVac(equipo: string): boolean {
   if (eqNorm.includes('STERI') || eqNorm.includes('OE')) return true;
   const steriPatterns = [
     '4XL1', '5XL2', '4XL3', '5XL4', '5XL5', '5XL6', 
-    '8XL7', '8XL8', '4XL9', '5XL10', '4XLTRUJILLO', '5XLTRUJILLO'
+    '8XL7', '8XL8', '4XL9', '5XL10', '4XLTRUJILLO', '5XLTRUJILLO',
+    '4XLT', '5XLT'
   ];
   return steriPatterns.some(p => eqNorm.includes(p) || eqNorm === p);
 }
@@ -40,38 +41,44 @@ interface TemplateConfig {
 // Registro de plantillas configuradas (Fácilmente extensible para futuros equipos)
 const templates: TemplateConfig[] = [
   {
-    // 1. FORMATO DE CONFORMIDAD PARA AUTOCLAVES (V-1 a V-6)
+    // 1. FORMATO DE CONFORMIDAD PARA AUTOCLAVES (V-1 a V-6, incluyendo V-1 T y V-2 T de Trujillo)
     matches: (equipo: string) => isAutoclave(equipo),
     templatePath: path.join(process.cwd(), 'public', 'templates', 'CONFORMIDAD DE MANTENIMIENTO PREVENTIVO DE AUTOCLAVE FORMATO.xlsx'),
-    sheetToUse: 'Hoja8', // Usamos la pestaña Hoja8 que es la plantilla original vacía y limpia
+    sheetToUse: 'Hoja1', // Usamos la pestaña Hoja1 que es la plantilla única actual
     fill: (sheet, tarea, equipo, fechaFormateada, workbook) => {
       // 1. Fecha Realizada en B5
       sheet.getCell('B5').value = `     FECHA   REALIZADA:   ${fechaFormateada}`;
       sheet.getCell('B5').font = { name: 'Arial', size: 9, bold: true };
       sheet.getCell('B5').alignment = { vertical: 'middle', horizontal: 'left' };
 
-      // 2. Determinar columna del autoclave (C=V-1, D=V-2, E=V-3, F=V-4, G=V-5, H=V-6)
+      // 2. Determinar columna del autoclave (C=V-1, D=V-2, E=V-3, F=V-4, G=V-5, H=V-6, I=V-1 T, J=V-2 T)
       const eqUpper = equipo.toUpperCase();
-      let markedColIndex = -1; // Índice de columna a marcar (0 a 5)
-      if (eqUpper.includes('V1') || eqUpper.includes('V-1')) markedColIndex = 0;
+      const eqNorm = normalizeString(equipo);
+      let markedColIndex = -1; // Índice de columna a marcar (0 a 7)
+      
+      if (eqNorm.includes('V1T') || eqUpper.includes('V-1 T') || eqUpper.includes('V-1-T')) markedColIndex = 6;
+      else if (eqNorm.includes('V2T') || eqUpper.includes('V-2 T') || eqUpper.includes('V-2-T')) markedColIndex = 7;
+      else if (eqUpper.includes('V1') || eqUpper.includes('V-1')) markedColIndex = 0;
       else if (eqUpper.includes('V2') || eqUpper.includes('V-2')) markedColIndex = 1;
       else if (eqUpper.includes('V3') || eqUpper.includes('V-3')) markedColIndex = 2;
       else if (eqUpper.includes('V4') || eqUpper.includes('V-4')) markedColIndex = 3;
       else if (eqUpper.includes('V5') || eqUpper.includes('V-5')) markedColIndex = 4;
       else if (eqUpper.includes('V6') || eqUpper.includes('V-6')) markedColIndex = 5;
 
-      // 3. Completar checklist (Filas 6 a 28 inclusive - las 23 actividades)
+      // 3. Completar checklist (Filas 6 a 28 inclusive - las 23 actividades, columnas C a J)
       for (let r = 6; r <= 28; r++) {
-        for (let c = 0; c < 6; c++) {
-          const colChar = String.fromCharCode(67 + c); // Columnas C, D, E, F, G, H
+        for (let c = 0; c < 8; c++) {
+          const colChar = String.fromCharCode(67 + c); // Columnas C, D, E, F, G, H, I, J
           const cell = sheet.getCell(`${colChar}${r}`);
-          cell.alignment = { vertical: 'middle', horizontal: 'center' };
-          cell.font = { name: 'Arial', size: 10, bold: true };
-          
-          if (c === markedColIndex) {
-            cell.value = 'A';
-          } else {
-            cell.value = '';
+          if (cell) {
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            cell.font = { name: 'Arial', size: 10, bold: true };
+            
+            if (c === markedColIndex) {
+              cell.value = 'A';
+            } else {
+              cell.value = '';
+            }
           }
         }
       }
@@ -106,44 +113,48 @@ const templates: TemplateConfig[] = [
       const eqNorm = normalizeString(equipo);
       let markedColIndex = -1;
 
-      // SOPORTE DINÁMICO PARA TRUJILLO DENTRO DE LA PLANTILLA STERI-VAC
-      if (eqNorm.includes('4XLTRUJILLO')) {
-        // Escribir cabecera dinámicamente en M6
-        sheet.getCell('M6').value = '4XL TRUJILLO';
-        sheet.getCell('M6').font = { name: 'Arial', size: 9, bold: true };
-        sheet.getCell('M6').alignment = { vertical: 'middle', horizontal: 'center' };
-        markedColIndex = 13; // Columna M
-      } else if (eqNorm.includes('5XLTRUJILLO')) {
-        // Escribir cabecera dinámicamente en N6
-        sheet.getCell('N6').value = '5XL TRUJILLO';
-        sheet.getCell('N6').font = { name: 'Arial', size: 9, bold: true };
-        sheet.getCell('N6').alignment = { vertical: 'middle', horizontal: 'center' };
-        markedColIndex = 14; // Columna N
-      } else {
-        // Para los demás equipos, buscar en las columnas de la C (3) a la L (12)
-        for (let c = 3; c <= 12; c++) {
-          const headerVal = sheet.getCell(6, c).value;
-          if (headerVal) {
-            const headerNorm = normalizeString(headerVal.toString());
-            if (eqNorm.includes(headerNorm) || headerNorm.includes(eqNorm)) {
-              markedColIndex = c;
-              break;
-            }
+      for (let c = 3; c <= 14; c++) {
+        const headerVal = sheet.getCell(6, c).value;
+        if (headerVal) {
+          const headerNorm = normalizeString(headerVal.toString());
+          
+          // Match normalizado estándar (ej: "4XL1" vs "4XL1")
+          if (eqNorm.includes(headerNorm) || headerNorm.includes(eqNorm)) {
+            markedColIndex = c;
+            break;
+          }
+          
+          // Soporte especial para equivalencias de Trujillo (4XL-T, 5XL-T)
+          if (
+            (eqNorm.includes('4XLT') || eqNorm.includes('4XLTRUJILLO')) && 
+            (headerNorm.includes('4XLT') || headerNorm.includes('4XLTRUJILLO'))
+          ) {
+            markedColIndex = c;
+            break;
+          }
+          if (
+            (eqNorm.includes('5XLT') || eqNorm.includes('5XLTRUJILLO')) && 
+            (headerNorm.includes('5XLT') || headerNorm.includes('5XLTRUJILLO'))
+          ) {
+            markedColIndex = c;
+            break;
           }
         }
       }
 
-      // 3. Completar checklist (Filas 7 a 27 inclusive - las 21 actividades)
+      // 3. Completar checklist (Filas 7 a 27 inclusive - las 21 actividades, columnas C a N)
       for (let r = 7; r <= 27; r++) {
         for (let c = 3; c <= 14; c++) {
           const cell = sheet.getCell(r, c);
-          cell.alignment = { vertical: 'middle', horizontal: 'center' };
-          cell.font = { name: 'Arial', size: 10, bold: true };
-          
-          if (c === markedColIndex) {
-            cell.value = 'A';
-          } else {
-            cell.value = '';
+          if (cell) {
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            cell.font = { name: 'Arial', size: 10, bold: true };
+            
+            if (c === markedColIndex) {
+              cell.value = 'A';
+            } else {
+              cell.value = '';
+            }
           }
         }
       }
