@@ -906,6 +906,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       <div className="flex items-center justify-end gap-2.5 pt-4">
         {initialValues.id && estado === 'CULMINADO' && 
          tipo?.toUpperCase() === 'PREVENTIVO' && 
+         (frecuenciaType === '12' || (frecuenciaType === 'personalizada' && Number(customFrecuenciaMeses) === 12)) &&
          ((equipo || '').toUpperCase().includes('AUTOCLAVE') || 
           (equipo || '').toUpperCase().includes('OE') || 
           (equipo || '').toUpperCase().includes('STERI')) && (

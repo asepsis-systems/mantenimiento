@@ -2529,6 +2529,7 @@ export default function Dashboard() {
 
                                   {(t.estado === 'CULMINADO' || t.estado === 'HECHO') && 
                                    (t.tipo || '').toUpperCase() === 'PREVENTIVO' && 
+                                   Number(t.frecuenciaMeses) === 12 && 
                                    ((t.equipo || '').toUpperCase().includes('AUTOCLAVE') || 
                                     (t.equipo || '').toUpperCase().includes('OE') || 
                                     (t.equipo || '').toUpperCase().includes('STERI')) && (

@@ -94,13 +94,30 @@ const templates: TemplateConfig[] = [
       // 2. Determinar dinámicamente la columna en la fila 6 (de la C=Col 3 hasta la N=Col 14)
       const eqNorm = normalizeString(equipo);
       let markedColIndex = -1;
-      for (let c = 3; c <= 14; c++) {
-        const headerVal = sheet.getCell(6, c).value;
-        if (headerVal) {
-          const headerNorm = normalizeString(headerVal.toString());
-          if (eqNorm.includes(headerNorm)) {
-            markedColIndex = c;
-            break;
+
+      // SOPORTE DINÁMICO PARA TRUJILLO DENTRO DE LA PLANTILLA STERI-VAC
+      if (eqNorm.includes('4XLTRUJILLO')) {
+        // Escribir cabecera dinámicamente en M6
+        sheet.getCell('M6').value = '4XL TRUJILLO';
+        sheet.getCell('M6').font = { name: 'Arial', size: 9, bold: true };
+        sheet.getCell('M6').alignment = { vertical: 'middle', horizontal: 'center' };
+        markedColIndex = 13; // Columna M
+      } else if (eqNorm.includes('5XLTRUJILLO')) {
+        // Escribir cabecera dinámicamente en N6
+        sheet.getCell('N6').value = '5XL TRUJILLO';
+        sheet.getCell('N6').font = { name: 'Arial', size: 9, bold: true };
+        sheet.getCell('N6').alignment = { vertical: 'middle', horizontal: 'center' };
+        markedColIndex = 14; // Columna N
+      } else {
+        // Para los demás equipos, buscar en las columnas de la C (3) a la L (12)
+        for (let c = 3; c <= 12; c++) {
+          const headerVal = sheet.getCell(6, c).value;
+          if (headerVal) {
+            const headerNorm = normalizeString(headerVal.toString());
+            if (eqNorm.includes(headerNorm)) {
+              markedColIndex = c;
+              break;
+            }
           }
         }
       }
@@ -164,7 +181,15 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // 3. Buscar plantilla configurada para el equipo
+    // 3. VALIDACIÓN ESTRICTA DE FRECUENCIA ANUAL: Solo frecuencia: 12 meses
+    if (Number(tarea.frecuenciaMeses) !== 12) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'El informe de conformidad en Excel únicamente se genera para mantenimientos anuales (frecuencia: 12 meses).' 
+      }, { status: 400 });
+    }
+
+    // 4. Buscar plantilla configurada para el equipo
     const config = templates.find((t) => t.matches(tarea.equipo || ''));
     if (!config) {
       return NextResponse.json({ 
@@ -180,7 +205,7 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // 4. Cargar la plantilla nativa usando ExcelJS
+    // 5. Cargar la plantilla nativa usando ExcelJS
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(config.templatePath);
 
@@ -195,7 +220,7 @@ export async function GET(request: NextRequest) {
     // Asegurar que se visualicen las líneas de cuadrícula
     sheet.views = [{ showGridLines: true }];
 
-    // 5. Formatear la fecha para el reporte (de YYYY-MM-DD a DD/MM/YY)
+    // 6. Formatear la fecha para el reporte (de YYYY-MM-DD a DD/MM/YY)
     let fechaFormateada = '';
     if (tarea.fechaCulminado) {
       const parts = tarea.fechaCulminado.split('-');
@@ -208,10 +233,10 @@ export async function GET(request: NextRequest) {
       fechaFormateada = tarea.fecha || new Date().toLocaleDateString('es-PE', { year: '2-digit', month: '2-digit', day: '2-digit' });
     }
 
-    // 6. Rellenar dinámicamente según la configuración de la plantilla
+    // 7. Rellenar dinámicamente según la configuración de la plantilla
     config.fill(sheet, tarea, tarea.equipo || '', fechaFormateada, workbook);
 
-    // 7. Limpieza estricta: Eliminar el resto de hojas innecesarias y renombrar la de interés a "Conformidad"
+    // 8. Limpieza estricta: Eliminar el resto de hojas innecesarias y renombrar la de interés a "Conformidad"
     workbook.worksheets.forEach((ws) => {
       if (ws.name !== config.sheetToUse) {
         workbook.removeWorksheet(ws.id);
@@ -219,7 +244,7 @@ export async function GET(request: NextRequest) {
     });
     sheet.name = 'Conformidad';
 
-    // 8. Escribir el buffer y retornar el archivo como descarga directa
+    // 9. Escribir el buffer y retornar el archivo como descarga directa
     const buffer = await workbook.xlsx.writeBuffer();
     const fileName = `Informe_Conformidad_${tarea.equipo?.replace(/\s+/g, '_')}_${fechaFormateada.replace(/\//g, '-')}.xlsx`;
 
