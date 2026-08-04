@@ -7,11 +7,22 @@ function addMonths(dateStr: string, months: number): string {
   const month = parseInt(parts[1], 10) - 1; // 0-indexed
   const day = parseInt(parts[2], 10);
 
-  const date = new Date(year, month, 1);
-  date.setMonth(date.getMonth() + months);
-  const maxDays = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  const targetDay = Math.min(day, maxDays);
-  date.setDate(targetDay);
+  const date = new Date(year, month, day);
+
+  if (months === -1) {
+    // Semanal: +7 días
+    date.setDate(date.getDate() + 7);
+  } else if (months === -2) {
+    // Quincenal: +15 días
+    date.setDate(date.getDate() + 15);
+  } else {
+    // Meses normales
+    date.setDate(1);
+    date.setMonth(date.getMonth() + months);
+    const maxDays = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    const targetDay = Math.min(day, maxDays);
+    date.setDate(targetDay);
+  }
 
   const yyyy = date.getFullYear();
   const mm = String(date.getMonth() + 1).padStart(2, '0');

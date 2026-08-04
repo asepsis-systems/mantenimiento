@@ -156,6 +156,13 @@ export default function Dashboard() {
     ])
   ).sort((a, b) => a.localeCompare(b));
 
+  const getFrecuenciaWeight = (val: string): number => {
+    const num = Number(val);
+    if (num === -1) return 1;
+    if (num === -2) return 2;
+    return num >= 0 ? 10 + num : 100;
+  };
+
   const frecuenciaOptions = Array.from(
     new Set([
       '1', '2', '3', '4', '6', '12',
@@ -164,7 +171,7 @@ export default function Dashboard() {
         .filter((f): f is number => f !== null && f !== undefined)
         .map(f => String(f))
     ])
-  ).sort((a, b) => Number(a) - Number(b));
+  ).sort((a, b) => getFrecuenciaWeight(a) - getFrecuenciaWeight(b));
 
   const [searchRespQuery, setSearchRespQuery] = useState('');
   const [newRespName, setNewRespName] = useState('');
@@ -781,11 +788,22 @@ export default function Dashboard() {
     const month = parseInt(parts[1], 10) - 1; // 0-indexed
     const day = parseInt(parts[2], 10);
 
-    const date = new Date(year, month, 1);
-    date.setMonth(date.getMonth() + months);
-    const maxDays = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-    const targetDay = Math.min(day, maxDays);
-    date.setDate(targetDay);
+    const date = new Date(year, month, day);
+
+    if (months === -1) {
+      // Semanal: +7 días
+      date.setDate(date.getDate() + 7);
+    } else if (months === -2) {
+      // Quincenal: +15 días
+      date.setDate(date.getDate() + 15);
+    } else {
+      // Meses normales
+      date.setDate(1);
+      date.setMonth(date.getMonth() + months);
+      const maxDays = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+      const targetDay = Math.min(day, maxDays);
+      date.setDate(targetDay);
+    }
 
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -1217,7 +1235,9 @@ export default function Dashboard() {
 
       const targetDate = (t.estado === 'CULMINADO' || t.estado === 'HECHO') ? t.proximaEjecucion : t.fecha;
       const proximoText = targetDate ? formatSmallDate(targetDate) : '-';
-      const frecuenciaText = t.frecuenciaMeses ? `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
+      const frecuenciaText = t.frecuenciaMeses === -1 ? 'Semanal' :
+                             t.frecuenciaMeses === -2 ? 'Quincenal' :
+                             t.frecuenciaMeses ? `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
 
       return `
         ${headerRow}
@@ -1440,7 +1460,9 @@ export default function Dashboard() {
 
       // Recurrence / Next execution details
       let proximoText = 'Sin recurrencia';
-      let frecuenciaText = t.frecuenciaMeses ? `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
+      let frecuenciaText = t.frecuenciaMeses === -1 ? 'Semanal' :
+                           t.frecuenciaMeses === -2 ? 'Quincenal' :
+                           t.frecuenciaMeses ? `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
       const isCompTask = !!(t.equipo && (t.equipo.toUpperCase().includes('COMPRESOR') || t.equipo.toUpperCase().includes('COMPRESORA')));
       const proximoFormatStyle = isCompTask ? '' : "mso-number-format:'dd\\/mm\\/yyyy';";
 
@@ -2219,7 +2241,9 @@ export default function Dashboard() {
               <option value="UNICA">ÚNICA</option>
               <option value="RECURRENTE">RECURRENTE</option>
               {frecuenciaOptions.map(f => (
-                <option key={f} value={f}>{f} MESES</option>
+                <option key={f} value={f}>
+                  {f === '-1' ? 'SEMANAL' : f === '-2' ? 'QUINCENAL' : `${f} MESES`}
+                </option>
               ))}
             </select>
 
@@ -2801,7 +2825,9 @@ export default function Dashboard() {
                                   ? 'bg-[#1e1b4b] border-indigo-500/30 text-indigo-400'
                                   : 'bg-indigo-50 border-indigo-100 text-indigo-700'
                               }`}>
-                                {t.frecuenciaMeses} {t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}
+                                {t.frecuenciaMeses === -1 ? 'Semanal' :
+                                 t.frecuenciaMeses === -2 ? 'Quincenal' :
+                                 `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}`}
                               </span>
                             ) : (
                               <span className={`inline-flex px-2.5 py-1 text-[10px] font-medium rounded-full border transition-colors ${
@@ -3025,7 +3051,9 @@ export default function Dashboard() {
                       <div>
                         <span className="text-slate-400">Frecuencia:</span>{' '}
                         <span className={`font-semibold ${isPremiumDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                          {t.frecuenciaMeses ? `🔄 ${t.frecuenciaMeses} M` : 'Única'}
+                          {t.frecuenciaMeses === -1 ? '🔄 Semanal' :
+                           t.frecuenciaMeses === -2 ? '🔄 Quincenal' :
+                           t.frecuenciaMeses ? `🔄 ${t.frecuenciaMeses} M` : 'Única'}
                         </span>
                       </div>
                       <div className="col-span-2 flex items-center gap-1.5 mt-1">

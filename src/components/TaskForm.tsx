@@ -187,7 +187,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       return 'unica';
     }
     const fm = Number(initialValues.frecuenciaMeses);
-    if ([1, 2, 3, 4, 6, 12].includes(fm)) {
+    if ([-1, -2, 1, 2, 3, 4, 6, 12].includes(fm)) {
       return String(fm);
     }
     return 'personalizada';
@@ -195,7 +195,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [customFrecuenciaMeses, setCustomFrecuenciaMeses] = useState<number | ''>(() => {
     if (initialValues.frecuenciaMeses !== undefined && initialValues.frecuenciaMeses !== null) {
       const fm = Number(initialValues.frecuenciaMeses);
-      if (![1, 2, 3, 4, 6, 12].includes(fm)) {
+      if (![-1, -2, 1, 2, 3, 4, 6, 12].includes(fm)) {
         return fm;
       }
     }
@@ -900,6 +900,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({
               className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm focus:outline-none focus:border-brand-500 font-medium"
             >
               <option value="unica">Única (No recurrente)</option>
+              <option value="-1">Semanal</option>
+              <option value="-2">Quincenal</option>
               <option value="1">1 Mes</option>
               <option value="2">2 Meses</option>
               <option value="3">3 Meses</option>

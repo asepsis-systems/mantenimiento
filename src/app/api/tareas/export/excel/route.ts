@@ -231,17 +231,17 @@ export async function GET(request: NextRequest) {
     // Asegurar que se visualicen las líneas de cuadrícula
     sheet.views = [{ showGridLines: true }];
 
-    // 6. Formatear la fecha para el reporte (de YYYY-MM-DD a DD/MM/YY)
+    // 6. Formatear la fecha para el reporte (de YYYY-MM-DD a DD/MM/YYYY)
     let fechaFormateada = '';
     if (tarea.fechaCulminado) {
       const parts = tarea.fechaCulminado.split('-');
       if (parts.length === 3) {
-        fechaFormateada = `${parts[2]}/${parts[1]}/${parts[0].substring(2)}`;
+        fechaFormateada = `${parts[2]}/${parts[1]}/${parts[0]}`;
       } else {
         fechaFormateada = tarea.fechaCulminado;
       }
     } else {
-      fechaFormateada = tarea.fecha || new Date().toLocaleDateString('es-PE', { year: '2-digit', month: '2-digit', day: '2-digit' });
+      fechaFormateada = tarea.fecha || new Date().toLocaleDateString('es-PE', { year: 'numeric', month: '2-digit', day: '2-digit' });
     }
 
     // 7. Rellenar dinámicamente según la configuración de la plantilla
