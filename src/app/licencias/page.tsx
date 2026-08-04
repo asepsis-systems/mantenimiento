@@ -1097,27 +1097,18 @@ export default function LicensesPage() {
                           {(['certificado', 'protocolo', 'informeTecnico', 'factura', 'presupuesto', 'checklist'] as LicenseDocType[]).map((docType) => {
                             return (
                               <td key={docType} className="p-4 text-center align-top">
-                                {user?.role !== 'VIEWER' ? (
-                                  <div className="flex flex-col items-center justify-center p-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 hover:bg-brand-50 hover:border-brand-300 group transition-all duration-300">
+                                <div className="space-y-2">
+                                  <span className="block text-[11px] text-slate-400">Sin archivo</span>
+                                  {user?.role !== 'VIEWER' && (
                                     <button
                                       type="button"
                                       onClick={() => handleUploadForPlaceholder(row.machineName, docType)}
-                                      className="flex flex-col items-center gap-1.5 focus:outline-none w-full cursor-pointer"
+                                      className="text-[11px] text-slate-600 hover:text-slate-900 font-semibold rounded-xl px-2 py-1 bg-slate-100 hover:bg-slate-200 transition"
                                     >
-                                      <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 group-hover:bg-brand-100 group-hover:text-brand-600 flex items-center justify-center transition-all duration-300 shadow-xs">
-                                        <FolderPlus className="w-5 h-5" />
-                                      </div>
-                                      <span className="text-[10px] font-bold text-slate-400 group-hover:text-brand-600 transition-colors uppercase tracking-wider">Subir</span>
+                                      Subir
                                     </button>
-                                  </div>
-                                ) : (
-                                  <div className="flex flex-col items-center justify-center p-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 w-full">
-                                    <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-300 flex items-center justify-center">
-                                      <Folder className="w-5 h-5" />
-                                    </div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Sin archivo</span>
-                                  </div>
-                                )}
+                                  )}
+                                </div>
                               </td>
                             );
                           })}
@@ -1164,118 +1155,58 @@ export default function LicensesPage() {
                           const expiryField = docTypeExpiryFieldMap[docType];
                           const specificExpiryDate = lic[expiryField] as string | null;
                           const documentState = getDocumentState(specificExpiryDate);
-                          
-                          const folderStyles = {
-                            active: {
-                              bg: 'bg-sky-50/50 border-sky-100 hover:border-sky-300',
-                              iconBg: 'bg-sky-100 text-sky-600 shadow-sky-100/30',
-                              badge: 'bg-sky-100 text-sky-700 border-sky-200',
-                              dot: 'bg-sky-500'
-                            },
-                            dueSoon: {
-                              bg: 'bg-amber-50/50 border-amber-100 hover:border-amber-300',
-                              iconBg: 'bg-amber-100 text-amber-600 shadow-amber-100/30',
-                              badge: 'bg-amber-100 text-amber-700 border-amber-200',
-                              dot: 'bg-amber-500'
-                            },
-                            expired: {
-                              bg: 'bg-rose-50/50 border-rose-100 hover:border-rose-300',
-                              iconBg: 'bg-rose-100 text-rose-600 shadow-rose-100/30',
-                              badge: 'bg-rose-100 text-rose-700 border-rose-200',
-                              dot: 'bg-rose-500'
-                            },
-                            none: {
-                              bg: 'bg-slate-50/50 border-slate-100 hover:border-slate-300',
-                              iconBg: 'bg-slate-100 text-slate-500 shadow-slate-100/30',
-                              badge: 'bg-slate-100 text-slate-500 border-slate-200',
-                              dot: 'bg-slate-400'
-                            }
+                          const stateStyles = {
+                            active: 'bg-sky-100 text-sky-700 border-sky-200',
+                            dueSoon: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                            expired: 'bg-rose-100 text-rose-700 border-rose-200',
+                            none: 'bg-slate-100 text-slate-500 border-slate-200'
                           };
-
-                          const folderStyle = folderStyles[documentState.variant as keyof typeof folderStyles] || folderStyles.none;
-
                           return (
                             <td key={docType} className="p-4 text-center align-top">
-                              {name ? (
-                                <div className={`flex flex-col items-center p-2.5 rounded-2xl border transition-all duration-300 ${folderStyle.bg}`}>
-                                  {/* Icono de Carpeta */}
-                                  <div 
-                                    className="relative group/folder cursor-pointer mb-2" 
-                                    onClick={() => openFilePreview(lic.id, name, docType)}
-                                    title="Ver archivo"
-                                  >
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-xs ${folderStyle.iconBg} hover:scale-105 active:scale-95`}>
-                                      <Folder className="w-6 h-6 fill-current opacity-80" />
+                              <div className="space-y-2">
+                                {name ? (
+                                  <>
+                                    <div className={`inline-flex items-center justify-center gap-1 rounded-full border px-3 py-1 text-[11px] font-semibold ${stateStyles[documentState.variant as keyof typeof stateStyles]}`}>
+                                      {documentState.variant === 'active' && <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />}
+                                      {documentState.variant === 'dueSoon' && <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />}
+                                      {documentState.variant === 'expired' && <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />}
+                                      <span>{documentState.label}</span>
                                     </div>
-                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-xs border border-slate-100">
-                                      <span className={`w-2 h-2 rounded-full ${folderStyle.dot}`} />
-                                    </div>
-                                  </div>
-
-                                  {/* Badge de Estado */}
-                                  <div className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider mb-1 ${folderStyle.badge}`}>
-                                    <span>{documentState.label}</span>
-                                  </div>
-
-                                  {/* Fecha de Vencimiento */}
-                                  <p className="text-[10px] font-semibold text-slate-500 font-mono mb-1">{specificExpiryDate || '-'}</p>
-
-                                  {/* Nombre de Archivo */}
-                                  <div className="w-full mb-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => openFilePreview(lic.id, name, docType)}
-                                      className="w-full inline-flex items-center justify-center gap-1 text-[10px] text-slate-600 hover:text-brand-600 font-bold bg-white border border-slate-200 rounded-lg py-1 px-1.5 hover:shadow-xs transition duration-200"
-                                      title={name}
-                                    >
-                                      <span className="truncate max-w-[80px]">{name}</span>
-                                    </button>
-                                  </div>
-
-                                  {/* Acciones Rápidas */}
-                                  {user?.role !== 'VIEWER' && (
-                                    <div className="flex items-center justify-center gap-1 border-t border-slate-200/60 pt-1.5 w-full">
+                                    <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">{specificExpiryDate || '-'}</p>
+                                    <div className="flex items-center justify-center gap-1">
                                       <button
                                         type="button"
-                                        onClick={() => openDocUploadModal(lic.id, docType, specificExpiryDate || '')}
-                                        className="text-[10px] text-slate-500 hover:text-brand-600 font-bold bg-slate-100 hover:bg-brand-50 px-2 py-0.5 rounded-md transition cursor-pointer"
+                                        onClick={() => openFilePreview(lic.id, name, docType)}
+                                        className="inline-flex items-center justify-center gap-2 text-[11px] text-brand-600 hover:text-brand-700 font-medium hover:underline bg-brand-50 px-2 py-1 rounded-md border border-brand-100"
                                       >
-                                        Editar
+                                        <FileText className="w-3.5 h-3.5 text-brand-500" />
+                                        <span className="truncate max-w-[7rem]">{name}</span>
                                       </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleDeleteFile(lic.id, docType)}
-                                        className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                                        title="Eliminar archivo"
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </button>
+                                      {user?.role !== 'VIEWER' && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteFile(lic.id, docType)}
+                                          className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all duration-200"
+                                          title="Eliminar archivo"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
                                     </div>
-                                  )}
-                                </div>
-                              ) : (
-                                user?.role !== 'VIEWER' ? (
-                                  <div className="flex flex-col items-center justify-center p-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 hover:bg-brand-50 hover:border-brand-300 group transition-all duration-300">
-                                    <button
-                                      type="button"
-                                      onClick={() => openDocUploadModal(lic.id, docType, specificExpiryDate || '')}
-                                      className="flex flex-col items-center gap-1.5 focus:outline-none w-full cursor-pointer"
-                                    >
-                                      <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 group-hover:bg-brand-100 group-hover:text-brand-600 flex items-center justify-center transition-all duration-300 shadow-xs">
-                                        <FolderPlus className="w-5 h-5" />
-                                      </div>
-                                      <span className="text-[10px] font-bold text-slate-400 group-hover:text-brand-600 transition-colors uppercase tracking-wider">Subir</span>
-                                    </button>
-                                  </div>
+                                  </>
                                 ) : (
-                                  <div className="flex flex-col items-center justify-center p-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 w-full">
-                                    <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-300 flex items-center justify-center">
-                                      <Folder className="w-5 h-5" />
-                                    </div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Sin archivo</span>
-                                  </div>
-                                )
-                              )}
+                                  <span className="block text-[11px] text-slate-400">Sin archivo</span>
+                                )}
+                                {user?.role !== 'VIEWER' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => openDocUploadModal(lic.id, docType, specificExpiryDate || '')}
+                                    className="text-[11px] text-slate-600 hover:text-slate-900 font-semibold rounded-xl px-2 py-1 bg-slate-100 hover:bg-slate-200 transition"
+                                  >
+                                    {name ? 'Editar' : 'Subir'}
+                                  </button>
+                                )}
+                              </div>
                             </td>
                           );
                         })}
