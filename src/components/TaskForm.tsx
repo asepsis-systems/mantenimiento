@@ -904,7 +904,11 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
       {/* Form Buttons */}
       <div className="flex items-center justify-end gap-2.5 pt-4">
-        {initialValues.id && estado === 'CULMINADO' && (
+        {initialValues.id && estado === 'CULMINADO' && 
+         tipo?.toUpperCase() === 'PREVENTIVO' && 
+         ((equipo || '').toUpperCase().includes('AUTOCLAVE') || 
+          (equipo || '').toUpperCase().includes('OE') || 
+          (equipo || '').toUpperCase().includes('STERI')) && (
           <a
             href={`/api/tareas/export/excel?id=${initialValues.id}`}
             className="mr-auto py-2.5 px-4 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"

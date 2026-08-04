@@ -2527,7 +2527,11 @@ export default function Dashboard() {
                                     </button>
                                   )}
 
-                                  {(t.estado === 'CULMINADO' || t.estado === 'HECHO') && (
+                                  {(t.estado === 'CULMINADO' || t.estado === 'HECHO') && 
+                                   (t.tipo || '').toUpperCase() === 'PREVENTIVO' && 
+                                   ((t.equipo || '').toUpperCase().includes('AUTOCLAVE') || 
+                                    (t.equipo || '').toUpperCase().includes('OE') || 
+                                    (t.equipo || '').toUpperCase().includes('STERI')) && (
                                     <a
                                       href={`/api/tareas/export/excel?id=${t.id}`}
                                       className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold rounded-full transition-colors cursor-pointer ${
