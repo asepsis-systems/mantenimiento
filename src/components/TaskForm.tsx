@@ -1,6 +1,30 @@
 import React, { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 
+function normalizeString(val: string): string {
+  return val
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Z0-9]/g, "");
+}
+
+function isAutoclave(equipo: string): boolean {
+  const eqNorm = normalizeString(equipo);
+  if (eqNorm.includes('AUTOCLAVE')) return true;
+  return ['V1', 'V2', 'V3', 'V4', 'V5', 'V6'].some(v => eqNorm === v || eqNorm === `V${v.substring(1)}`);
+}
+
+function isSteriVac(equipo: string): boolean {
+  const eqNorm = normalizeString(equipo);
+  if (eqNorm.includes('STERI') || eqNorm.includes('OE')) return true;
+  const steriPatterns = [
+    '4XL1', '5XL2', '4XL3', '5XL4', '5XL5', '5XL6', 
+    '8XL7', '8XL8', '4XL9', '5XL10', '4XLTRUJILLO', '5XLTRUJILLO'
+  ];
+  return steriPatterns.some(p => eqNorm.includes(p) || eqNorm === p);
+}
+
 interface Responsable {
   id: string;
   nombre: string;
@@ -907,9 +931,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         {initialValues.id && estado === 'CULMINADO' && 
          tipo?.toUpperCase() === 'PREVENTIVO' && 
          (frecuenciaType === '12' || (frecuenciaType === 'personalizada' && Number(customFrecuenciaMeses) === 12)) &&
-         ((equipo || '').toUpperCase().includes('AUTOCLAVE') || 
-          (equipo || '').toUpperCase().includes('OE') || 
-          (equipo || '').toUpperCase().includes('STERI')) && (
+         (isAutoclave(equipo || '') || isSteriVac(equipo || '')) && (
           <a
             href={`/api/tareas/export/excel?id=${initialValues.id}`}
             className="mr-auto py-2.5 px-4 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"

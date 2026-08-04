@@ -13,6 +13,23 @@ function normalizeString(val: string): string {
     .replace(/[^A-Z0-9]/g, ""); // Conservar solo letras y números
 }
 
+// Funciones de validación de compatibilidad súper robustas
+export function isAutoclave(equipo: string): boolean {
+  const eqNorm = normalizeString(equipo);
+  if (eqNorm.includes('AUTOCLAVE')) return true;
+  return ['V1', 'V2', 'V3', 'V4', 'V5', 'V6'].some(v => eqNorm === v || eqNorm === `V${v.substring(1)}`);
+}
+
+export function isSteriVac(equipo: string): boolean {
+  const eqNorm = normalizeString(equipo);
+  if (eqNorm.includes('STERI') || eqNorm.includes('OE')) return true;
+  const steriPatterns = [
+    '4XL1', '5XL2', '4XL3', '5XL4', '5XL5', '5XL6', 
+    '8XL7', '8XL8', '4XL9', '5XL10', '4XLTRUJILLO', '5XLTRUJILLO'
+  ];
+  return steriPatterns.some(p => eqNorm.includes(p) || eqNorm === p);
+}
+
 interface TemplateConfig {
   matches: (equipo: string) => boolean;
   templatePath: string;
@@ -24,10 +41,7 @@ interface TemplateConfig {
 const templates: TemplateConfig[] = [
   {
     // 1. FORMATO DE CONFORMIDAD PARA AUTOCLAVES (V-1 a V-6)
-    matches: (equipo: string) => {
-      const eqNorm = normalizeString(equipo);
-      return eqNorm.includes('AUTOCLAVE');
-    },
+    matches: (equipo: string) => isAutoclave(equipo),
     templatePath: path.join(process.cwd(), 'public', 'templates', 'CONFORMIDAD DE MANTENIMIENTO PREVENTIVO DE AUTOCLAVE FORMATO.xlsx'),
     sheetToUse: 'Hoja8', // Usamos la pestaña Hoja8 que es la plantilla original vacía y limpia
     fill: (sheet, tarea, equipo, fechaFormateada, workbook) => {
@@ -79,10 +93,7 @@ const templates: TemplateConfig[] = [
   },
   {
     // 2. FORMATO DE CONFORMIDAD PARA EQUIPOS STERI-VAC (OE)
-    matches: (equipo: string) => {
-      const eqNorm = normalizeString(equipo);
-      return eqNorm.includes('OE') || eqNorm.includes('STERI');
-    },
+    matches: (equipo: string) => isSteriVac(equipo),
     templatePath: path.join(process.cwd(), 'public', 'templates', 'MANTTO PREVENTIVO DE STERI-VAC OE-01.xlsx'),
     sheetToUse: 'Hoja1',
     fill: (sheet, tarea, equipo, fechaFormateada, workbook) => {
@@ -114,7 +125,7 @@ const templates: TemplateConfig[] = [
           const headerVal = sheet.getCell(6, c).value;
           if (headerVal) {
             const headerNorm = normalizeString(headerVal.toString());
-            if (eqNorm.includes(headerNorm)) {
+            if (eqNorm.includes(headerNorm) || headerNorm.includes(eqNorm)) {
               markedColIndex = c;
               break;
             }

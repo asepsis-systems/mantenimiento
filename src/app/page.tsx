@@ -79,6 +79,30 @@ const MONTHS = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
 
+function normalizeString(val: string): string {
+  return val
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Z0-9]/g, "");
+}
+
+function isAutoclave(equipo: string): boolean {
+  const eqNorm = normalizeString(equipo);
+  if (eqNorm.includes('AUTOCLAVE')) return true;
+  return ['V1', 'V2', 'V3', 'V4', 'V5', 'V6'].some(v => eqNorm === v || eqNorm === `V${v.substring(1)}`);
+}
+
+function isSteriVac(equipo: string): boolean {
+  const eqNorm = normalizeString(equipo);
+  if (eqNorm.includes('STERI') || eqNorm.includes('OE')) return true;
+  const steriPatterns = [
+    '4XL1', '5XL2', '4XL3', '5XL4', '5XL5', '5XL6', 
+    '8XL7', '8XL8', '4XL9', '5XL10', '4XLTRUJILLO', '5XLTRUJILLO'
+  ];
+  return steriPatterns.some(p => eqNorm.includes(p) || eqNorm === p);
+}
+
 export default function Dashboard() {
   const router = useRouter();
   
@@ -2530,9 +2554,7 @@ export default function Dashboard() {
                                   {(t.estado === 'CULMINADO' || t.estado === 'HECHO') && 
                                    (t.tipo || '').toUpperCase() === 'PREVENTIVO' && 
                                    Number(t.frecuenciaMeses) === 12 && 
-                                   ((t.equipo || '').toUpperCase().includes('AUTOCLAVE') || 
-                                    (t.equipo || '').toUpperCase().includes('OE') || 
-                                    (t.equipo || '').toUpperCase().includes('STERI')) && (
+                                   (isAutoclave(t.equipo || '') || isSteriVac(t.equipo || '')) && (
                                     <a
                                       href={`/api/tareas/export/excel?id=${t.id}`}
                                       className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold rounded-full transition-colors cursor-pointer ${
