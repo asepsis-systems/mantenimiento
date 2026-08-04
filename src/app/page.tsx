@@ -103,6 +103,35 @@ function isSteriVac(equipo: string): boolean {
   return steriPatterns.some(p => eqNorm.includes(p) || eqNorm === p);
 }
 
+function matchEquipo(eqVal: string, filterVal: string): boolean {
+  if (!eqVal || !filterVal) return false;
+  
+  const parts = eqVal.split(' | ').map(p => p.trim());
+  
+  return parts.some(part => {
+    const eqNorm = normalizeString(part);
+    const filterNorm = normalizeString(filterVal);
+    
+    const filterIsTrujillo = filterNorm.includes('TRUJILLO') || filterNorm.endsWith('TRUJILLO') || filterNorm.includes('4XLT') || filterNorm.includes('5XLT');
+    const eqIsTrujillo = eqNorm.includes('TRUJILLO') || eqNorm.includes('TRUJIL') || eqNorm.endsWith('T') || eqNorm.includes('4XLT') || eqNorm.includes('5XLT');
+    
+    if (filterIsTrujillo !== eqIsTrujillo) return false;
+    
+    if (eqNorm === filterNorm) return true;
+    if (eqNorm.includes(filterNorm) || filterNorm.includes(eqNorm)) return true;
+    
+    // Special Trujillo aliases
+    if (filterNorm.includes('4XLTRUJILLO') && (eqNorm.includes('4XLT') || eqNorm.includes('4XLTRUJILLO'))) return true;
+    if (filterNorm.includes('5XLTRUJILLO') && (eqNorm.includes('5XLT') || eqNorm.includes('5XLTRUJILLO'))) return true;
+    
+    // Autoclave Trujillo aliases
+    if (filterNorm.includes('AUTOCLAVEV2TRUJILLO') && (eqNorm.includes('V2T') || eqNorm.includes('V2TRUJILLO') || eqNorm.includes('V2'))) return true;
+    if (filterNorm.includes('AUTOCLAVEV5TRUJILLO') && (eqNorm.includes('V5T') || eqNorm.includes('V5TRUJILLO') || eqNorm.includes('V5'))) return true;
+
+    return false;
+  });
+}
+
 export default function Dashboard() {
   const router = useRouter();
   
@@ -949,12 +978,9 @@ export default function Dashboard() {
   const filteredTareas = tareas.filter(t => {
     // Equipo/Máquina filter
     if (selectedEquipoFilter) {
-      const eqLower = (t.equipo || '').toLowerCase();
-      const filterLower = selectedEquipoFilter.toLowerCase();
-      const isMatch = eqLower === filterLower || 
-        eqLower.split(' | ').map(s => s.trim()).includes(filterLower);
-      
-      if (!isMatch) return false;
+      if (!matchEquipo(t.equipo || '', selectedEquipoFilter)) {
+        return false;
+      }
     }
 
     // Sede filter
@@ -2197,6 +2223,46 @@ export default function Dashboard() {
               <option value="">SEDE: TODAS</option>
               <option value="Lima">LIMA</option>
               <option value="Trujillo">TRUJILLO</option>
+            </select>
+
+            <select
+              value={selectedEquipoFilter ?? ''}
+              onChange={(e) => { setSelectedEquipoFilter(e.target.value === '' ? null : e.target.value); handleSearchTrigger(); }}
+              className={`text-[10px] font-bold rounded-xl px-2 py-2 border outline-none transition-all ${
+                isPremiumDarkMode 
+                  ? 'bg-slate-900/50 border-slate-800 text-slate-300 focus:border-sky-500/50' 
+                  : 'bg-slate-50 border-slate-200 text-slate-600 focus:border-brand-500/50'
+              }`}
+            >
+              <option value="">EQUIPO: TODOS</option>
+              <option value="OE 4XL 1">OE 4XL 1</option>
+              <option value="OE 5XL 2">OE 5XL 2</option>
+              <option value="OE 4XL 3">OE 4XL 3</option>
+              <option value="OE 5XL 4">OE 5XL 4</option>
+              <option value="OE 5XL 5">OE 5XL 5</option>
+              <option value="OE 5XL 6">OE 5XL 6</option>
+              <option value="OE 8XL 7">OE 8XL 7</option>
+              <option value="OE 8XL 8">OE 8XL 8</option>
+              <option value="OE 4XL 9">OE 4XL 9</option>
+              <option value="OE 5XL 10">OE 5XL 10</option>
+              <option value="OE 4 XL TRUJILLO">OE 4 XL TRUJILLO</option>
+              <option value="OE 5 XL TRUJILLO">OE 5 XL TRUJILLO</option>
+              <option value="AUTOCLAVE V1">AUTOCLAVE V1</option>
+              <option value="AUTOCLAVE V2">AUTOCLAVE V2</option>
+              <option value="AUTOCLAVE V3">AUTOCLAVE V3</option>
+              <option value="AUTOCLAVE V4">AUTOCLAVE V4</option>
+              <option value="AUTOCLAVE V5">AUTOCLAVE V5</option>
+              <option value="AUTOCLAVE V6">AUTOCLAVE V6</option>
+              <option value="PLASMA P1">PLASMA P1</option>
+              <option value="PLASMA P2">PLASMA P2</option>
+              <option value="PLASMA P3">PLASMA P3</option>
+              <option value="FORMALDEHIDO F01">FORMALDEHIDO F01</option>
+              <option value="AUTOCLAVE V-2 TRUJILLO">AUTOCLAVE V-2 TRUJILLO</option>
+              <option value="AUTOCLAVE V-5 TRUJILLO">AUTOCLAVE V-5 TRUJILLO</option>
+              <option value="LAVADORA">LAVADORA</option>
+              <option value="CALDERA">CALDERA</option>
+              <option value="COMPRESOR 25HP">COMPRESOR 25HP</option>
+              <option value="COMPRESOR 10HP">COMPRESOR 10HP</option>
             </select>
 
             <select
