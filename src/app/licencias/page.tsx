@@ -203,6 +203,202 @@ export default function LicensesPage() {
 
   const [deletedPlaceholders, setDeletedPlaceholders] = useState<string[]>([]);
 
+  // State variables for Electric section Google Drive file manager
+  const [loadingElectric, setLoadingElectric] = useState(false);
+  const [electricParentId, setElectricParentId] = useState<string | null>(null);
+  const [electricFolders, setElectricFolders] = useState<any[]>([]);
+  const [electricFiles, setElectricFiles] = useState<any[]>([]);
+  const [electricPath, setElectricPath] = useState<Array<{ id: string; nombre: string }>>([]);
+  const [electricViewMode, setElectricViewMode] = useState<'grid' | 'list'>('grid');
+  
+  const [isElectricFolderModalOpen, setIsElectricFolderModalOpen] = useState(false);
+  const [isElectricRenameModalOpen, setIsElectricRenameModalOpen] = useState(false);
+  const [electricNewFolderName, setElectricNewFolderName] = useState('');
+  
+  const [electricRenameId, setElectricRenameId] = useState<string | null>(null);
+  const [electricRenameType, setElectricRenameType] = useState<'folder' | 'file'>('folder');
+  const [electricRenameName, setElectricRenameName] = useState('');
+  const [electricSearchQuery, setElectricSearchQuery] = useState('');
+
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+
+  const fetchElectricContents = async () => {
+    try {
+      setLoadingElectric(true);
+      const parentQuery = electricParentId ? `?parentId=${electricParentId}` : '';
+      const res = await fetch(`/api/licencias/electrico/carpetas${parentQuery}`);
+      const data = await res.json();
+      if (data.success) {
+        setElectricFolders(data.folders || []);
+        setElectricFiles(data.files || []);
+        setElectricPath(data.path || []);
+      }
+    } catch (err) {
+      console.error('Error fetching electric content:', err);
+    } finally {
+      setLoadingElectric(false);
+    }
+  };
+
+  const formatBytes = (bytes: number, decimals = 2) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (user?.role === 'VIEWER') return;
+    setIsDraggingOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOver(false);
+    if (user?.role === 'VIEWER') return;
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleUploadElectricFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const openElectricFilePreview = (file: any) => {
+    const url = `/api/licencias/electrico/archivos?id=${file.id}`;
+    const ext = file.extension.toLowerCase();
+    setPreviewUrl(url);
+    setPreviewName(file.nombre);
+    setPreviewExt(ext);
+    setIsPreviewOpen(true);
+  };
+
+  useEffect(() => {
+    if (currentSection === 'ELÉCTRICO') {
+      fetchElectricContents();
+    }
+  }, [currentSection, electricParentId]);
+
+  const handleCreateElectricFolder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!electricNewFolderName.trim()) return;
+    try {
+      const res = await fetch('/api/licencias/electrico/carpetas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: electricNewFolderName.trim(),
+          parentId: electricParentId,
+          usuarioCreacion: user?.name || user?.username || 'Sistema'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsElectricFolderModalOpen(false);
+        setElectricNewFolderName('');
+        fetchElectricContents();
+      } else {
+        alert(data.error || 'Error al crear la carpeta.');
+      }
+    } catch (err) {
+      console.error('Error creating electric folder:', err);
+    }
+  };
+
+  const handleUploadElectricFile = async (file: File) => {
+    try {
+      setUploadingFile(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      if (electricParentId) {
+        formData.append('parentId', electricParentId);
+      }
+      formData.append('usuarioSubida', user?.name || user?.username || 'Sistema');
+
+      const res = await fetch('/api/licencias/electrico/archivos', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchElectricContents();
+      } else {
+        alert(data.error || 'Error al subir el archivo.');
+      }
+    } catch (err) {
+      console.error('Error uploading electric file:', err);
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleDeleteElectricFolder = async (id: string, name: string) => {
+    if (!confirm(`¿Está seguro de eliminar la carpeta "${name}"? Se eliminarán todas las subcarpetas y archivos dentro.`)) return;
+    try {
+      const res = await fetch(`/api/licencias/electrico/carpetas?id=${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchElectricContents();
+      } else {
+        alert(data.error || 'Error al eliminar la carpeta.');
+      }
+    } catch (err) {
+      console.error('Error deleting electric folder:', err);
+    }
+  };
+
+  const handleDeleteElectricFile = async (id: string, name: string) => {
+    if (!confirm(`¿Está seguro de eliminar el archivo "${name}"?`)) return;
+    try {
+      const res = await fetch(`/api/licencias/electrico/archivos?id=${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchElectricContents();
+      } else {
+        alert(data.error || 'Error al eliminar el archivo.');
+      }
+    } catch (err) {
+      console.error('Error deleting electric file:', err);
+    }
+  };
+
+  const handleRenameElectricItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!electricRenameId || !electricRenameName.trim()) return;
+    try {
+      const endpoint = electricRenameType === 'folder' ? 'carpetas' : 'archivos';
+      const res = await fetch(`/api/licencias/electrico/${endpoint}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: electricRenameId,
+          nuevoNombre: electricRenameName.trim()
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsElectricRenameModalOpen(false);
+        setElectricRenameId(null);
+        setElectricRenameName('');
+        fetchElectricContents();
+      } else {
+        alert(data.error || 'Error al renombrar el elemento.');
+      }
+    } catch (err) {
+      console.error('Error renaming item:', err);
+    }
+  };
+
   useEffect(() => {
     const saved = localStorage.getItem('deletedPlaceholders');
     if (saved) {
@@ -1040,346 +1236,676 @@ export default function LicensesPage() {
           </div>
         </div>
 
-        <div className="mb-6 relative max-w-md">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-            <Search className="w-4.5 h-4.5" />
-          </div>
-          <input
-            type="text"
-            placeholder="Buscar registro por nombre, entidad o código..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 text-sm transition-all"
-          />
-        </div>
+                {currentSection === 'ELÉCTRICO' ? (
+          <div 
+            className="space-y-6"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            {/* Action Bar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50 border border-slate-200/80 rounded-3xl p-5 shadow-xs">
+              {/* Breadcrumbs Navigation */}
+              <div className="flex items-center flex-wrap gap-2 text-sm font-semibold">
+                <button
+                  onClick={() => setElectricParentId(null)}
+                  className="flex items-center gap-1.5 text-pink-600 hover:text-pink-700 transition"
+                >
+                  <Folder className="w-5 h-5 fill-pink-500/10 text-pink-500" />
+                  <span>ELÉCTRICO</span>
+                </button>
+                {electricPath.map((folder, idx) => (
+                  <div key={folder.id} className="flex items-center gap-2">
+                    <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+                    <button
+                      onClick={() => setElectricParentId(folder.id)}
+                      className="text-slate-600 hover:text-slate-900 transition max-w-[150px] truncate"
+                    >
+                      {folder.nombre}
+                    </button>
+                  </div>
+                ))}
+              </div>
 
-        <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs w-full max-w-none">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1100px] text-left border-collapse text-sm">
-              <thead className="bg-[#0f172a] text-white shadow-sm">
-                <tr className="text-[10px] tracking-[0.24em] uppercase font-bold border-b border-slate-800">
-                  <th className="p-4 text-center border-r border-white/5">N°</th>
-                  <th className="p-4 border-r border-white/5">NOMBRE/MAQUINA</th>
-                  <th className="p-4 border-r border-white/5">DETALLES</th>
-                  <th className="p-4 border-r border-white/5">CERTIFICADO</th>
-                  <th className="p-4 border-r border-white/5">PROTOCOLO</th>
-                  <th className="p-4 border-r border-white/5">INFORME TÉCNICO</th>
-                  <th className="p-4 text-center border-r border-white/5">FACTURA</th>
-                  <th className="p-4 text-center border-r border-white/5">PRESUPUESTO</th>
-                  <th className="p-4 text-center border-r border-white/5">CHECK LIST</th>
-                  <th className="p-4 text-center w-32">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {displayRows.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} className="p-12 text-center text-slate-400">
-                      No hay máquinas ni registros guardados en esta sección. Usa el botón "Crear Máquina" para comenzar.
-                    </td>
-                  </tr>
-                ) : (
-                  displayRows.map((row, index) => {
-                    if (!row.license) {
-                      return (
-                        <tr key={`placeholder-${row.machineName}`} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="p-4 text-left align-top font-mono text-slate-700">{index + 1}</td>
-                          <td className="p-4 text-left align-top font-semibold text-slate-800">{row.machineName}</td>
-                          <td className="p-4 text-left align-top text-slate-600">
-                            <button
-                              type="button"
-                              onClick={() => openDetailsModalForMachine(row.machineName)}
-                              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              Ver
-                            </button>
-                          </td>
-                          {(['certificado', 'protocolo', 'informeTecnico', 'factura', 'presupuesto', 'checklist'] as LicenseDocType[]).map((docType) => {
-                            return (
-                              <td key={docType} className="p-4 text-center align-top">
-                                {currentSection === 'ELÉCTRICO' ? (
-                                  user?.role !== 'VIEWER' ? (
-                                    <div className="flex flex-col items-center justify-center p-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 hover:bg-brand-50 hover:border-brand-300 group transition-all duration-300">
-                                      <button
-                                        type="button"
-                                        onClick={() => handleUploadForPlaceholder(row.machineName, docType)}
-                                        className="flex flex-col items-center gap-1.5 focus:outline-none w-full cursor-pointer"
-                                      >
-                                        <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 group-hover:bg-brand-100 group-hover:text-brand-600 flex items-center justify-center transition-all duration-300 shadow-xs">
-                                          <FolderPlus className="w-5 h-5" />
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-400 group-hover:text-brand-600 transition-colors uppercase tracking-wider">Subir</span>
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <div className="flex flex-col items-center justify-center p-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 w-full">
-                                      <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-300 flex items-center justify-center">
-                                        <Folder className="w-5 h-5" />
-                                      </div>
-                                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Sin archivo</span>
-                                    </div>
-                                  )
-                                ) : (
-                                  <div className="space-y-2">
-                                    <span className="block text-[11px] text-slate-400">Sin archivo</span>
-                                    {user?.role !== 'VIEWER' && (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleUploadForPlaceholder(row.machineName, docType)}
-                                        className="text-[11px] text-slate-600 hover:text-slate-900 font-semibold rounded-xl px-2 py-1 bg-slate-100 hover:bg-slate-200 transition"
-                                      >
-                                        Subir
-                                      </button>
-                                    )}
+              {/* Action Buttons & View Toggle */}
+              <div className="flex items-center flex-wrap gap-3">
+                {/* Search Bar inside Drive */}
+                <div className="relative max-w-xs w-full">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Search className="w-4.5 h-4.5" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Buscar en esta carpeta..."
+                    value={electricSearchQuery}
+                    onChange={(e) => setElectricSearchQuery(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-2xl py-2 pl-9 pr-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500/20 text-xs transition-all"
+                  />
+                </div>
+
+                {/* View Mode Toggle */}
+                <div className="flex items-center border border-slate-200 rounded-xl bg-white p-1">
+                  <button
+                    onClick={() => setElectricViewMode('grid')}
+                    className={`p-1.5 rounded-lg transition-colors ${electricViewMode === 'grid' ? 'bg-pink-50 text-pink-600 font-bold' : 'text-slate-400 hover:text-slate-600'}`}
+                    title="Vista Cuadrícula"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setElectricViewMode('list')}
+                    className={`p-1.5 rounded-lg transition-colors ${electricViewMode === 'list' ? 'bg-pink-50 text-pink-600 font-bold' : 'text-slate-400 hover:text-slate-600'}`}
+                    title="Vista Lista"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <line x1="3" y1="6" x2="21" y2="6" />
+                      <line x1="3" y1="12" x2="21" y2="12" />
+                      <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Create Folder & Upload Buttons */}
+                {user?.role !== 'VIEWER' && (
+                  <>
+                    <button
+                      onClick={() => setIsElectricFolderModalOpen(true)}
+                      className="inline-flex items-center gap-2 rounded-2xl bg-white border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-xs cursor-pointer"
+                    >
+                      <FolderPlus className="w-4 h-4 text-slate-500" />
+                      <span>Nueva Carpeta</span>
+                    </button>
+
+                    <label className="inline-flex items-center gap-2 rounded-2xl bg-pink-600 hover:bg-pink-500 text-white px-4 py-2.5 text-xs font-bold transition shadow-xs cursor-pointer">
+                      <Upload className="w-4 h-4" />
+                      <span>{uploadingFile ? 'Subiendo...' : 'Subir Archivo'}</span>
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleUploadElectricFile(e.target.files[0]);
+                          }
+                        }}
+                        disabled={uploadingFile}
+                      />
+                    </label>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Drag & Drop Over Zone Overlay */}
+            <div className="relative min-h-[400px]">
+              {isDraggingOver && (
+                <div className="absolute inset-0 z-10 bg-pink-50/90 border-3 border-dashed border-pink-400 rounded-3xl flex flex-col items-center justify-center p-8 transition-all duration-300">
+                  <div className="w-20 h-20 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center mb-4 animate-bounce">
+                    <Upload className="w-10 h-10" />
+                  </div>
+                  <h4 className="text-lg font-bold text-pink-800">Suelte los archivos para subirlos</h4>
+                  <p className="text-sm text-pink-600 mt-1 font-medium">Se guardarán automáticamente en la carpeta actual</p>
+                </div>
+              )}
+
+              {loadingElectric ? (
+                <div className="flex flex-col items-center justify-center py-24">
+                  <div className="w-12 h-12 border-3 border-pink-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-sm font-semibold text-slate-400 mt-4">Cargando archivos y carpetas...</span>
+                </div>
+              ) : electricFolders.length === 0 && electricFiles.length === 0 ? (
+                /* Empty state */
+                <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200/80 rounded-3xl p-8 text-center shadow-xs">
+                  <div className="w-16 h-16 rounded-2xl bg-pink-50 text-pink-500 flex items-center justify-center mb-4">
+                    <Folder className="w-8 h-8 fill-pink-500/10" />
+                  </div>
+                  <h4 className="text-base font-bold text-slate-800">Esta carpeta está vacía</h4>
+                  <p className="text-xs text-slate-400 mt-1 max-w-sm">
+                    {user?.role !== 'VIEWER' 
+                      ? 'Arrastre y suelte archivos aquí, o use los botones de arriba para crear carpetas o subir nuevos documentos.' 
+                      : 'No hay elementos disponibles en este directorio.'}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Grid View Mode */}
+                  {electricViewMode === 'grid' ? (
+                    <div className="space-y-6">
+                      {/* Folders Row */}
+                      {electricFolders.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Carpetas ({electricFolders.length})</h4>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {electricFolders.filter(f => f.nombre.toLowerCase().includes(electricSearchQuery.toLowerCase())).map((folder) => (
+                              <div
+                                key={folder.id}
+                                className="group relative bg-white border border-slate-200 hover:border-pink-300 hover:shadow-md rounded-2xl p-4 transition-all duration-300 cursor-pointer"
+                                onDoubleClick={() => setElectricParentId(folder.id)}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="w-12 h-12 rounded-xl bg-pink-50 text-pink-500 flex items-center justify-center shrink-0">
+                                    <Folder className="w-6 h-6 fill-pink-500/20" />
+                                  </div>
+                                  <div className="min-w-0 pr-6">
+                                    <p className="text-sm font-semibold text-slate-800 truncate" title={folder.nombre}>
+                                      {folder.nombre}
+                                    </p>
+                                    <p className="text-[10px] text-slate-400 mt-0.5">Carpeta</p>
+                                  </div>
+                                </div>
+
+                                {/* Hover Actions */}
+                                {user?.role !== 'VIEWER' && (
+                                  <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setElectricRenameId(folder.id);
+                                        setElectricRenameType('folder');
+                                        setElectricRenameName(folder.nombre);
+                                        setIsElectricRenameModalOpen(true);
+                                      }}
+                                      className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"
+                                      title="Renombrar"
+                                    >
+                                      <Edit3 className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteElectricFolder(folder.id, folder.nombre);
+                                      }}
+                                      className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                                      title="Eliminar"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
                                   </div>
                                 )}
-                              </td>
-                            );
-                          })}
-                          <td className="p-4 text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              {user?.role !== 'VIEWER' && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (confirm(`¿Está seguro de eliminar la máquina "${row.machineName}" de la lista?`)) {
-                                      handleDeletePlaceholder(row.machineName);
-                                    }
-                                  }}
-                                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                  title="Eliminar"
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Files Row */}
+                      {electricFiles.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Archivos ({electricFiles.length})</h4>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {electricFiles.filter(f => f.nombre.toLowerCase().includes(electricSearchQuery.toLowerCase())).map((file) => {
+                              const isImage = ['.jpg', '.jpeg', '.png', '.gif'].includes(file.extension.toLowerCase());
+                              const isPdf = file.extension.toLowerCase() === '.pdf';
+                              return (
+                                <div
+                                  key={file.id}
+                                  className="group relative bg-white border border-slate-200 hover:border-pink-300 hover:shadow-md rounded-2xl p-4 transition-all duration-300"
                                 >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    }
-
-                    const lic = row.license;
-                    return (
-                      <tr key={lic.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="p-4 text-left align-top font-mono text-slate-700">{index + 1}</td>
-                        <td className="p-4 text-left align-top font-semibold text-slate-800">{lic.name || '-'}</td>
-                        <td className="p-4 text-left align-top text-slate-600">
-                          <button
-                            type="button"
-                            onClick={() => openDetailsModalForMachine(lic.name, lic)}
-                            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            Ver
-                          </button>
-                        </td>
-                        {(['certificado', 'protocolo', 'informeTecnico', 'factura', 'presupuesto', 'checklist'] as LicenseDocType[]).map((docType) => {
-                          const field = docTypeFieldMap[docType];
-                          const name = lic[field.nameField] as string | null;
-                          const expiryField = docTypeExpiryFieldMap[docType];
-                          const specificExpiryDate = lic[expiryField] as string | null;
-                          const documentState = getDocumentState(specificExpiryDate);
-                          
-                          const folderStyles = {
-                            active: {
-                              bg: 'bg-sky-50/50 border-sky-100 hover:border-sky-300',
-                              iconBg: 'bg-sky-100 text-sky-600 shadow-sky-100/30',
-                              badge: 'bg-sky-100 text-sky-700 border-sky-200',
-                              dot: 'bg-sky-500'
-                            },
-                            dueSoon: {
-                              bg: 'bg-amber-50/50 border-amber-100 hover:border-amber-300',
-                              iconBg: 'bg-amber-100 text-amber-600 shadow-amber-100/30',
-                              badge: 'bg-amber-100 text-amber-700 border-amber-200',
-                              dot: 'bg-amber-500'
-                            },
-                            expired: {
-                              bg: 'bg-rose-50/50 border-rose-100 hover:border-rose-300',
-                              iconBg: 'bg-rose-100 text-rose-600 shadow-rose-100/30',
-                              badge: 'bg-rose-100 text-rose-700 border-rose-200',
-                              dot: 'bg-rose-500'
-                            },
-                            none: {
-                              bg: 'bg-slate-50/50 border-slate-100 hover:border-slate-300',
-                              iconBg: 'bg-slate-100 text-slate-500 shadow-slate-100/30',
-                              badge: 'bg-slate-100 text-slate-500 border-slate-200',
-                              dot: 'bg-slate-400'
-                            }
-                          };
-
-                          const folderStyle = folderStyles[documentState.variant as keyof typeof folderStyles] || folderStyles.none;
-
-                          const stateStyles = {
-                            active: 'bg-sky-100 text-sky-700 border-sky-200',
-                            dueSoon: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                            expired: 'bg-rose-100 text-rose-700 border-rose-200',
-                            none: 'bg-slate-100 text-slate-500 border-slate-200'
-                          };
-
-                          return (
-                            <td key={docType} className="p-4 text-center align-top">
-                              {currentSection === 'ELÉCTRICO' ? (
-                                name ? (
-                                  <div className={`flex flex-col items-center p-2.5 rounded-2xl border transition-all duration-300 ${folderStyle.bg}`}>
-                                    {/* Icono de Carpeta */}
-                                    <div 
-                                      className="relative group/folder cursor-pointer mb-2" 
-                                      onClick={() => openFilePreview(lic.id, name, docType)}
-                                      title="Ver archivo"
-                                    >
-                                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-xs ${folderStyle.iconBg} hover:scale-105 active:scale-95`}>
-                                        <Folder className="w-6 h-6 fill-current opacity-80" />
-                                      </div>
-                                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-xs border border-slate-100">
-                                        <span className={`w-2 h-2 rounded-full ${folderStyle.dot}`} />
-                                      </div>
-                                    </div>
-
-                                    {/* Badge de Estado */}
-                                    <div className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider mb-1 ${folderStyle.badge}`}>
-                                      <span>{documentState.label}</span>
-                                    </div>
-
-                                    {/* Fecha de Vencimiento */}
-                                    <p className="text-[10px] font-semibold text-slate-500 font-mono mb-1">{specificExpiryDate || '-'}</p>
-
-                                    {/* Nombre de Archivo */}
-                                    <div className="w-full mb-2">
-                                      <button
-                                        type="button"
-                                        onClick={() => openFilePreview(lic.id, name, docType)}
-                                        className="w-full inline-flex items-center justify-center gap-1 text-[10px] text-slate-600 hover:text-brand-600 font-bold bg-white border border-slate-200 rounded-lg py-1 px-1.5 hover:shadow-xs transition duration-200"
-                                        title={name}
-                                      >
-                                        <span className="truncate max-w-[80px]">{name}</span>
-                                      </button>
-                                    </div>
-
-                                    {/* Acciones Rápidas */}
-                                    {user?.role !== 'VIEWER' && (
-                                      <div className="flex items-center justify-center gap-1 border-t border-slate-200/60 pt-1.5 w-full">
-                                        <button
-                                          type="button"
-                                          onClick={() => openDocUploadModal(lic.id, docType, specificExpiryDate || '')}
-                                          className="text-[10px] text-slate-500 hover:text-brand-600 font-bold bg-slate-100 hover:bg-brand-50 px-2 py-0.5 rounded-md transition cursor-pointer"
+                                  <div className="flex flex-col h-full">
+                                    {/* Icon / Thumbnail */}
+                                    <div className="w-full h-32 rounded-xl bg-slate-50 border border-slate-100/80 flex items-center justify-center mb-3 overflow-hidden relative">
+                                      {isImage ? (
+                                        <img
+                                          src={`/api/licencias/electrico/archivos?id=${file.id}`}
+                                          alt={file.nombre}
+                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 animate-in fade-in"
+                                        />
+                                      ) : (
+                                        <FileText className={`w-12 h-12 ${isPdf ? 'text-rose-500' : 'text-blue-500'}`} />
+                                      )}
+                                      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <a
+                                          href={`/api/licencias/electrico/archivos?id=${file.id}`}
+                                          download={file.nombre}
+                                          className="p-1 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-slate-800 shadow-sm transition"
+                                          title="Descargar"
                                         >
-                                          Editar
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleDeleteFile(lic.id, docType)}
-                                          className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                                          title="Eliminar archivo"
-                                        >
-                                          <Trash2 className="w-3 h-3" />
-                                        </button>
-                                      </div>
-                                    )}
-                                  </div>
-                                ) : (
-                                  user?.role !== 'VIEWER' ? (
-                                    <div className="flex flex-col items-center justify-center p-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 hover:bg-brand-50 hover:border-brand-300 group transition-all duration-300">
-                                      <button
-                                        type="button"
-                                        onClick={() => openDocUploadModal(lic.id, docType, specificExpiryDate || '')}
-                                        className="flex flex-col items-center gap-1.5 focus:outline-none w-full cursor-pointer"
-                                      >
-                                        <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 group-hover:bg-brand-100 group-hover:text-brand-600 flex items-center justify-center transition-all duration-300 shadow-xs">
-                                          <FolderPlus className="w-5 h-5" />
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-400 group-hover:text-brand-600 transition-colors uppercase tracking-wider">Subir</span>
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <div className="flex flex-col items-center justify-center p-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 w-full">
-                                      <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-300 flex items-center justify-center">
-                                        <Folder className="w-5 h-5" />
-                                      </div>
-                                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Sin archivo</span>
-                                    </div>
-                                  )
-                                )
-                              ) : (
-                                <div className="space-y-2">
-                                  {name ? (
-                                    <>
-                                      <div className={`inline-flex items-center justify-center gap-1 rounded-full border px-3 py-1 text-[11px] font-semibold ${stateStyles[documentState.variant as keyof typeof stateStyles]}`}>
-                                        {documentState.variant === 'active' && <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />}
-                                        {documentState.variant === 'dueSoon' && <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />}
-                                        {documentState.variant === 'expired' && <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />}
-                                        <span>{documentState.label}</span>
-                                      </div>
-                                      <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">{specificExpiryDate || '-'}</p>
-                                      <div className="flex items-center justify-center gap-1">
-                                        <button
-                                          type="button"
-                                          onClick={() => openFilePreview(lic.id, name, docType)}
-                                          className="inline-flex items-center justify-center gap-2 text-[11px] text-brand-600 hover:text-brand-700 font-medium hover:underline bg-brand-50 px-2 py-1 rounded-md border border-brand-100"
-                                        >
-                                          <FileText className="w-3.5 h-3.5 text-brand-500" />
-                                          <span className="truncate max-w-[7rem]">{name}</span>
-                                        </button>
+                                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                          </svg>
+                                        </a>
                                         {user?.role !== 'VIEWER' && (
-                                          <button
-                                            type="button"
-                                            onClick={() => handleDeleteFile(lic.id, docType)}
-                                            className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all duration-200"
-                                            title="Eliminar archivo"
-                                          >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                          </button>
+                                          <>
+                                            <button
+                                              onClick={() => {
+                                                setElectricRenameId(file.id);
+                                                setElectricRenameType('file');
+                                                setElectricRenameName(file.nombre);
+                                                setIsElectricRenameModalOpen(true);
+                                              }}
+                                              className="p-1 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-slate-800 shadow-sm transition"
+                                              title="Renombrar"
+                                            >
+                                              <Edit3 className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                              onClick={() => handleDeleteElectricFile(file.id, file.nombre)}
+                                              className="p-1 rounded-md bg-white border border-slate-200 text-rose-500 hover:text-rose-700 hover:bg-rose-50 shadow-sm transition"
+                                              title="Eliminar"
+                                            >
+                                              <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                          </>
                                         )}
                                       </div>
-                                    </>
-                                  ) : (
-                                    <span className="block text-[11px] text-slate-400">Sin archivo</span>
-                                  )}
+                                    </div>
+
+                                    {/* Info */}
+                                    <div className="min-w-0 flex-1">
+                                      <p 
+                                        className="text-sm font-semibold text-slate-800 truncate cursor-pointer hover:text-pink-600 transition"
+                                        title={file.nombre}
+                                        onClick={() => openElectricFilePreview(file)}
+                                      >
+                                        {file.nombre}
+                                      </p>
+                                      <div className="flex items-center justify-between mt-1 text-[10px] text-slate-400 font-medium">
+                                        <span>{formatBytes(file.tamano)}</span>
+                                        <span className="font-mono">{new Date(file.fechaSubida).toLocaleDateString()}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* List View Mode */
+                    <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs w-full max-w-none">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[800px] text-left border-collapse text-sm">
+                          <thead className="bg-[#0f172a] text-white shadow-sm">
+                            <tr className="text-[10px] tracking-[0.24em] uppercase font-bold border-b border-slate-800">
+                              <th className="p-4 pl-6">Nombre</th>
+                              <th className="p-4">Tipo</th>
+                              <th className="p-4">Tamaño</th>
+                              <th className="p-4">Fecha</th>
+                              <th className="p-4">Creado/Subido Por</th>
+                              <th className="p-4 text-center w-36">Acciones</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {/* Folders in List */}
+                            {electricFolders.filter(f => f.nombre.toLowerCase().includes(electricSearchQuery.toLowerCase())).map((folder) => (
+                              <tr 
+                                key={folder.id} 
+                                className="hover:bg-slate-50/50 transition-colors cursor-pointer group"
+                                onDoubleClick={() => setElectricParentId(folder.id)}
+                              >
+                                <td className="p-4 pl-6 font-semibold text-slate-800">
+                                  <div className="flex items-center gap-3">
+                                    <Folder className="w-5 h-5 fill-pink-500/10 text-pink-500 shrink-0" />
+                                    <span className="truncate max-w-md">{folder.nombre}</span>
+                                  </div>
+                                </td>
+                                <td className="p-4 text-slate-500 text-xs">Carpeta de archivos</td>
+                                <td className="p-4 text-slate-400 text-xs">-</td>
+                                <td className="p-4 text-slate-500 text-xs font-mono">{new Date(folder.fechaCreacion).toLocaleDateString()}</td>
+                                <td className="p-4 text-slate-500 text-xs">{folder.usuarioCreacion}</td>
+                                <td className="p-4 text-center">
+                                  <div className="flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setElectricParentId(folder.id);
+                                      }}
+                                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"
+                                      title="Abrir"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
+                                    {user?.role !== 'VIEWER' && (
+                                      <>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setElectricRenameId(folder.id);
+                                            setElectricRenameType('folder');
+                                            setElectricRenameName(folder.nombre);
+                                            setIsElectricRenameModalOpen(true);
+                                          }}
+                                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"
+                                          title="Renombrar"
+                                        >
+                                          <Edit3 className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteElectricFolder(folder.id, folder.nombre);
+                                          }}
+                                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                                          title="Eliminar"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+
+                            {/* Files in List */}
+                            {electricFiles.filter(f => f.nombre.toLowerCase().includes(electricSearchQuery.toLowerCase())).map((file) => (
+                              <tr 
+                                key={file.id} 
+                                className="hover:bg-slate-50/50 transition-colors group"
+                              >
+                                <td className="p-4 pl-6 font-semibold text-slate-800">
+                                  <div className="flex items-center gap-3">
+                                    <FileText className="w-5 h-5 text-blue-500 shrink-0" />
+                                    <span 
+                                      className="truncate max-w-md cursor-pointer hover:text-pink-600 transition"
+                                      onClick={() => openElectricFilePreview(file)}
+                                    >
+                                      {file.nombre}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="p-4 text-slate-500 text-xs uppercase">{file.extension.replace('.', '') || 'Archivo'}</td>
+                                <td className="p-4 text-slate-500 text-xs font-mono">{formatBytes(file.tamano)}</td>
+                                <td className="p-4 text-slate-500 text-xs font-mono">{new Date(file.fechaSubida).toLocaleDateString()}</td>
+                                <td className="p-4 text-slate-500 text-xs">{file.usuarioSubida}</td>
+                                <td className="p-4 text-center">
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    <button
+                                      onClick={() => openElectricFilePreview(file)}
+                                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"
+                                      title="Previsualizar"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
+                                    <a
+                                      href={`/api/licencias/electrico/archivos?id=${file.id}`}
+                                      download={file.nombre}
+                                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"
+                                      title="Descargar"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                      </svg>
+                                    </a>
+                                    {user?.role !== 'VIEWER' && (
+                                      <>
+                                        <button
+                                          onClick={() => {
+                                            setElectricRenameId(file.id);
+                                            setElectricRenameType('file');
+                                            setElectricRenameName(file.nombre);
+                                            setIsElectricRenameModalOpen(true);
+                                          }}
+                                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"
+                                          title="Renombrar"
+                                        >
+                                          <Edit3 className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteElectricFile(file.id, file.nombre)}
+                                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                                          title="Eliminar"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="mb-6 relative max-w-md">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Search className="w-4.5 h-4.5" />
+              </div>
+              <input
+                type="text"
+                placeholder="Buscar registro por nombre, entidad o código..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 text-sm transition-all"
+              />
+            </div>
+
+            <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs w-full max-w-none">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[1100px] text-left border-collapse text-sm">
+                  <thead className="bg-[#0f172a] text-white shadow-sm">
+                    <tr className="text-[10px] tracking-[0.24em] uppercase font-bold border-b border-slate-800">
+                      <th className="p-4 text-center border-r border-white/5">N°</th>
+                      <th className="p-4 border-r border-white/5">NOMBRE/MAQUINA</th>
+                      <th className="p-4 border-r border-white/5">DETALLES</th>
+                      <th className="p-4 border-r border-white/5">CERTIFICADO</th>
+                      <th className="p-4 border-r border-white/5">PROTOCOLO</th>
+                      <th className="p-4 border-r border-white/5">INFORME TÉCNICO</th>
+                      <th className="p-4 text-center border-r border-white/5">FACTURA</th>
+                      <th className="p-4 text-center border-r border-white/5">PRESUPUESTO</th>
+                      <th className="p-4 text-center border-r border-white/5">CHECK LIST</th>
+                      <th className="p-4 text-center w-32">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {displayRows.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} className="p-12 text-center text-slate-400">
+                          No hay máquinas ni registros guardados en esta sección. Usa el botón "Crear Máquina" para comenzar.
+                        </td>
+                      </tr>
+                    ) : (
+                      displayRows.map((row, index) => {
+                        if (!row.license) {
+                          return (
+                            <tr key={`placeholder-${row.machineName}`} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="p-4 text-left align-top font-mono text-slate-700">{index + 1}</td>
+                              <td className="p-4 text-left align-top font-semibold text-slate-800">{row.machineName}</td>
+                              <td className="p-4 text-left align-top text-slate-600">
+                                <button
+                                  type="button"
+                                  onClick={() => openDetailsModalForMachine(row.machineName)}
+                                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  Ver
+                                </button>
+                              </td>
+                              {(['certificado', 'protocolo', 'informeTecnico', 'factura', 'presupuesto', 'checklist'] as LicenseDocType[]).map((docType) => {
+                                return (
+                                  <td key={docType} className="p-4 text-center align-top">
+                                    <div className="space-y-2">
+                                      <span className="block text-[11px] text-slate-400">Sin archivo</span>
+                                      {user?.role !== 'VIEWER' && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUploadForPlaceholder(row.machineName, docType)}
+                                          className="text-[11px] text-slate-600 hover:text-slate-900 font-semibold rounded-xl px-2 py-1 bg-slate-100 hover:bg-slate-200 transition"
+                                        >
+                                          Subir
+                                        </button>
+                                      )}
+                                    </div>
+                                  </td>
+                                );
+                              })}
+                              <td className="p-4 text-center">
+                                <div className="flex items-center justify-center gap-1">
                                   {user?.role !== 'VIEWER' && (
                                     <button
                                       type="button"
-                                      onClick={() => openDocUploadModal(lic.id, docType, specificExpiryDate || '')}
-                                      className="text-[11px] text-slate-600 hover:text-slate-900 font-semibold rounded-xl px-2 py-1 bg-slate-100 hover:bg-slate-200 transition"
+                                      onClick={() => {
+                                        if (confirm(`¿Está seguro de eliminar la máquina "${row.machineName}" de la lista?`)) {
+                                          handleDeletePlaceholder(row.machineName);
+                                        }
+                                      }}
+                                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                      title="Eliminar"
                                     >
-                                      {name ? 'Editar' : 'Subir'}
+                                      <Trash2 className="w-4 h-4" />
                                     </button>
                                   )}
                                 </div>
-                              )}
-                            </td>
+                              </td>
+                            </tr>
                           );
-                        })}
-                        <td className="p-4 text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            {user?.role !== 'VIEWER' && (
+                        }
+
+                        const lic = row.license;
+                        return (
+                          <tr key={lic.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="p-4 text-left align-top font-mono text-slate-700">{index + 1}</td>
+                            <td className="p-4 text-left align-top font-semibold text-slate-800">{lic.name || '-'}</td>
+                            <td className="p-4 text-left align-top text-slate-600">
                               <button
-                                onClick={() => {
-                                  if (confirm(`¿Está seguro de eliminar la máquina "${lic.name}" de la lista?`)) {
-                                    fetch(`/api/licencias/${lic.id}`, { method: 'DELETE' })
-                                      .then((res) => res.json())
-                                      .then((data) => {
-                                        if (data.success) {
-                                          handleDeletePlaceholder(lic.name);
-                                          fetchLicenses();
-                                        }
-                                      });
-                                  }
-                                }}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                title="Eliminar"
+                                type="button"
+                                onClick={() => openDetailsModalForMachine(lic.name, lic)}
+                                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Eye className="w-3.5 h-3.5" />
+                                Ver
                               </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                            </td>
+                            {(['certificado', 'protocolo', 'informeTecnico', 'factura', 'presupuesto', 'checklist'] as LicenseDocType[]).map((docType) => {
+                              const field = docTypeFieldMap[docType];
+                              const name = lic[field.nameField] as string | null;
+                              const expiryField = docTypeExpiryFieldMap[docType];
+                              const specificExpiryDate = lic[expiryField] as string | null;
+                              const documentState = getDocumentState(specificExpiryDate);
+                              
+                              const folderStyles = {
+                                active: {
+                                  bg: 'bg-sky-50/50 border-sky-100 hover:border-sky-300',
+                                  iconBg: 'bg-sky-100 text-sky-600 shadow-sky-100/30',
+                                  badge: 'bg-sky-100 text-sky-700 border-sky-200',
+                                  dot: 'bg-sky-500'
+                                },
+                                dueSoon: {
+                                  bg: 'bg-amber-50/50 border-amber-100 hover:border-amber-300',
+                                  iconBg: 'bg-amber-100 text-amber-600 shadow-amber-100/30',
+                                  badge: 'bg-amber-100 text-amber-700 border-amber-200',
+                                  dot: 'bg-amber-500'
+                                },
+                                expired: {
+                                  bg: 'bg-rose-50/50 border-rose-100 hover:border-rose-300',
+                                  iconBg: 'bg-rose-100 text-rose-600 shadow-rose-100/30',
+                                  badge: 'bg-rose-100 text-rose-700 border-rose-200',
+                                  dot: 'bg-rose-500'
+                                },
+                                none: {
+                                  bg: 'bg-slate-50/50 border-slate-100 hover:border-slate-300',
+                                  iconBg: 'bg-slate-100 text-slate-500 shadow-slate-100/30',
+                                  badge: 'bg-slate-100 text-slate-500 border-slate-200',
+                                  dot: 'bg-slate-400'
+                                }
+                              };
+
+                              const folderStyle = folderStyles[documentState.variant as keyof typeof folderStyles] || folderStyles.none;
+
+                              const stateStyles = {
+                                active: 'bg-sky-100 text-sky-700 border-sky-200',
+                                dueSoon: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                                expired: 'bg-rose-100 text-rose-700 border-rose-200',
+                                none: 'bg-slate-100 text-slate-500 border-slate-200'
+                              };
+
+                              return (
+                                <td key={docType} className="p-4 text-center align-top">
+                                  <div className="space-y-2">
+                                    {name ? (
+                                      <>
+                                        <div className={`inline-flex items-center justify-center gap-1 rounded-full border px-3 py-1 text-[11px] font-semibold ${stateStyles[documentState.variant as keyof typeof stateStyles]}`}>
+                                          {documentState.variant === 'active' && <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />}
+                                          {documentState.variant === 'dueSoon' && <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />}
+                                          {documentState.variant === 'expired' && <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />}
+                                          <span>{documentState.label}</span>
+                                        </div>
+                                        <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">{specificExpiryDate || '-'}</p>
+                                        <div className="flex items-center justify-center gap-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => openFilePreview(lic.id, name, docType)}
+                                            className="inline-flex items-center justify-center gap-2 text-[11px] text-brand-600 hover:text-brand-700 font-medium hover:underline bg-brand-50 px-2 py-1 rounded-md border border-brand-100"
+                                          >
+                                            <FileText className="w-3.5 h-3.5 text-brand-500" />
+                                            <span className="truncate max-w-[7rem]">{name}</span>
+                                          </button>
+                                          {user?.role !== 'VIEWER' && (
+                                            <button
+                                              type="button"
+                                              onClick={() => handleDeleteFile(lic.id, docType)}
+                                              className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all duration-200"
+                                              title="Eliminar archivo"
+                                            >
+                                              <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                          )}
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <span className="block text-[11px] text-slate-400">Sin archivo</span>
+                                    )}
+                                    {user?.role !== 'VIEWER' && (
+                                      <button
+                                        type="button"
+                                        onClick={() => openDocUploadModal(lic.id, docType, specificExpiryDate || '')}
+                                        className="text-[11px] text-slate-600 hover:text-slate-900 font-semibold rounded-xl px-2 py-1 bg-slate-100 hover:bg-slate-200 transition"
+                                      >
+                                        {name ? 'Editar' : 'Subir'}
+                                      </button>
+                                    )}
+                                  </div>
+                                  </td>
+                              );
+                            })}
+                            <td className="p-4 text-center">
+                              <div className="flex items-center justify-center gap-1">
+                                {user?.role !== 'VIEWER' && (
+                                  <button
+                                    onClick={() => {
+                                      if (confirm(`¿Está seguro de eliminar la máquina "${lic.name}" de la lista?`)) {
+                                        fetch(`/api/licencias/${lic.id}`, { method: 'DELETE' })
+                                          .then((res) => res.json())
+                                          .then((data) => {
+                                            if (data.success) {
+                                              handleDeletePlaceholder(lic.name);
+                                              fetchLicenses();
+                                            }
+                                          });
+                                      }
+                                    }}
+                                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                    title="Eliminar"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
       </main>
 
       {isModalOpen && (
@@ -1910,6 +2436,97 @@ export default function LicensesPage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modals for Electric section Google Drive file manager */}
+      {isElectricFolderModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <h3 className="font-bold text-slate-800 text-base">Crear Nueva Carpeta</h3>
+              <button
+                onClick={() => setIsElectricFolderModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateElectricFolder} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nombre de la Carpeta</label>
+                <input
+                  type="text"
+                  value={electricNewFolderName}
+                  onChange={(e) => setElectricNewFolderName(e.target.value)}
+                  placeholder="Ej. Planos de Tableros"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-700 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsElectricFolderModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-colors"
+                >
+                  Crear Carpeta
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isElectricRenameModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <h3 className="font-bold text-slate-800 text-base">Renombrar {electricRenameType === 'folder' ? 'Carpeta' : 'Archivo'}</h3>
+              <button
+                onClick={() => setIsElectricRenameModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
+            <form onSubmit={handleRenameElectricItem} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nuevo Nombre</label>
+                <input
+                  type="text"
+                  value={electricRenameName}
+                  onChange={(e) => setElectricRenameName(e.target.value)}
+                  placeholder="Ej. Nuevo nombre"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-700 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsElectricRenameModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-colors"
+                >
+                  Renombrar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

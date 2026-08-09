@@ -205,6 +205,35 @@ model LicenciaCarpeta {
   licenses  License[] @relation("FolderLicenses")
 }
 
+model ElectricFolder {
+  id              String           @id @default(uuid())
+  nombre          String
+  parentId        String?
+  parent          ElectricFolder?  @relation("ElectricFolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children        ElectricFolder[] @relation("ElectricFolderHierarchy")
+  files           ElectricFile[]   @relation("ElectricFolderFiles")
+  fechaCreacion   DateTime         @default(now())
+  usuarioCreacion String?
+
+  @@index([parentId])
+  @@map("ElectricFolder")
+}
+
+model ElectricFile {
+  id            String          @id @default(uuid())
+  nombre        String
+  parentId      String?
+  folder        ElectricFolder? @relation("ElectricFolderFiles", fields: [parentId], references: [id], onDelete: Cascade)
+  ruta          String
+  extension     String
+  tamano        Int
+  fechaSubida   DateTime        @default(now())
+  usuarioSubida String?
+
+  @@index([parentId])
+  @@map("ElectricFile")
+}
+
 // ==========================================
 // MODELS FROM FILE MANAGER (ISO.ASEPSIS.PE)
 // To prevent Prisma from dropping them on db push
