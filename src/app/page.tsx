@@ -1990,7 +1990,7 @@ export default function Dashboard() {
             }`}
           >
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Sin Documentos</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Pendientes y en Proceso</span>
               <span className="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight block mt-1">{sinDocsProximosCount}</span>
               <span className="text-[10px] text-slate-500 mt-1 block">Registros totales</span>
             </div>
@@ -2291,7 +2291,7 @@ export default function Dashboard() {
             >
               <option value="ALL">DOC: TODOS</option>
               <option value="CON_DOC">CON DOCUMENTO</option>
-              <option value="SIN_DOC">SIN DOCUMENTO</option>
+              <option value="SIN_DOC">PENDIENTES Y EN PROCESO</option>
             </select>
 
             <select
