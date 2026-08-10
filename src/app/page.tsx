@@ -887,14 +887,21 @@ export default function Dashboard() {
       if (diff < 0) {
         const absDiff = Math.abs(diff);
         return (
-          <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
-              isPremiumDarkMode
-                ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
-                : 'bg-rose-50 border-rose-200 text-rose-700'
+          <div className="flex flex-col items-center justify-center gap-1">
+            <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
+                isPremiumDarkMode
+                  ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
+                  : 'bg-rose-50 border-rose-200 text-rose-700'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
+                <span>Vence hace {absDiff} d</span>
+              </span>
+            </div>
+            <span className={`text-[11px] font-semibold transition-colors duration-300 ${
+              isPremiumDarkMode ? 'text-rose-400/90' : 'text-rose-700/95'
             }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
-              <span>Vence hace {absDiff} d</span>
+              {formatSmallDate(targetDate)}
             </span>
           </div>
         );
@@ -902,14 +909,21 @@ export default function Dashboard() {
         const threshold = getUpcomingAlertThreshold(t.frecuenciaMeses);
         if (threshold > 0 && diff <= threshold) {
           return (
-            <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
-                isPremiumDarkMode
-                  ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
-                  : 'bg-amber-50 border-amber-200 text-amber-700'
+            <div className="flex flex-col items-center justify-center gap-1">
+              <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
+                  isPremiumDarkMode
+                    ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
+                    : 'bg-amber-50 border-amber-200 text-amber-700'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-amber-500' : 'bg-amber-600'} animate-pulse`}></span>
+                  <span>Faltan {diff} d</span>
+                </span>
+              </div>
+              <span className={`text-[11px] font-medium transition-colors duration-300 ${
+                isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
               }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-amber-500' : 'bg-amber-600'} animate-pulse`}></span>
-                <span>Faltan {diff} d</span>
+                {formatSmallDate(targetDate)}
               </span>
             </div>
           );
@@ -939,14 +953,21 @@ export default function Dashboard() {
       if (diff < 0) {
         const absDiff = Math.abs(diff);
         return (
-          <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
-              isPremiumDarkMode
-                ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
-                : 'bg-rose-50 border-rose-200 text-rose-700'
+          <div className="flex flex-col items-center justify-center gap-1">
+            <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
+                isPremiumDarkMode
+                  ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
+                  : 'bg-rose-50 border-rose-200 text-rose-700'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
+                <span>Vence hace {absDiff} d</span>
+              </span>
+            </div>
+            <span className={`text-[11px] font-semibold transition-colors duration-300 ${
+              isPremiumDarkMode ? 'text-rose-400/90' : 'text-rose-700/95'
             }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
-              <span>Vence hace {absDiff} d</span>
+              {formatSmallDate(targetDate)}
             </span>
           </div>
         );
@@ -954,14 +975,21 @@ export default function Dashboard() {
         const threshold = getUpcomingAlertThreshold(t.frecuenciaMeses);
         if (threshold > 0 && diff <= threshold) {
           return (
-            <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
-                isPremiumDarkMode
-                  ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
-                  : 'bg-amber-50 border-amber-200 text-amber-700'
+            <div className="flex flex-col items-center justify-center gap-1">
+              <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
+                  isPremiumDarkMode
+                    ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
+                    : 'bg-amber-50 border-amber-200 text-amber-700'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-amber-500' : 'bg-amber-600'} animate-pulse`}></span>
+                  <span>Faltan {diff} d</span>
+                </span>
+              </div>
+              <span className={`text-[11px] font-medium transition-colors duration-300 ${
+                isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
               }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-amber-500' : 'bg-amber-600'} animate-pulse`}></span>
-                <span>Faltan {diff} d</span>
+                {formatSmallDate(targetDate)}
               </span>
             </div>
           );
@@ -990,14 +1018,21 @@ export default function Dashboard() {
     if (diff < 0) {
       const absDiff = Math.abs(diff);
       return (
-        <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
-            isPremiumDarkMode
-              ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
-              : 'bg-rose-50 border-rose-200 text-rose-700'
+        <div className="flex flex-col items-center justify-center gap-1">
+          <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
+              isPremiumDarkMode
+                ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
+                : 'bg-rose-50 border-rose-200 text-rose-700'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
+              <span>Vence hace {absDiff} d</span>
+            </span>
+          </div>
+          <span className={`text-[11px] font-semibold transition-colors duration-300 ${
+            isPremiumDarkMode ? 'text-rose-400/90' : 'text-rose-700/95'
           }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
-            <span>Vence hace {absDiff} d</span>
+            {formatSmallDate(targetDate)}
           </span>
         </div>
       );
@@ -1005,14 +1040,21 @@ export default function Dashboard() {
       const threshold = getUpcomingAlertThreshold(t.frecuenciaMeses);
       if (threshold > 0 && diff <= threshold) {
         return (
-          <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
-              isPremiumDarkMode
-                ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
-                : 'bg-amber-50 border-amber-200 text-amber-700'
+          <div className="flex flex-col items-center justify-center gap-1">
+            <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
+                isPremiumDarkMode
+                  ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
+                  : 'bg-amber-50 border-amber-200 text-amber-700'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-amber-500' : 'bg-amber-600'} animate-pulse`}></span>
+                <span>Faltan {diff} d</span>
+              </span>
+            </div>
+            <span className={`text-[11px] font-medium transition-colors duration-300 ${
+              isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
             }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-amber-500' : 'bg-amber-600'} animate-pulse`}></span>
-              <span>Faltan {diff} d</span>
+              {formatSmallDate(targetDate)}
             </span>
           </div>
         );
