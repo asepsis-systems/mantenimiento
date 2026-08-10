@@ -1159,7 +1159,7 @@ export default function LicensesPage() {
             <p className="text-sm text-slate-500">Control de vigencia, fechas de vencimiento y renovación de documentos de equipos y planta.</p>
           </div>
 
-          {user?.role !== 'VIEWER' && (
+          {user?.role !== 'VIEWER' && currentSection === 'EQUIPOS' && (
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={openCreateMachineModal}
