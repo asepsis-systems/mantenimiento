@@ -840,6 +840,14 @@ export default function Dashboard() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
+  const getUpcomingAlertThreshold = (frecuenciaMeses: number | null | undefined): number => {
+    if (!frecuenciaMeses) return 0;
+    if (frecuenciaMeses >= 1) return 15; // 15 días antes para 1, 2, 3, 4, 6, 12 meses
+    if (frecuenciaMeses === -2) return 7; // 7 días antes para quincenal
+    if (frecuenciaMeses === -1) return 7; // 7 días antes para semanal (siguiente semana)
+    return 0;
+  };
+
   const renderProximoBadge = (t: Tarea) => {
     // Si es una compresora, mostrar las horas
     if (t.equipo && (t.equipo.toUpperCase().includes('COMPRESOR') || t.equipo.toUpperCase().includes('COMPRESORA'))) {
@@ -891,6 +899,21 @@ export default function Dashboard() {
           </div>
         );
       } else {
+        const threshold = getUpcomingAlertThreshold(t.frecuenciaMeses);
+        if (threshold > 0 && diff <= threshold) {
+          return (
+            <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
+                isPremiumDarkMode
+                  ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
+                  : 'bg-amber-50 border-amber-200 text-amber-700'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-amber-500' : 'bg-amber-600'} animate-pulse`}></span>
+                <span>Faltan {diff} d</span>
+              </span>
+            </div>
+          );
+        }
         return (
           <span className={`font-medium text-xs select-none transition-colors duration-300 ${
             isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
@@ -928,6 +951,21 @@ export default function Dashboard() {
           </div>
         );
       } else {
+        const threshold = getUpcomingAlertThreshold(t.frecuenciaMeses);
+        if (threshold > 0 && diff <= threshold) {
+          return (
+            <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
+                isPremiumDarkMode
+                  ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
+                  : 'bg-amber-50 border-amber-200 text-amber-700'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-amber-500' : 'bg-amber-600'} animate-pulse`}></span>
+                <span>Faltan {diff} d</span>
+              </span>
+            </div>
+          );
+        }
         return (
           <span className={`font-medium text-xs select-none transition-colors duration-300 ${
             isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
@@ -964,6 +1002,21 @@ export default function Dashboard() {
         </div>
       );
     } else {
+      const threshold = getUpcomingAlertThreshold(t.frecuenciaMeses);
+      if (threshold > 0 && diff <= threshold) {
+        return (
+          <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
+              isPremiumDarkMode
+                ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
+                : 'bg-amber-50 border-amber-200 text-amber-700'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-amber-500' : 'bg-amber-600'} animate-pulse`}></span>
+              <span>Faltan {diff} d</span>
+            </span>
+          </div>
+        );
+      }
       return (
         <span className={`font-medium text-xs select-none transition-colors duration-300 ${
           isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
