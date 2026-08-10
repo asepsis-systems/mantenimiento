@@ -279,6 +279,15 @@ export default function LicensesPage() {
     setIsPreviewOpen(true);
   };
 
+  const handleGoBack = () => {
+    if (electricPath.length <= 1) {
+      setElectricParentId(null);
+    } else {
+      const parentFolder = electricPath[electricPath.length - 2];
+      setElectricParentId(parentFolder.id);
+    }
+  };
+
   useEffect(() => {
     if (currentSection === 'ELÉCTRICO') {
       fetchElectricContents();
@@ -1247,6 +1256,16 @@ export default function LicensesPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50 border border-slate-200/80 rounded-3xl p-5 shadow-xs">
               {/* Breadcrumbs Navigation */}
               <div className="flex items-center flex-wrap gap-2 text-sm font-semibold">
+                {electricParentId !== null && (
+                  <button
+                    type="button"
+                    onClick={handleGoBack}
+                    className="mr-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-pink-600 hover:border-pink-200 hover:bg-pink-50/30 transition shadow-xs cursor-pointer text-xs font-bold"
+                  >
+                    <ArrowLeft className="w-4 h-4 text-slate-500" />
+                    <span>Atrás</span>
+                  </button>
+                )}
                 <button
                   onClick={() => setElectricParentId(null)}
                   className="flex items-center gap-1.5 text-pink-600 hover:text-pink-700 transition"
