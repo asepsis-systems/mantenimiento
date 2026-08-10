@@ -1000,7 +1000,7 @@ export default function Dashboard() {
 
     // Document filter
     if (selectedDocFilter === 'CON_DOC' && !t.certificadoPath) return false;
-    if (selectedDocFilter === 'SIN_DOC' && t.certificadoPath) return false;
+    if (selectedDocFilter === 'SIN_DOC' && t.estado !== 'PENDIENTE' && t.estado !== 'EN_PROCESO') return false;
 
     // Frecuencia filter
     if (selectedFrecuenciaFilter) {
@@ -1040,7 +1040,7 @@ export default function Dashboard() {
 
   // CMMS KPI Counters (calculated over the entire dataset to support arbitrary task years and stay stable)
   const conDocsProximosCount = tareas.filter(t => t.certificadoPath).length;
-  const sinDocsProximosCount = tareas.filter(t => !t.certificadoPath).length;
+  const sinDocsProximosCount = tareas.filter(t => t.estado === 'PENDIENTE' || t.estado === 'EN_PROCESO').length;
   const estaSemanaCount = tareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getDaysDiff(todayStr, t.fecha) >= 0 && getDaysDiff(todayStr, t.fecha) <= 7).length;
   const esteMesCount = tareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getIsCurrentMonth(t.fecha)).length;
 
