@@ -2017,7 +2017,7 @@ export default function Dashboard() {
             }`}
           >
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Esta Semana</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Inspecciones Municipales</span>
               <span className="text-2xl sm:text-3xl font-extrabold text-violet-600 tracking-tight block mt-1">{estaSemanaCount}</span>
               <span className="text-[10px] text-slate-500 mt-1 block">Siguientes 7 días</span>
             </div>
@@ -2044,7 +2044,7 @@ export default function Dashboard() {
             }`}
           >
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Este Mes</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Inspecciones Hospitales y Clínicas</span>
               <span className="text-2xl sm:text-3xl font-extrabold text-cyan-600 tracking-tight block mt-1">{esteMesCount}</span>
               <span className="text-[10px] text-slate-500 mt-1 block">Mes calendario actual</span>
             </div>
@@ -2323,9 +2323,9 @@ export default function Dashboard() {
               }`}
             >
               <option value="ALL">PERÍODO: TODOS</option>
-              <option value="ESTA_SEMANA">ESTA SEMANA (LUN - DOM)</option>
+              <option value="ESTA_SEMANA">INSPECCIONES MUNICIPALES</option>
               <option value="SEMANA_PASADA">SEMANA PASADA</option>
-              <option value="ESTE_MES">ESTE MES</option>
+              <option value="ESTE_MES">INSPECCIONES HOSPITALES Y CLÍNICAS</option>
               <option value="MES_PASADO">MES PASADO</option>
             </select>
           </div>
