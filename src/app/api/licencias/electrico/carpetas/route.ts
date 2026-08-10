@@ -28,15 +28,19 @@ export async function GET(request: NextRequest) {
 
     // Get subfolders
     const folders = await db.electricFolder.findMany({
-      where: { parentId },
-      orderBy: { nombre: 'asc' }
+      where: { parentId }
     });
+
+    // Natural alphanumeric sorting for folders (e.g. 1, 2, 3, 10 instead of 1, 10, 2)
+    folders.sort((a, b) => a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' }));
 
     // Get files
     const files = await db.electricFile.findMany({
-      where: { parentId },
-      orderBy: { nombre: 'asc' }
+      where: { parentId }
     });
+
+    // Natural alphanumeric sorting for files
+    files.sort((a, b) => a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' }));
 
     // Get current breadcrumb path
     const path = await getFolderPath(parentId);
