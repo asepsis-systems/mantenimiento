@@ -210,7 +210,7 @@ export default function Dashboard() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDIENTE' | 'EN_PROCESO' | 'CULMINADO' | 'ALERTAS'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDIENTE' | 'EN_PROCESO' | 'CULMINADO' | 'ALERTAS' | 'ATENCION_REQUERIDA'>('ALL');
   const [quickRange, setQuickRange] = useState<string>('ALL');
 
   // Sorting
@@ -1164,6 +1164,7 @@ export default function Dashboard() {
   // CMMS KPI Counters (calculated over the entire dataset to support arbitrary task years and stay stable)
   const conDocsProximosCount = tareas.filter(t => t.certificadoPath).length;
   const sinDocsProximosCount = tareas.filter(t => t.estado === 'PENDIENTE' || t.estado === 'EN_PROCESO').length;
+  const atencionRequeridaCount = tareas.filter(t => t.estado === 'PENDIENTE' || isTaskUpcomingAlert(t, todayStr)).length;
   const estaSemanaCount = tareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getDaysDiff(todayStr, t.fecha) >= 0 && getDaysDiff(todayStr, t.fecha) <= 7).length;
   const esteMesCount = tareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getIsCurrentMonth(t.fecha)).length;
 
@@ -1172,6 +1173,7 @@ export default function Dashboard() {
     if (statusFilter === 'ALL') return true;
     if (statusFilter === 'PENDIENTE') return t.estado === 'PENDIENTE';
     if (statusFilter === 'ALERTAS') return isTaskUpcomingAlert(t, todayStr);
+    if (statusFilter === 'ATENCION_REQUERIDA') return t.estado === 'PENDIENTE' || isTaskUpcomingAlert(t, todayStr);
     if (statusFilter === 'EN_PROCESO') return t.estado === 'EN_PROCESO';
     if (statusFilter === 'CULMINADO') return t.estado === 'CULMINADO' || t.estado === 'HECHO';
     return true;
@@ -1997,11 +1999,11 @@ export default function Dashboard() {
             </div>
           </button>
 
-          {/* Card: ALERTAS */}
+          {/* Card: EN PROCESO */}
           <button
             type="button"
             onClick={() => {
-              setStatusFilter('ALERTAS');
+              setStatusFilter('EN_PROCESO');
               setSelectedDocFilter('ALL');
               setQuickRange('ALL');
               setFromDate('');
@@ -2010,20 +2012,20 @@ export default function Dashboard() {
               handleSearchTrigger();
             }}
             className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
-              statusFilter === 'ALERTAS'
+              statusFilter === 'EN_PROCESO'
                 ? 'bg-amber-50/25 border-amber-500 shadow-md shadow-amber-500/5 ring-2 ring-amber-500/10 scale-[1.02]'
                 : 'bg-white border-slate-100 shadow-xs hover:border-amber-200 hover:scale-[1.02] hover:shadow-sm'
             }`}
           >
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Alertas</span>
-              <span className="text-2xl sm:text-3xl font-extrabold text-amber-500 tracking-tight block mt-1">{alertasCount}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Próximos mttos.</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">En Proceso</span>
+              <span className="text-2xl sm:text-3xl font-extrabold text-amber-500 tracking-tight block mt-1">{enProcesoCount}</span>
+              <span className="text-[10px] text-slate-500 mt-1 block">Siendo ejecutadas</span>
             </div>
             <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
-              statusFilter === 'ALERTAS' ? 'bg-amber-100 text-amber-600 scale-110' : 'bg-amber-50 text-amber-500 group-hover/card:bg-amber-100 group-hover/card:text-amber-600 group-hover/card:scale-110'
+              statusFilter === 'EN_PROCESO' ? 'bg-amber-100 text-amber-600 scale-110' : 'bg-amber-50 text-amber-500 group-hover/card:bg-amber-100 group-hover/card:text-amber-600 group-hover/card:scale-110'
             }`}>
-              <Bell className={`w-6 h-6 ${statusFilter === 'ALERTAS' ? 'animate-pulse' : ''}`} />
+              <TrendingUp className="w-6 h-6" />
             </div>
           </button>
 
@@ -2095,12 +2097,12 @@ export default function Dashboard() {
             </div>
           </button>
 
-          {/* Card: SIN DOCUMENTOS */}
+          {/* Card: ATENCIÓN REQUERIDA */}
           <button
             type="button"
             onClick={() => {
-              setStatusFilter('ALL');
-              setSelectedDocFilter('SIN_DOC');
+              setStatusFilter('ATENCION_REQUERIDA');
+              setSelectedDocFilter('ALL');
               setQuickRange('ALL');
               setFromDate('');
               setToDate('');
@@ -2108,20 +2110,20 @@ export default function Dashboard() {
               handleSearchTrigger();
             }}
             className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
-              selectedDocFilter === 'SIN_DOC'
+              statusFilter === 'ATENCION_REQUERIDA'
                 ? 'bg-rose-50/25 border-rose-500 shadow-md shadow-rose-500/5 ring-2 ring-rose-500/10 scale-[1.02]'
                 : 'bg-white border-slate-100 shadow-xs hover:border-rose-200 hover:scale-[1.02] hover:shadow-sm'
             }`}
           >
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Pendientes y en Proceso</span>
-              <span className="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight block mt-1">{sinDocsProximosCount}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Registros totales</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Atención Requerida</span>
+              <span className="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight block mt-1">{atencionRequeridaCount}</span>
+              <span className="text-[10px] text-slate-500 mt-1 block">Pendientes y Alertas</span>
             </div>
             <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
-              selectedDocFilter === 'SIN_DOC' ? 'bg-rose-100 text-rose-600 scale-110' : 'bg-rose-50 text-rose-500 group-hover/card:bg-rose-100 group-hover/card:text-rose-600 group-hover/card:scale-110'
+              statusFilter === 'ATENCION_REQUERIDA' ? 'bg-rose-100 text-rose-600 scale-110' : 'bg-rose-50 text-rose-500 group-hover/card:bg-rose-100 group-hover/card:text-rose-600 group-hover/card:scale-110'
             }`}>
-              <AlertCircle className="w-6 h-6" />
+              <AlertCircle className={`w-6 h-6 ${statusFilter === 'ATENCION_REQUERIDA' ? 'animate-pulse' : ''}`} />
             </div>
           </button>
 
@@ -2331,7 +2333,9 @@ export default function Dashboard() {
             >
               <option value="ALL">ESTADO: TODOS</option>
               <option value="PENDIENTE">PENDIENTE</option>
+              <option value="EN_PROCESO">EN PROCESO</option>
               <option value="ALERTAS">ALERTAS</option>
+              <option value="ATENCION_REQUERIDA">ATENCIÓN REQUERIDA</option>
               <option value="CULMINADO">CULMINADO</option>
             </select>
 
