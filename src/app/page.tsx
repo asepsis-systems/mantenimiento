@@ -921,7 +921,7 @@ export default function Dashboard() {
                   ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
                   : 'bg-rose-50 border-rose-200 text-rose-700'
               }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
+                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'} animate-pulse`}></span>
                 <span>Vence hace {absDiff} d</span>
               </span>
             </div>
@@ -987,7 +987,7 @@ export default function Dashboard() {
                   ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
                   : 'bg-rose-50 border-rose-200 text-rose-700'
               }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
+                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'} animate-pulse`}></span>
                 <span>Vence hace {absDiff} d</span>
               </span>
             </div>
@@ -1052,7 +1052,7 @@ export default function Dashboard() {
                 ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
                 : 'bg-rose-50 border-rose-200 text-rose-700'
             }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
+              <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'} animate-pulse`}></span>
               <span>Vence hace {absDiff} d</span>
             </span>
           </div>
@@ -1981,12 +1981,18 @@ export default function Dashboard() {
               setCurrentPage(1);
               handleSearchTrigger();
             }}
-            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
+            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card relative ${
               statusFilter === 'PENDIENTE'
                 ? 'bg-rose-50/25 border-rose-500 shadow-md shadow-rose-500/5 ring-2 ring-rose-500/10 scale-[1.02]'
                 : 'bg-white border-slate-100 shadow-xs hover:border-rose-200 hover:scale-[1.02] hover:shadow-sm'
             }`}
           >
+            {pendientesCount > 0 && (
+              <span className="absolute top-2.5 right-2.5 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+              </span>
+            )}
             <div>
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Pendientes</span>
               <span className="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight block mt-1">{pendientesCount}</span>
@@ -2109,12 +2115,18 @@ export default function Dashboard() {
               setCurrentPage(1);
               handleSearchTrigger();
             }}
-            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
+            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card relative ${
               statusFilter === 'ATENCION_REQUERIDA'
                 ? 'bg-rose-50/25 border-rose-500 shadow-md shadow-rose-500/5 ring-2 ring-rose-500/10 scale-[1.02]'
                 : 'bg-white border-slate-100 shadow-xs hover:border-rose-200 hover:scale-[1.02] hover:shadow-sm'
             }`}
           >
+            {atencionRequeridaCount > 0 && (
+              <span className="absolute top-2.5 right-2.5 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+              </span>
+            )}
             <div>
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Atención Requerida</span>
               <span className="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight block mt-1">{atencionRequeridaCount}</span>
@@ -2950,11 +2962,12 @@ export default function Dashboard() {
                           }`}>
                             <div className="flex flex-col items-center gap-1.5 justify-center">
                               {t.estado === 'PENDIENTE' && (
-                                <span className={`inline-flex px-3 py-1.5 text-[10px] font-semibold rounded-full border transition-colors ${
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold rounded-full border transition-colors ${
                                   isPremiumDarkMode
                                     ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
                                     : 'bg-rose-50 border-rose-200 text-rose-700'
                                 }`}>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0"></span>
                                   <span>PENDIENTE</span>
                                 </span>
                               )}
