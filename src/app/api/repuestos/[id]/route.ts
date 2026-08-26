@@ -34,26 +34,35 @@ export async function PUT(
       usados
     } = body;
 
-    if (!name || !code) {
-      return NextResponse.json({ success: false, error: 'El nombre y código son obligatorios.' }, { status: 400 });
+    const finalCode = isMatachana ? codigoMatachana : code;
+    const finalName = isMatachana ? descripcion : name;
+
+    if (!finalName || !finalCode) {
+      return NextResponse.json({ success: false, error: 'El nombre/descripción y el código son obligatorios.' }, { status: 400 });
     }
 
     const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
     const scriptToken = process.env.GOOGLE_SCRIPT_TOKEN || '';
 
-    // If it's a general part and Google Sheets integration is enabled
-    if (!isMatachana && scriptUrl && scriptUrl.trim() !== '') {
+    if (scriptUrl && scriptUrl.trim() !== '') {
       try {
-        const response = await fetch(scriptUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: scriptToken,
-            action: 'update',
-            payload: {
+        const payload = isMatachana
+          ? {
               metodo: metodo || '',
-              code, // Code identifies the row
-              name,
+              metodo2: metodo2 || '',
+              correlativo: correlativo || '',
+              descripcion: descripcion || '',
+              codigoMatachana: codigoMatachana || '',
+              kit1: kit1 || '',
+              kit2: kit2 || '',
+              stock: Number(stock) || 0,
+              usados: Number(usados) || 0,
+              location: location || ''
+            }
+          : {
+              metodo: metodo || '',
+              code: finalCode,
+              name: finalName,
               repuesto: repuesto || '',
               codigoMarca: codigoMarca || '',
               marca1: marca1 || '',
@@ -62,7 +71,16 @@ export async function PUT(
               fotoPath: fotoPath || '',
               almacenado: almacenado || '',
               seccion: seccion || ''
-            }
+            };
+
+        const response = await fetch(scriptUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: scriptToken,
+            action: 'update',
+            sheet: isMatachana ? 'Rpts. Matchana' : 'Inventario',
+            payload
           })
         });
 
@@ -81,9 +99,10 @@ export async function PUT(
 
       // Upsert/mirror in the local DB
       const sparePart = await db.sparePart.upsert({
-        where: { code },
+        where: { code: finalCode },
         update: {
-          name,
+          name: finalName,
+          code: finalCode,
           stock: Number(stock) || 0,
           minStock: Number(minStock) || 0,
           price: price ? Number(price) : null,
@@ -107,8 +126,8 @@ export async function PUT(
           usados: Number(usados) || 0
         },
         create: {
-          name,
-          code,
+          name: finalName,
+          code: finalCode,
           stock: Number(stock) || 0,
           minStock: Number(minStock) || 0,
           price: price ? Number(price) : null,
@@ -136,10 +155,10 @@ export async function PUT(
       return NextResponse.json({ success: true, sparePart });
     }
 
-    // Default local behavior (for Matachana or local-only)
+    // Default local behavior (for local-only)
     const existing = await db.sparePart.findFirst({
       where: { 
-        code,
+        code: finalCode,
         NOT: { id }
       }
     });
@@ -150,8 +169,8 @@ export async function PUT(
     const sparePart = await db.sparePart.update({
       where: { id },
       data: {
-        name,
-        code,
+        name: finalName,
+        code: finalCode,
         stock: Number(stock) || 0,
         minStock: Number(minStock) || 0,
         price: price ? Number(price) : null,
@@ -196,13 +215,13 @@ export async function DELETE(
       where: {
         OR: [
           { id },
-          { code: id }
+          { code: id },
+          { codigoMatachana: id }
         ]
       }
     });
 
-    // If it's a general part and Google Sheets integration is enabled
-    if (part && !part.isMatachana && scriptUrl && scriptUrl.trim() !== '') {
+    if (part && scriptUrl && scriptUrl.trim() !== '') {
       try {
         const response = await fetch(scriptUrl, {
           method: 'POST',
@@ -210,8 +229,9 @@ export async function DELETE(
           body: JSON.stringify({
             token: scriptToken,
             action: 'delete',
+            sheet: part.isMatachana ? 'Rpts. Matchana' : 'Inventario',
             payload: {
-              code: part.code
+              code: part.isMatachana ? part.codigoMatachana : part.code
             }
           })
         });

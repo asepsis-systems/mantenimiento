@@ -6,26 +6,28 @@ export async function GET(request: NextRequest) {
     const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
     const scriptToken = process.env.GOOGLE_SCRIPT_TOKEN || '';
 
-    // Always fetch Matachana parts from DB
-    const dbMatachanaParts = await db.sparePart.findMany({
-      where: { isMatachana: true },
-      orderBy: { name: 'asc' }
-    });
-
     let generalParts: any[] = [];
+    let dbMatachanaParts: any[] = [];
 
     if (scriptUrl && scriptUrl.trim() !== '') {
       try {
-        const response = await fetch(`${scriptUrl}?token=${encodeURIComponent(scriptToken)}`, {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' },
-          next: { revalidate: 0 } // Ensure fresh data on every fetch
-        });
+        const [genResponse, matResponse] = await Promise.all([
+          fetch(`${scriptUrl}?token=${encodeURIComponent(scriptToken)}&sheet=Inventario`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            next: { revalidate: 0 } // Ensure fresh data on every fetch
+          }),
+          fetch(`${scriptUrl}?token=${encodeURIComponent(scriptToken)}&sheet=Rpts. Matchana`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            next: { revalidate: 0 } // Ensure fresh data on every fetch
+          })
+        ]);
 
-        if (response.ok) {
-          const resData = await response.json();
-          if (resData.success && Array.isArray(resData.data)) {
-            generalParts = resData.data.map((item: any) => ({
+        if (genResponse.ok) {
+          const genData = await genResponse.json();
+          if (genData.success && Array.isArray(genData.data)) {
+            generalParts = genData.data.map((item: any) => ({
               id: item.code, // Use code as ID for frontend consistency
               name: item.name || '',
               code: item.code || '',
@@ -54,33 +56,83 @@ export async function GET(request: NextRequest) {
               usados: 0
             }));
           } else {
-            console.error('Google Sheets Apps Script returned success: false', resData.error);
-            // Fallback to local DB if script reports error
+            console.error('Google Sheets Apps Script returned success: false for Inventario', genData.error);
             generalParts = await db.sparePart.findMany({
               where: { isMatachana: false },
               orderBy: { name: 'asc' }
             });
           }
         } else {
-          console.error('Failed to fetch from Google Sheets Apps Script', response.status, response.statusText);
-          // Fallback to local DB
+          console.error('Failed to fetch general from Google Sheets Apps Script', genResponse.status);
           generalParts = await db.sparePart.findMany({
             where: { isMatachana: false },
             orderBy: { name: 'asc' }
           });
         }
+
+        if (matResponse.ok) {
+          const matData = await matResponse.json();
+          if (matData.success && Array.isArray(matData.data)) {
+            dbMatachanaParts = matData.data.map((item: any) => ({
+              id: item.codigoMatachana, // Use code as ID for frontend consistency
+              name: item.descripcion || '',
+              code: item.codigoMatachana || '',
+              stock: Number(item.stock) || 0,
+              minStock: 0,
+              price: null,
+              location: item.location || '',
+              isMatachana: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              metodo: item.metodo || '',
+              metodo2: item.metodo2 || '',
+              repuesto: '',
+              codigoMarca: '',
+              marca1: '',
+              comentario: '',
+              fotoNombre: '',
+              fotoPath: '',
+              almacenado: '',
+              seccion: '',
+              correlativo: item.correlativo || '',
+              descripcion: item.descripcion || '',
+              codigoMatachana: item.codigoMatachana || '',
+              kit1: item.kit1 || '',
+              kit2: item.kit2 || '',
+              usados: Number(item.usados) || 0
+            }));
+          } else {
+            console.error('Google Sheets Apps Script returned success: false for Matachana', matData.error);
+            dbMatachanaParts = await db.sparePart.findMany({
+              where: { isMatachana: true },
+              orderBy: { name: 'asc' }
+            });
+          }
+        } else {
+          console.error('Failed to fetch Matachana from Google Sheets Apps Script', matResponse.status);
+          dbMatachanaParts = await db.sparePart.findMany({
+            where: { isMatachana: true },
+            orderBy: { name: 'asc' }
+          });
+        }
       } catch (fetchError: any) {
         console.error('Error fetching from Google Sheets Apps Script:', fetchError.message);
-        // Fallback to local DB
         generalParts = await db.sparePart.findMany({
           where: { isMatachana: false },
           orderBy: { name: 'asc' }
         });
+        dbMatachanaParts = await db.sparePart.findMany({
+          where: { isMatachana: true },
+          orderBy: { name: 'asc' }
+        });
       }
     } else {
-      // Load everything from local DB if GOOGLE_SCRIPT_URL is not set
       generalParts = await db.sparePart.findMany({
         where: { isMatachana: false },
+        orderBy: { name: 'asc' }
+      });
+      dbMatachanaParts = await db.sparePart.findMany({
+        where: { isMatachana: true },
         orderBy: { name: 'asc' }
       });
     }
@@ -122,26 +174,35 @@ export async function POST(request: NextRequest) {
       usados
     } = body;
 
-    if (!name || !code) {
-      return NextResponse.json({ success: false, error: 'El nombre y código son obligatorios.' }, { status: 400 });
+    const finalCode = isMatachana ? codigoMatachana : code;
+    const finalName = isMatachana ? descripcion : name;
+
+    if (!finalName || !finalCode) {
+      return NextResponse.json({ success: false, error: 'El nombre/descripción y el código son obligatorios.' }, { status: 400 });
     }
 
     const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
     const scriptToken = process.env.GOOGLE_SCRIPT_TOKEN || '';
 
-    // If it's a general part and Google Sheets integration is enabled
-    if (!isMatachana && scriptUrl && scriptUrl.trim() !== '') {
+    if (scriptUrl && scriptUrl.trim() !== '') {
       try {
-        const response = await fetch(scriptUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: scriptToken,
-            action: 'create',
-            payload: {
+        const payload = isMatachana
+          ? {
               metodo: metodo || '',
-              code,
-              name,
+              metodo2: metodo2 || '',
+              correlativo: correlativo || '',
+              descripcion: descripcion || '',
+              codigoMatachana: codigoMatachana || '',
+              kit1: kit1 || '',
+              kit2: kit2 || '',
+              stock: Number(stock) || 0,
+              usados: Number(usados) || 0,
+              location: location || ''
+            }
+          : {
+              metodo: metodo || '',
+              code: finalCode,
+              name: finalName,
               repuesto: repuesto || '',
               codigoMarca: codigoMarca || '',
               marca1: marca1 || '',
@@ -150,7 +211,16 @@ export async function POST(request: NextRequest) {
               fotoPath: fotoPath || '',
               almacenado: almacenado || '',
               seccion: seccion || ''
-            }
+            };
+
+        const response = await fetch(scriptUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: scriptToken,
+            action: 'create',
+            sheet: isMatachana ? 'Rpts. Matchana' : 'Inventario',
+            payload
           })
         });
 
@@ -167,9 +237,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, error: `Error de red al conectar con Google Sheets: ${err.message}` }, { status: 500 });
       }
     } else {
-      // If doing local only, check for duplicate codes in local DB
       const existing = await db.sparePart.findUnique({
-        where: { code }
+        where: { code: finalCode }
       });
       if (existing) {
         return NextResponse.json({ success: false, error: 'Ya existe un repuesto con ese código.' }, { status: 400 });
@@ -178,9 +247,10 @@ export async function POST(request: NextRequest) {
 
     // Mirror / Upsert the record in the local DB so fallback is always updated
     const sparePart = await db.sparePart.upsert({
-      where: { code },
+      where: { code: finalCode },
       update: {
-        name,
+        name: finalName,
+        code: finalCode,
         stock: Number(stock) || 0,
         minStock: Number(minStock) || 0,
         price: price ? Number(price) : null,
@@ -204,8 +274,8 @@ export async function POST(request: NextRequest) {
         usados: Number(usados) || 0
       },
       create: {
-        name,
-        code,
+        name: finalName,
+        code: finalCode,
         stock: Number(stock) || 0,
         minStock: Number(minStock) || 0,
         price: price ? Number(price) : null,
@@ -235,4 +305,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
 
