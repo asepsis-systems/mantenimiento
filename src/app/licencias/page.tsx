@@ -175,6 +175,7 @@ export default function LicensesPage() {
   const [detailGarantia, setDetailGarantia] = useState('');
 
   const [newMachineName, setNewMachineName] = useState('');
+  const [selectedSedeFilter, setSelectedSedeFilter] = useState<'TODAS' | 'LIMA' | 'TRUJILLO'>('TODAS');
   const [machineError, setMachineError] = useState('');
 
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -1039,11 +1040,28 @@ export default function LicensesPage() {
     return !status.hasExpired && status.hasPending;
   }).length;
 
-  const filteredLicenses = licenses.filter((l) =>
-    l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    l.entity.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (l.code && l.code.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredLicenses = licenses.filter((l) => {
+    const matchesSearch =
+      l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      l.entity.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (l.code && l.code.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    if (!matchesSearch) return false;
+
+    if (selectedSedeFilter !== 'TODAS') {
+      const details = parseDetails(l.details);
+      let sede = (details.sede || '').toUpperCase().trim();
+      if (!sede) {
+        sede = (l.name || '').toUpperCase().includes('TRUJILLO') ? 'TRUJILLO' : 'LIMA';
+      }
+      
+      const isTrujillo = sede.includes('TRUJILLO');
+      if (selectedSedeFilter === 'TRUJILLO' && !isTrujillo) return false;
+      if (selectedSedeFilter === 'LIMA' && isTrujillo) return false;
+    }
+
+    return true;
+  });
 
   const normalizeMachineName = (name: string) =>
     name.toUpperCase().replace(/\s+/g, ' ').trim();
@@ -1063,6 +1081,14 @@ export default function LicensesPage() {
         (lic) => normalizeMachineName(lic.name || '') === normalizeMachineName(machineName)
       );
       return { machineName, license };
+    })
+    .filter((row) => {
+      if (selectedSedeFilter === 'TODAS') return true;
+      if (row.license) return true;
+      const isTrujillo = row.machineName.toUpperCase().includes('TRUJILLO');
+      if (selectedSedeFilter === 'TRUJILLO') return isTrujillo;
+      if (selectedSedeFilter === 'LIMA') return !isTrujillo;
+      return true;
     });
 
   const extraLicenseRows: DisplayRow[] = filteredLicenses
@@ -1690,17 +1716,31 @@ export default function LicensesPage() {
           </div>
         ) : (
           <>
-            <div className="mb-6 relative max-w-md">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                <Search className="w-4.5 h-4.5" />
+            <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
+              <div className="relative flex-1 w-full max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Search className="w-4.5 h-4.5" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Buscar registro por nombre, entidad o código..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 text-sm transition-all shadow-xs"
+                />
               </div>
-              <input
-                type="text"
-                placeholder="Buscar registro por nombre, entidad o código..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 text-sm transition-all"
-              />
+
+              <div className="w-full sm:w-56">
+                <select
+                  value={selectedSedeFilter}
+                  onChange={(e) => setSelectedSedeFilter(e.target.value as any)}
+                  className="w-full bg-white border border-slate-200 rounded-2xl py-3 px-4 text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 text-sm font-semibold transition-all cursor-pointer shadow-xs"
+                >
+                  <option value="TODAS">📍 SEDE: TODAS</option>
+                  <option value="LIMA">📍 LIMA</option>
+                  <option value="TRUJILLO">📍 TRUJILLO</option>
+                </select>
+              </div>
             </div>
 
             <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs w-full max-w-none">
@@ -1733,7 +1773,16 @@ export default function LicensesPage() {
                           return (
                             <tr key={`placeholder-${row.machineName}`} className="hover:bg-slate-50/50 transition-colors">
                               <td className="p-4 text-left align-top font-mono text-slate-700">{index + 1}</td>
-                              <td className="p-4 text-left align-top font-semibold text-slate-800">{row.machineName}</td>
+                              <td className="p-4 text-left align-top font-semibold text-slate-800">
+                                <div>{row.machineName}</div>
+                                <span className={`inline-flex items-center px-2 py-0.5 mt-1.5 text-[9px] font-bold rounded-md border ${
+                                  row.machineName.toUpperCase().includes('TRUJILLO')
+                                    ? 'bg-purple-50 border-purple-200/50 text-purple-700'
+                                    : 'bg-sky-50 border-sky-200/50 text-sky-700'
+                                }`}>
+                                  {row.machineName.toUpperCase().includes('TRUJILLO') ? 'TRUJILLO' : 'LIMA'}
+                                </span>
+                              </td>
                               <td className="p-4 text-left align-top text-slate-600">
                                 <button
                                   type="button"
@@ -1788,7 +1837,26 @@ export default function LicensesPage() {
                         return (
                           <tr key={lic.id} className="hover:bg-slate-50/50 transition-colors">
                             <td className="p-4 text-left align-top font-mono text-slate-700">{index + 1}</td>
-                            <td className="p-4 text-left align-top font-semibold text-slate-800">{lic.name || '-'}</td>
+                            <td className="p-4 text-left align-top font-semibold text-slate-800">
+                               <div>{lic.name || '-'}</div>
+                               {(() => {
+                                 const details = parseDetails(lic.details);
+                                 let sede = (details.sede || '').toUpperCase().trim();
+                                 if (!sede) {
+                                   sede = (lic.name || '').toUpperCase().includes('TRUJILLO') ? 'TRUJILLO' : 'LIMA';
+                                 }
+                                 const isTrujillo = sede.includes('TRUJILLO');
+                                 return (
+                                   <span className={`inline-flex items-center px-2 py-0.5 mt-1.5 text-[9px] font-bold rounded-md border ${
+                                     isTrujillo
+                                       ? 'bg-purple-50 border-purple-200/50 text-purple-700'
+                                       : 'bg-sky-50 border-sky-200/50 text-sky-700'
+                                   }`}>
+                                     {isTrujillo ? 'TRUJILLO' : 'LIMA'}
+                                   </span>
+                                 );
+                               })()}
+                             </td>
                             <td className="p-4 text-left align-top text-slate-600">
                               <button
                                 type="button"
