@@ -1102,19 +1102,19 @@ export default function LicensesPage() {
           <nav className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-2xl p-1 shrink-0">
             <button
               onClick={() => router.push('/')}
-              className="py-1.5 px-3.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all"
+              className="py-1.5 px-4.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-all cursor-pointer"
             >
               Reporte Semanal
             </button>
             <button
               onClick={() => router.push('/repuestos')}
-              className="py-1.5 px-3.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all"
+              className="py-1.5 px-4.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-all cursor-pointer"
             >
               Repuestos
             </button>
             <button
               onClick={() => router.push('/licencias')}
-              className="py-1.5 px-3.5 rounded-xl text-xs font-semibold text-white bg-white/10 transition-all"
+              className="py-1.5 px-4.5 rounded-xl text-sm font-bold text-white bg-white/10 transition-all cursor-pointer hover:bg-white/15"
             >
               Registros Generales
             </button>
@@ -1159,7 +1159,7 @@ export default function LicensesPage() {
             <p className="text-sm text-slate-500">Control de vigencia, fechas de vencimiento y renovación de documentos de equipos y planta.</p>
           </div>
 
-          {user?.role !== 'VIEWER' && currentSection === 'EQUIPOS' && (
+          {user?.role !== 'VIEWER' && (
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={openCreateMachineModal}
@@ -1245,7 +1245,7 @@ export default function LicensesPage() {
           </div>
         </div>
 
-                {currentSection === 'ELÉCTRICO' ? (
+                {(currentSection as string) === 'ELÉCTRICO_OLD_UNUSED' ? (
           <div 
             className="space-y-6"
             onDragOver={handleDragOver}
@@ -1704,20 +1704,20 @@ export default function LicensesPage() {
             </div>
 
             <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs w-full max-w-none">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto overflow-y-auto max-h-[68vh]">
                 <table className="w-full min-w-[1100px] text-left border-collapse text-sm">
-                  <thead className="bg-[#0f172a] text-white shadow-sm">
+                  <thead className="bg-[#0f172a] text-white shadow-sm sticky top-0 z-20">
                     <tr className="text-[10px] tracking-[0.24em] uppercase font-bold border-b border-slate-800">
-                      <th className="p-4 text-center border-r border-white/5">N°</th>
-                      <th className="p-4 border-r border-white/5">NOMBRE/MAQUINA</th>
-                      <th className="p-4 border-r border-white/5">DETALLES</th>
-                      <th className="p-4 border-r border-white/5">CERTIFICADO</th>
-                      <th className="p-4 border-r border-white/5">PROTOCOLO</th>
-                      <th className="p-4 border-r border-white/5">INFORME TÉCNICO</th>
-                      <th className="p-4 text-center border-r border-white/5">FACTURA</th>
-                      <th className="p-4 text-center border-r border-white/5">PRESUPUESTO</th>
-                      <th className="p-4 text-center border-r border-white/5">CHECK LIST</th>
-                      <th className="p-4 text-center w-32">Acciones</th>
+                      <th className="p-4 text-center border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">N°</th>
+                      <th className="p-4 border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">NOMBRE/MAQUINA</th>
+                      <th className="p-4 border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">DETALLES</th>
+                      <th className="p-4 border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">CERTIFICADO</th>
+                      <th className="p-4 border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">PROTOCOLO</th>
+                      <th className="p-4 border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">INFORME TÉCNICO</th>
+                      <th className="p-4 text-center border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">FACTURA</th>
+                      <th className="p-4 text-center border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">PRESUPUESTO</th>
+                      <th className="p-4 text-center border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">CHECK LIST</th>
+                      <th className="p-4 text-center w-32 sticky top-0 bg-[#0f172a] z-20">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">

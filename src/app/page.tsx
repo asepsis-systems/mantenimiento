@@ -1906,19 +1906,19 @@ export default function Dashboard() {
           <nav className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-2xl p-1 shrink-0">
             <button
               onClick={() => router.push('/')}
-              className="py-1.5 px-4 rounded-xl text-xs font-bold text-white bg-white/10 transition-all cursor-pointer hover:bg-white/15"
+              className="py-1.5 px-4.5 rounded-xl text-sm font-bold text-white bg-white/10 transition-all cursor-pointer hover:bg-white/15"
             >
               Reporte Semanal
             </button>
             <button
               onClick={() => router.push('/repuestos')}
-              className="py-1.5 px-4 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer"
+              className="py-1.5 px-4.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-all cursor-pointer"
             >
               Repuestos
             </button>
             <button
               onClick={() => router.push('/licencias')}
-              className="py-1.5 px-4 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer"
+              className="py-1.5 px-4.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-all cursor-pointer"
             >
               Registros Generales
             </button>
