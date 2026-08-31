@@ -233,13 +233,20 @@ export default function Dashboard() {
   const [uploadingTaskId, setUploadingTaskId] = useState<string | null>(null);
   const [isMultiUploadOpen, setIsMultiUploadOpen] = useState(false);
   const [multiUploadTaskId, setMultiUploadTaskId] = useState<string | null>(null);
-  const [multiUploadSlots, setMultiUploadSlots] = useState<{ name: string, file: File | null }[]>([
-    { name: 'Certificado 1', file: null },
-    { name: 'Certificado 2', file: null },
-    { name: 'Certificado 3', file: null },
-    { name: 'Certificado 4', file: null },
+  const [multiUploadSlots, setMultiUploadSlots] = useState<{
+    name: string;
+    file: File | null;
+    alsoSaveInLicenses?: boolean;
+    selectedLicenseId?: string;
+    selectedDocType?: string;
+  }[]>([
+    { name: 'Certificado 1', file: null, alsoSaveInLicenses: false, selectedLicenseId: '', selectedDocType: 'certificado' },
+    { name: 'Certificado 2', file: null, alsoSaveInLicenses: false, selectedLicenseId: '', selectedDocType: 'certificado' },
+    { name: 'Certificado 3', file: null, alsoSaveInLicenses: false, selectedLicenseId: '', selectedDocType: 'certificado' },
+    { name: 'Certificado 4', file: null, alsoSaveInLicenses: false, selectedLicenseId: '', selectedDocType: 'certificado' },
   ]);
   const [multiUploadHistoryFiles, setMultiUploadHistoryFiles] = useState<any[]>([]);
+  const [allLicenses, setAllLicenses] = useState<any[]>([]);
   
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmDeleteRespId, setConfirmDeleteRespId] = useState<string | null>(null);
@@ -304,13 +311,15 @@ export default function Dashboard() {
       const meData = await meRes.json();
       setUser(meData.user);
 
-      const [tareasRes, respRes] = await Promise.all([
+      const [tareasRes, respRes, licRes] = await Promise.all([
         fetch('/api/tareas'),
-        fetch('/api/responsables')
+        fetch('/api/responsables'),
+        fetch('/api/licencias?carpetaId=all')
       ]);
 
       const tareasData = await tareasRes.json();
       const respData = await respRes.json();
+      const licData = await licRes.json();
 
       if (tareasData.success) {
         setTareas(tareasData.tareas);
@@ -322,6 +331,10 @@ export default function Dashboard() {
         setResponsables(respData.responsables);
       } else {
         setError(respData.error || 'Error al cargar responsables');
+      }
+
+      if (licData.success) {
+        setAllLicenses(licData.licenses || []);
       }
     } catch (err) {
       setError('Error de comunicación con el servidor');
@@ -381,11 +394,19 @@ export default function Dashboard() {
 
   const openMultiUploadModal = async (tareaId: string) => {
     setMultiUploadTaskId(tareaId);
+    
+    // Buscar la tarea para obtener su equipo/máquina asociado
+    const currentTarea = tareas.find(t => t.id === tareaId);
+    const matchedLicense = allLicenses.find(l => 
+      (l.name || '').toLowerCase().replace(/[\s-_]/g, '') === (currentTarea?.equipo || '').toLowerCase().replace(/[\s-_]/g, '')
+    );
+    const defaultLicenseId = matchedLicense ? matchedLicense.id : '';
+
     setMultiUploadSlots([
-      { name: 'Certificado 1', file: null },
-      { name: 'Certificado 2', file: null },
-      { name: 'Certificado 3', file: null },
-      { name: 'Certificado 4', file: null },
+      { name: 'Certificado 1', file: null, alsoSaveInLicenses: false, selectedLicenseId: defaultLicenseId, selectedDocType: 'certificado' },
+      { name: 'Certificado 2', file: null, alsoSaveInLicenses: false, selectedLicenseId: defaultLicenseId, selectedDocType: 'certificado' },
+      { name: 'Certificado 3', file: null, alsoSaveInLicenses: false, selectedLicenseId: defaultLicenseId, selectedDocType: 'certificado' },
+      { name: 'Certificado 4', file: null, alsoSaveInLicenses: false, selectedLicenseId: defaultLicenseId, selectedDocType: 'certificado' },
     ]);
     setMultiUploadHistoryFiles([]);
     setIsMultiUploadOpen(true);
@@ -638,6 +659,28 @@ export default function Dashboard() {
           const data = await res.json();
           throw new Error(data.error || 'Error subiendo uno de los archivos');
         }
+
+        // --- DUPLICAR EN REGISTROS GENERALES (MTO LICENCIAS) ---
+        if (slot.alsoSaveInLicenses && slot.selectedLicenseId) {
+          try {
+            const licenseFormData = new FormData();
+            licenseFormData.append('file', slot.file);
+            licenseFormData.append('id', slot.selectedLicenseId);
+            licenseFormData.append('docType', slot.selectedDocType || 'certificado');
+
+            const licRes = await fetch('/api/licencias/upload', {
+              method: 'POST',
+              body: licenseFormData,
+            });
+
+            if (!licRes.ok) {
+              const licData = await licRes.json();
+              console.error(`Error al duplicar archivo ${slot.name} en Registros Generales:`, licData.error);
+            }
+          } catch (licErr) {
+            console.error(`Error de red al duplicar archivo ${slot.name} en Registros Generales:`, licErr);
+          }
+        }
       }
 
       // Refresh data
@@ -647,7 +690,7 @@ export default function Dashboard() {
         setTareas(prev => prev.map(t => t.id === multiUploadTaskId ? data.tarea : t));
       }
 
-      showFeedback('success', 'Todos los archivos han sido cargados.');
+      showFeedback('success', 'Todos los archivos han sido cargados (y duplicados si se seleccionó la opción).');
       setIsMultiUploadOpen(false);
     } catch (err: any) {
       showFeedback('error', err.message || 'Error en la subida múltiple');
@@ -3656,6 +3699,80 @@ export default function Dashboard() {
                   {slot.file && (
                     <div className="mt-1 text-[9px] text-slate-400 truncate">
                       Archivo: {slot.file.name}
+                    </div>
+                  )}
+
+                  {/* Opción de guardar en Registros Generales */}
+                  {slot.file && (
+                    <div className={`mt-3 pt-2.5 border-t border-dashed ${
+                      isPremiumDarkMode ? 'border-slate-800/80' : 'border-slate-200'
+                    }`}>
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={slot.alsoSaveInLicenses || false}
+                          onChange={(e) => {
+                            const newSlots = [...multiUploadSlots];
+                            newSlots[idx].alsoSaveInLicenses = e.target.checked;
+                            setMultiUploadSlots(newSlots);
+                          }}
+                          className="rounded border-slate-300 dark:border-slate-700 text-brand-600 focus:ring-brand-500 w-3.5 h-3.5"
+                        />
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                          ¿También deseas guardarlo en Registros Generales?
+                        </span>
+                      </label>
+
+                      {slot.alsoSaveInLicenses && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2">
+                          <div>
+                            <label className="text-[9px] font-bold text-slate-400 block mb-0.5">Seleccionar Equipo / Máquina</label>
+                            <select
+                              value={slot.selectedLicenseId || ''}
+                              onChange={(e) => {
+                                const newSlots = [...multiUploadSlots];
+                                newSlots[idx].selectedLicenseId = e.target.value;
+                                setMultiUploadSlots(newSlots);
+                              }}
+                              className={`w-full text-[10px] rounded-lg px-2 py-1.5 border outline-none font-medium ${
+                                isPremiumDarkMode 
+                                  ? 'bg-slate-950 border-slate-800 text-slate-200' 
+                                  : 'bg-white border-slate-200 text-slate-800'
+                              }`}
+                            >
+                              <option value="">-- Seleccionar Equipo --</option>
+                              {allLicenses.map((lic: any) => (
+                                <option key={lic.id} value={lic.id}>
+                                  {lic.name} ({lic.entity})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[9px] font-bold text-slate-400 block mb-0.5">Seleccionar Categoría (Carpeta)</label>
+                            <select
+                              value={slot.selectedDocType || 'certificado'}
+                              onChange={(e) => {
+                                const newSlots = [...multiUploadSlots];
+                                newSlots[idx].selectedDocType = e.target.value;
+                                setMultiUploadSlots(newSlots);
+                              }}
+                              className={`w-full text-[10px] rounded-lg px-2 py-1.5 border outline-none font-medium ${
+                                isPremiumDarkMode 
+                                  ? 'bg-slate-950 border-slate-800 text-slate-200' 
+                                  : 'bg-white border-slate-200 text-slate-800'
+                              }`}
+                            >
+                              <option value="certificado">CERTIFICADO</option>
+                              <option value="protocolo">PROTOCOLO</option>
+                              <option value="informeTecnico">INFORME TÉCNICO</option>
+                              <option value="factura">FACTURA</option>
+                              <option value="presupuesto">PRESUPUESTO</option>
+                              <option value="checklist">CHECK LIST</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                   {matchedExistingFile && (
