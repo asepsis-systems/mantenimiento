@@ -176,6 +176,32 @@ const templates: TemplateConfig[] = [
   }
 ];
 
+function addMonths(dateStr: string, months: number): string {
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1; // 0-indexed
+  const day = parseInt(parts[2], 10);
+
+  const date = new Date(year, month, day);
+
+  if (months === -1) {
+    date.setDate(date.getDate() + 7);
+  } else if (months === -2) {
+    date.setDate(date.getDate() + 15);
+  } else {
+    date.setDate(1);
+    date.setMonth(date.getMonth() + months);
+    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    date.setDate(Math.min(day, lastDay));
+  }
+
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -269,6 +295,57 @@ export async function GET(request: NextRequest) {
     // 9. Escribir el buffer y retornar el archivo como descarga directa
     const buffer = await workbook.xlsx.writeBuffer();
     const fileName = `Informe_Conformidad_${tarea.equipo?.replace(/\s+/g, '_')}_${fechaFormateada.replace(/\//g, '-')}.xlsx`;
+
+    // GUARDADO AUTOMÁTICO EN REGISTROS GENERALES -> EQUIPOS -> INFORME TÉCNICO
+    try {
+      const licenses = await db.license.findMany();
+      const normEquipo = normalizeString(tarea.equipo || '');
+      
+      let matchingLicense = licenses.find(l => normalizeString(l.name) === normEquipo);
+      if (!matchingLicense && normEquipo) {
+        matchingLicense = licenses.find(l => {
+          const normName = normalizeString(l.name);
+          return normName.includes(normEquipo) || normEquipo.includes(normName);
+        });
+      }
+
+      if (matchingLicense) {
+        const destDir = path.join(process.cwd(), 'uploads', 'licencias');
+        if (!fs.existsSync(destDir)) {
+          fs.mkdirSync(destDir, { recursive: true });
+        }
+
+        const destFileName = `${matchingLicense.id}-informeTecnico.xlsx`;
+        const destFilePath = path.join(destDir, destFileName);
+        
+        fs.writeFileSync(destFilePath, Buffer.from(buffer));
+
+        let expiryDate = '';
+        if (tarea.fechaCulminado) {
+          expiryDate = addMonths(tarea.fechaCulminado, 12);
+        } else {
+          const today = new Date();
+          const yyyy = today.getFullYear();
+          const mm = String(today.getMonth() + 1).padStart(2, '0');
+          const dd = String(today.getDate()).padStart(2, '0');
+          expiryDate = addMonths(`${yyyy}-${mm}-${dd}`, 12);
+        }
+
+        await db.license.update({
+          where: { id: matchingLicense.id },
+          data: {
+            archivoNombreInformeTecnico: fileName,
+            archivoPathInformeTecnico: `uploads/licencias/${destFileName}`,
+            vencimientoInformeTecnico: expiryDate
+          }
+        });
+        console.log(`[AUTO-SAVE] Guardado automático de informe de conformidad Excel para el equipo: ${matchingLicense.name}`);
+      } else {
+        console.log(`[AUTO-SAVE] No se encontró máquina coincidente en Registros Generales para: ${tarea.equipo}`);
+      }
+    } catch (saveErr) {
+      console.error('[AUTO-SAVE] Error al intentar guardar automáticamente en Registros Generales:', saveErr);
+    }
 
     return new NextResponse(buffer, {
       status: 200,
