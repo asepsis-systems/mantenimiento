@@ -143,6 +143,33 @@ const parseDetails = (details: string | null): Record<string, string> => {
   }
 };
 
+export const excelMachineData: Record<string, Record<string, string>> = {
+  'OE 4XL 1': { equipo: '4XL 1', marca: '3M', modelo: '400 DGP', serie: '522415', capacidad: '115L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
+  'OE 5XL 2': { equipo: '5XL 2', marca: '3M', modelo: '487 AGP', serie: '701573', capacidad: '136L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
+  'OE 4XL 3': { equipo: '4XL 3', marca: '3M', modelo: '400 DGP', serie: '522048', capacidad: '115L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
+  'OE 5XL 4': { equipo: '5XL 4', marca: '3M', modelo: '487 AGP', serie: '701922', capacidad: '136L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
+  'OE 5XL 5': { equipo: '5XL 5', marca: '3M', modelo: '487 AGP', serie: '701643', capacidad: '136L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
+  'OE 5XL 6': { equipo: '5XL 6', marca: '3M', modelo: '487 AGP', serie: '701744', capacidad: '136L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
+  'OE 8XL 7': { equipo: '8XL 7', marca: '3M', modelo: '790 AGP', serie: '300578', capacidad: '223L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
+  'OE 8XL 8': { equipo: '8XL 8', marca: '3M', modelo: '790 BGP', serie: '350119', capacidad: '223L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
+  'OE 4XL 9': { equipo: '4XL 9', marca: '3M', modelo: '400 DGP', serie: '522822', capacidad: '115L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
+  'OE 5XL 10': { equipo: '5XL 10', marca: '3M', modelo: '487 BGP', serie: '780094', capacidad: '136L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
+  'OE 4 XL': { equipo: '4 XL', marca: '3M', modelo: '400 DGP', serie: '522954', capacidad: '115L', estado: 'OPERATIVO', sede: 'Trujillo', procesos: '', garantia: '' },
+  'OE 5 XL': { equipo: '5 XL', marca: '3M', modelo: '487 BGP', serie: '780057', capacidad: '136L', estado: 'OPERATIVO', sede: 'Trujillo', procesos: '', garantia: '' },
+  'AUTOCLAVE V1': { equipo: 'AUTOCLAVE V1', marca: 'MATACHANA', modelo: '1012V -1', serie: 'SN E-32514', capacidad: '893L', estado: 'OPERATIVO', sede: 'Lima', procesos: '5 a 6', garantia: '' },
+  'AUTOCLAVE V2': { equipo: 'AUTOCLAVE V2', marca: 'MATACHANA', modelo: '1012V -1', serie: 'SN E-33890', capacidad: '893L', estado: 'OPERATIVO', sede: 'Lima', procesos: '5 a 6', garantia: '' },
+  'AUTOCLAVE V3': { equipo: 'AUTOCLAVE V3', marca: 'MATACHANA', modelo: '1012V -1', serie: 'SN E-35152', capacidad: '893L', estado: 'OPERATIVO', sede: 'Lima', procesos: '6 a 7', garantia: '' },
+  'AUTOCLAVE V4': { equipo: 'AUTOCLAVE V4', marca: 'MATACHANA', modelo: '820 L1', serie: '1520283', capacidad: '820L', estado: 'OPERATIVO', sede: 'Lima', procesos: '3 a 5', garantia: '' },
+  'AUTOCLAVE V5': { equipo: 'AUTOCLAVE V5', marca: 'MATACHANA', modelo: '490 L2', serie: '559410', capacidad: '593L', estado: 'OPERATIVO', sede: 'Lima', procesos: '3 a 5', garantia: '' },
+  'AUTOCLAVE V6': { equipo: 'AUTOCLAVE V6', marca: 'MATACHANA', modelo: '637 L1', serie: '1358549', capacidad: '760L', estado: 'OPERATIVO', sede: 'Lima', procesos: '3 a 5', garantia: '' },
+  'PLASMA P1': { equipo: 'PLASMA P1', marca: 'MATACHANA', modelo: '130HPO-2', serie: 'E-31216', capacidad: '145L', estado: 'OPERATIVO', sede: 'Lima', procesos: '3 a 4', garantia: '' },
+  'PLASMA P2': { equipo: 'PLASMA P2', marca: 'MATACHANA', modelo: '130HPO-2', serie: 'E-31712', capacidad: '145L', estado: 'OPERATIVO', sede: 'Lima', procesos: '3 a 4', garantia: 'Garantía Medstep' },
+  'PLASMA P3': { equipo: 'PLASMA P3', marca: 'MATACHANA', modelo: '130HPO-2', serie: 'E-33085', capacidad: '145L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
+  'FORMALDEHIDO F01': { equipo: 'FORMALDEHIDO F01', marca: 'MATACHANA', modelo: '130LF-1', serie: 'E-29117', capacidad: '135L', estado: 'OPERATIVO', sede: 'Lima', procesos: '1', garantia: '' },
+  'AUTOCLAVE V-2': { equipo: 'AUTOCLAVE V-2', marca: 'MATACHANA', modelo: '490 L2', serie: '559413', capacidad: '593L', estado: 'OPERATIVO', sede: 'Trujillo', procesos: '1', garantia: '' },
+  'AUTOCLAVE V-5': { equipo: 'AUTOCLAVE V-5', marca: 'MATACHANA', modelo: 'SC500 E-2', serie: 'E-28213', capacidad: '300L', estado: 'OPERATIVO', sede: 'Trujillo', procesos: '1', garantia: '' },
+};
+
 export default function LicensesPage() {
   const router = useRouter();
   const [licenses, setLicenses] = useState<License[]>([]);
@@ -542,6 +569,10 @@ export default function LicensesPage() {
   }, []);
 
   const openCreateModal = (defaultName = '') => {
+    const normName = normalizeMachineName(defaultName);
+    const matchedKey = Object.keys(excelMachineData).find(k => normalizeMachineName(k) === normName);
+    const initialData = matchedKey ? excelMachineData[matchedKey] : {};
+
     setEditingId(null);
     setFormName(defaultName || currentSection);
     setFormEntity('');
@@ -549,15 +580,15 @@ export default function LicensesPage() {
     setFormIssueDate('');
     setFormExpiryDate('');
     setFormStatus('VIGENTE');
-    setDetailEquipo(defaultName);
-    setDetailMarca('');
-    setDetailModelo('');
-    setDetailSerie('');
-    setDetailCapacidad('');
-    setDetailEstado('');
-    setDetailSede('');
-    setDetailProcesos('');
-    setDetailGarantia('');
+    setDetailEquipo(initialData.equipo || defaultName);
+    setDetailMarca(initialData.marca || '');
+    setDetailModelo(initialData.modelo || '');
+    setDetailSerie(initialData.serie || '');
+    setDetailCapacidad(initialData.capacidad || '');
+    setDetailEstado(initialData.estado || '');
+    setDetailSede(initialData.sede || '');
+    setDetailProcesos(initialData.procesos || '');
+    setDetailGarantia(initialData.garantia || '');
     setError('');
     setIsModalOpen(true);
   };
@@ -706,6 +737,10 @@ export default function LicensesPage() {
       // fetch files for this license
       if (lic.id) fetchLicenseFiles(lic.id);
     } else {
+      const normName = normalizeMachineName(machineName);
+      const matchedKey = Object.keys(excelMachineData).find(k => normalizeMachineName(k) === normName);
+      const initialData = matchedKey ? excelMachineData[matchedKey] : null;
+
       const dummyLicense: License = {
         id: '',
         name: machineName,
@@ -714,7 +749,7 @@ export default function LicensesPage() {
         issueDate: '',
         expiryDate: '',
         status: 'EN_TRAMITE',
-        details: null,
+        details: initialData ? JSON.stringify(initialData) : null,
         createdAt: '',
         updatedAt: '',
         archivoNombre: null,
@@ -823,22 +858,24 @@ export default function LicensesPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formEntity.trim() || !formIssueDate.trim() || !formExpiryDate.trim()) {
-      setError('Entidad, Emisión y Vencimiento son obligatorios.');
-      return;
-    }
 
     setActionLoading(true);
     setError('');
 
     try {
       const carpetaId = await ensureSectionFolderId();
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = now.getFullYear();
+      const todayStr = `${dd}/${mm}/${yyyy}`;
+      
       const payload = {
         name: formName.trim() || currentSection,
-        entity: formEntity.trim(),
-        code: formCode.trim() || null,
-        issueDate: formIssueDate.trim(),
-        expiryDate: formExpiryDate.trim(),
+        entity: formEntity.trim() || 'POR ESPECIFICAR',
+        code: formCode.trim() || 'S/N',
+        issueDate: formIssueDate.trim() || todayStr,
+        expiryDate: formExpiryDate.trim() || todayStr,
         status: formStatus,
         details: JSON.stringify({
           equipo: detailEquipo.trim(),
@@ -2014,53 +2051,6 @@ export default function LicensesPage() {
               </div>
             )}
             <form onSubmit={handleSave} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Entidad Emisora</label>
-                  <input
-                    type="text"
-                    value={formEntity}
-                    onChange={(e) => setFormEntity(e.target.value)}
-                    placeholder="ej. Diresa / Municipalidad"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
-                    required
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">N° de Documento</label>
-                  <input
-                    type="text"
-                    value={formCode}
-                    onChange={(e) => setFormCode(e.target.value)}
-                    placeholder="LIC-2026-098"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 font-mono"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">F. de Emisión</label>
-                  <input
-                    type="text"
-                    value={formIssueDate}
-                    onChange={(e) => setFormIssueDate(e.target.value)}
-                    placeholder="DD/MM/AAAA"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 font-mono"
-                    required
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">F. de Vencimiento</label>
-                  <input
-                    type="text"
-                    value={formExpiryDate}
-                    onChange={(e) => setFormExpiryDate(e.target.value)}
-                    placeholder="DD/MM/AAAA"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 font-mono"
-                    required
-                  />
-                </div>
-              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Equipo</label>
@@ -2149,39 +2139,6 @@ export default function LicensesPage() {
                   />
                 </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Garantía/Contrato</label>
-                <input
-                  type="text"
-                  value={detailGarantia}
-                  onChange={(e) => setDetailGarantia(e.target.value)}
-                  placeholder="Garantía/Contrato"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Estado de Vigencia</label>
-                  <select
-                    value={formStatus}
-                    onChange={(e) => setFormStatus(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
-                  >
-                    <option value="VIGENTE">VIGENTE</option>
-                    <option value="VENCIDO">VENCIDO</option>
-                    <option value="EN_TRAMITE">EN TRÁMITE</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Sección</label>
-                  <input
-                    type="text"
-                    value={currentSection}
-                    disabled
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-500 text-sm focus:outline-none"
-                  />
-                </div>
-              </div>
               <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
                 <button
                   type="button"
@@ -2220,76 +2177,6 @@ export default function LicensesPage() {
               </button>
             </div>
             <form onSubmit={handleDocUpload} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Entidad Emisora</label>
-                  <input
-                    type="text"
-                    value={uploadEntity}
-                    onChange={(e) => setUploadEntity(e.target.value)}
-                    placeholder="ej. Diresa / Municipalidad"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
-                    required
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">N° de Documento</label>
-                  <input
-                    type="text"
-                    value={uploadCode}
-                    onChange={(e) => setUploadCode(e.target.value)}
-                    placeholder="LIC-2026-098"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 font-mono"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">F. de Emisión</label>
-                  <input
-                    type="text"
-                    value={uploadIssueDate}
-                    onChange={(e) => setUploadIssueDate(e.target.value)}
-                    placeholder="DD/MM/AAAA"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 font-mono"
-                    required
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">F. de Vencimiento</label>
-                  <input
-                    type="text"
-                    value={uploadExpiryDate}
-                    onChange={(e) => setUploadExpiryDate(e.target.value)}
-                    placeholder="DD/MM/AAAA"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 font-mono"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Estado de Vigencia</label>
-                  <select
-                    value={uploadStatus}
-                    onChange={(e) => setUploadStatus(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
-                  >
-                    <option value="VIGENTE">VIGENTE</option>
-                    <option value="VENCIDO">VENCIDO</option>
-                    <option value="EN_TRAMITE">EN TRÁMITE</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Sección</label>
-                  <input
-                    type="text"
-                    value={currentSection}
-                    disabled
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-500 text-sm focus:outline-none"
-                  />
-                </div>
-              </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Seleccionar Archivo (PDF, JPG, PNG)</label>
                 <input
