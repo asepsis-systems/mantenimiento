@@ -202,73 +202,44 @@ function addMonths(dateStr: string, months: number): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-export async function GET(request: NextRequest) {
+export async function generateAndSaveExcelConformidad(id: string): Promise<{ success: boolean; error?: string; fileName?: string; buffer?: Buffer }> {
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-
-    if (!id) {
-      return NextResponse.json({ success: false, error: 'ID de tarea no especificado.' }, { status: 400 });
-    }
-
-    // 1. Obtener la tarea de la base de datos
     const tarea = await db.tarea.findUnique({
       where: { id }
     });
 
     if (!tarea) {
-      return NextResponse.json({ success: false, error: 'Tarea no encontrada.' }, { status: 404 });
+      return { success: false, error: 'Tarea no encontrada.' };
     }
 
-    // 2. VALIDACIÓN ESTRICTA: El archivo Excel debe generarse ÚNICAMENTE para mantenimientos preventivos
     const tipoMantenimiento = (tarea.tipo || '').toUpperCase();
     if (tipoMantenimiento !== 'PREVENTIVO') {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'El informe de conformidad en Excel únicamente se genera para mantenimientos de tipo PREVENTIVO.' 
-      }, { status: 400 });
+      return { success: false, error: 'Únicamente para mantenimientos preventivos.' };
     }
 
-    // 3. VALIDACIÓN ESTRICTA DE FRECUENCIA ANUAL: Solo frecuencia: 12 meses
     if (Number(tarea.frecuenciaMeses) !== 12) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'El informe de conformidad en Excel únicamente se genera para mantenimientos anuales (frecuencia: 12 meses).' 
-      }, { status: 400 });
+      return { success: false, error: 'Únicamente para frecuencia de 12 meses.' };
     }
 
-    // 4. Buscar plantilla configurada para el equipo
     const config = templates.find((t) => t.matches(tarea.equipo || ''));
     if (!config) {
-      return NextResponse.json({ 
-        success: false, 
-        error: `No se encuentra configurada una plantilla de conformidad en Excel para el equipo: ${tarea.equipo || 'Sin Nombre'}.` 
-      }, { status: 400 });
+      return { success: false, error: `No se encuentra plantilla configurada para el equipo: ${tarea.equipo}` };
     }
 
     if (!fs.existsSync(config.templatePath)) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Archivo de plantilla física no encontrado en el servidor.' 
-      }, { status: 500 });
+      return { success: false, error: 'Archivo de plantilla física no encontrado.' };
     }
 
-    // 5. Cargar la plantilla nativa usando ExcelJS
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(config.templatePath);
 
     const sheet = workbook.getWorksheet(config.sheetToUse);
     if (!sheet) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'La hoja de trabajo de la plantilla seleccionada no pudo ser localizada.' 
-      }, { status: 500 });
+      return { success: false, error: 'Hoja de plantilla no encontrada.' };
     }
 
-    // Asegurar que se visualicen las líneas de cuadrícula
     sheet.views = [{ showGridLines: true }];
 
-    // 6. Formatear la fecha para el reporte (de YYYY-MM-DD a DD/MM/YYYY)
     let fechaFormateada = '';
     if (tarea.fechaCulminado) {
       const parts = tarea.fechaCulminado.split('-');
@@ -281,10 +252,8 @@ export async function GET(request: NextRequest) {
       fechaFormateada = tarea.fecha || new Date().toLocaleDateString('es-PE', { year: 'numeric', month: '2-digit', day: '2-digit' });
     }
 
-    // 7. Rellenar dinámicamente según la configuración de la plantilla
     config.fill(sheet, tarea, tarea.equipo || '', fechaFormateada, workbook);
 
-    // 8. Limpieza estricta: Eliminar el resto de hojas innecesarias y renombrar la de interés a "Conformidad"
     workbook.worksheets.forEach((ws) => {
       if (ws.name !== config.sheetToUse) {
         workbook.removeWorksheet(ws.id);
@@ -292,65 +261,91 @@ export async function GET(request: NextRequest) {
     });
     sheet.name = 'Conformidad';
 
-    // 9. Escribir el buffer y retornar el archivo como descarga directa
     const buffer = await workbook.xlsx.writeBuffer();
     const fileName = `Informe_Conformidad_${tarea.equipo?.replace(/\s+/g, '_')}_${fechaFormateada.replace(/\//g, '-')}.xlsx`;
 
-    // GUARDADO AUTOMÁTICO EN REGISTROS GENERALES -> EQUIPOS -> INFORME TÉCNICO
-    try {
-      const licenses = await db.license.findMany();
-      const normEquipo = normalizeString(tarea.equipo || '');
-      
-      let matchingLicense = licenses.find(l => normalizeString(l.name) === normEquipo);
-      if (!matchingLicense && normEquipo) {
-        matchingLicense = licenses.find(l => {
-          const normName = normalizeString(l.name);
-          return normName.includes(normEquipo) || normEquipo.includes(normName);
-        });
-      }
-
-      if (matchingLicense) {
-        const destDir = path.join(process.cwd(), 'uploads', 'licencias');
-        if (!fs.existsSync(destDir)) {
-          fs.mkdirSync(destDir, { recursive: true });
-        }
-
-        const destFileName = `${matchingLicense.id}-informeTecnico.xlsx`;
-        const destFilePath = path.join(destDir, destFileName);
-        
-        fs.writeFileSync(destFilePath, Buffer.from(buffer));
-
-        let expiryDate = '';
-        if (tarea.fechaCulminado) {
-          expiryDate = addMonths(tarea.fechaCulminado, 12);
-        } else {
-          const today = new Date();
-          const yyyy = today.getFullYear();
-          const mm = String(today.getMonth() + 1).padStart(2, '0');
-          const dd = String(today.getDate()).padStart(2, '0');
-          expiryDate = addMonths(`${yyyy}-${mm}-${dd}`, 12);
-        }
-
-        await db.license.update({
-          where: { id: matchingLicense.id },
-          data: {
-            archivoNombreInformeTecnico: fileName,
-            archivoPathInformeTecnico: `uploads/licencias/${destFileName}`,
-            vencimientoInformeTecnico: expiryDate
-          }
-        });
-        console.log(`[AUTO-SAVE] Guardado automático de informe de conformidad Excel para el equipo: ${matchingLicense.name}`);
-      } else {
-        console.log(`[AUTO-SAVE] No se encontró máquina coincidente en Registros Generales para: ${tarea.equipo}`);
-      }
-    } catch (saveErr) {
-      console.error('[AUTO-SAVE] Error al intentar guardar automáticamente en Registros Generales:', saveErr);
+    const licenses = await db.license.findMany();
+    const normEquipo = normalizeString(tarea.equipo || '');
+    
+    let matchingLicense = licenses.find(l => normalizeString(l.name) === normEquipo);
+    if (!matchingLicense && normEquipo) {
+      matchingLicense = licenses.find(l => {
+        const normName = normalizeString(l.name);
+        return normName.includes(normEquipo) || normEquipo.includes(normName);
+      });
     }
 
-    return new NextResponse(buffer, {
+    if (!matchingLicense && normEquipo) {
+      matchingLicense = await db.license.create({
+        data: {
+          name: tarea.equipo || 'EQUIPO_DESCONOCIDO',
+          entity: 'POR ESPECIFICAR',
+          code: 'S/N',
+          issueDate: tarea.fechaCulminado || tarea.fecha || new Date().toISOString().split('T')[0],
+          status: 'VIGENTE'
+        }
+      });
+    }
+
+    if (matchingLicense) {
+      const destDir = path.join(process.cwd(), 'uploads', 'licencias');
+      if (!fs.existsSync(destDir)) {
+        fs.mkdirSync(destDir, { recursive: true });
+      }
+
+      const destFileName = `${matchingLicense.id}-informeTecnico.xlsx`;
+      const destFilePath = path.join(destDir, destFileName);
+      
+      fs.writeFileSync(destFilePath, Buffer.from(buffer));
+
+      let expiryDate = '';
+      if (tarea.fechaCulminado) {
+        expiryDate = addMonths(tarea.fechaCulminado, 12);
+      } else {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        expiryDate = addMonths(`${yyyy}-${mm}-${dd}`, 12);
+      }
+
+      await db.license.update({
+        where: { id: matchingLicense.id },
+        data: {
+          archivoNombreInformeTecnico: fileName,
+          archivoPathInformeTecnico: `uploads/licencias/${destFileName}`,
+          vencimientoInformeTecnico: expiryDate
+        }
+      });
+      console.log(`[AUTO-SAVE] Guardado automático de conformidad Excel para la máquina: ${matchingLicense.name}`);
+      return { success: true, fileName, buffer: Buffer.from(buffer) };
+    }
+
+    return { success: false, error: 'No se pudo vincular ni crear la máquina correspondiente en Registros Generales.' };
+  } catch (error: any) {
+    console.error('[generateAndSaveExcelConformidad] Error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'ID de tarea no especificado.' }, { status: 400 });
+    }
+
+    const res = await generateAndSaveExcelConformidad(id);
+    if (!res.success) {
+      return NextResponse.json({ success: false, error: res.error }, { status: 400 });
+    }
+
+    return new NextResponse(res.buffer, {
       status: 200,
       headers: {
-        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Content-Disposition': `attachment; filename="${res.fileName}"`,
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       },
     });

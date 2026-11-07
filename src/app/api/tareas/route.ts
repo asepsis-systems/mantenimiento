@@ -286,6 +286,20 @@ export async function POST(request: NextRequest) {
       return nuevaTarea;
     });
 
+    // AUTO-GENERACIÓN Y GUARDADO AUTOMÁTICO EN REGISTROS GENERALES SI SE CREA COMO CULMINADA
+    if (
+      (tarea.estado === 'CULMINADO' || tarea.estado === 'HECHO') &&
+      (tarea.tipo || '').toUpperCase() === 'PREVENTIVO' &&
+      Number(tarea.frecuenciaMeses) === 12
+    ) {
+      try {
+        const { generateAndSaveExcelConformidad } = await import('./export/excel/route');
+        await generateAndSaveExcelConformidad(tarea.id);
+      } catch (autoErr) {
+        console.error('[AUTO-SAVE] Error al generar automáticamente el Excel de conformidad tras crear tarea:', autoErr);
+      }
+    }
+
     return NextResponse.json({ success: true, tarea });
   } catch (error: any) {
     console.error('Error creating tarea:', error);

@@ -27,8 +27,7 @@ import {
   ChevronDown,
   Check,
   X,
-  Clock,
-  Bell
+  Clock
 } from 'lucide-react';
 
 import { TaskModal } from '@/components/TaskModal';
@@ -104,35 +103,6 @@ function isSteriVac(equipo: string): boolean {
   return steriPatterns.some(p => eqNorm.includes(p) || eqNorm === p);
 }
 
-function matchEquipo(eqVal: string, filterVal: string): boolean {
-  if (!eqVal || !filterVal) return false;
-  
-  const parts = eqVal.split(' | ').map(p => p.trim());
-  
-  return parts.some(part => {
-    const eqNorm = normalizeString(part);
-    const filterNorm = normalizeString(filterVal);
-    
-    const filterIsTrujillo = filterNorm.includes('TRUJILLO') || filterNorm.endsWith('TRUJILLO') || filterNorm.includes('4XLT') || filterNorm.includes('5XLT');
-    const eqIsTrujillo = eqNorm.includes('TRUJILLO') || eqNorm.includes('TRUJIL') || eqNorm.endsWith('T') || eqNorm.includes('4XLT') || eqNorm.includes('5XLT');
-    
-    if (filterIsTrujillo !== eqIsTrujillo) return false;
-    
-    if (eqNorm === filterNorm) return true;
-    if (eqNorm.includes(filterNorm) || filterNorm.includes(eqNorm)) return true;
-    
-    // Special Trujillo aliases
-    if (filterNorm.includes('4XLTRUJILLO') && (eqNorm.includes('4XLT') || eqNorm.includes('4XLTRUJILLO'))) return true;
-    if (filterNorm.includes('5XLTRUJILLO') && (eqNorm.includes('5XLT') || eqNorm.includes('5XLTRUJILLO'))) return true;
-    
-    // Autoclave Trujillo aliases
-    if (filterNorm.includes('AUTOCLAVEV2TRUJILLO') && (eqNorm.includes('V2T') || eqNorm.includes('V2TRUJILLO') || eqNorm.includes('V2'))) return true;
-    if (filterNorm.includes('AUTOCLAVEV5TRUJILLO') && (eqNorm.includes('V5T') || eqNorm.includes('V5TRUJILLO') || eqNorm.includes('V5'))) return true;
-
-    return false;
-  });
-}
-
 export default function Dashboard() {
   const router = useRouter();
   
@@ -186,13 +156,6 @@ export default function Dashboard() {
     ])
   ).sort((a, b) => a.localeCompare(b));
 
-  const getFrecuenciaWeight = (val: string): number => {
-    const num = Number(val);
-    if (num === -1) return 1;
-    if (num === -2) return 2;
-    return num >= 0 ? 10 + num : 100;
-  };
-
   const frecuenciaOptions = Array.from(
     new Set([
       '1', '2', '3', '4', '6', '12',
@@ -201,7 +164,7 @@ export default function Dashboard() {
         .filter((f): f is number => f !== null && f !== undefined)
         .map(f => String(f))
     ])
-  ).sort((a, b) => getFrecuenciaWeight(a) - getFrecuenciaWeight(b));
+  ).sort((a, b) => Number(a) - Number(b));
 
   const [searchRespQuery, setSearchRespQuery] = useState('');
   const [newRespName, setNewRespName] = useState('');
@@ -210,7 +173,7 @@ export default function Dashboard() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDIENTE' | 'EN_PROCESO' | 'CULMINADO' | 'ALERTAS' | 'ATENCION_REQUERIDA'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDIENTE' | 'EN_PROCESO' | 'CULMINADO'>('ALL');
   const [quickRange, setQuickRange] = useState<string>('ALL');
 
   // Sorting
@@ -233,20 +196,13 @@ export default function Dashboard() {
   const [uploadingTaskId, setUploadingTaskId] = useState<string | null>(null);
   const [isMultiUploadOpen, setIsMultiUploadOpen] = useState(false);
   const [multiUploadTaskId, setMultiUploadTaskId] = useState<string | null>(null);
-  const [multiUploadSlots, setMultiUploadSlots] = useState<{
-    name: string;
-    file: File | null;
-    alsoSaveInLicenses?: boolean;
-    selectedLicenseId?: string;
-    selectedDocType?: string;
-  }[]>([
-    { name: 'Certificado 1', file: null, alsoSaveInLicenses: false, selectedLicenseId: '', selectedDocType: 'certificado' },
-    { name: 'Certificado 2', file: null, alsoSaveInLicenses: false, selectedLicenseId: '', selectedDocType: 'certificado' },
-    { name: 'Certificado 3', file: null, alsoSaveInLicenses: false, selectedLicenseId: '', selectedDocType: 'certificado' },
-    { name: 'Certificado 4', file: null, alsoSaveInLicenses: false, selectedLicenseId: '', selectedDocType: 'certificado' },
+  const [multiUploadSlots, setMultiUploadSlots] = useState<{ name: string, file: File | null }[]>([
+    { name: 'Certificado 1', file: null },
+    { name: 'Certificado 2', file: null },
+    { name: 'Certificado 3', file: null },
+    { name: 'Certificado 4', file: null },
   ]);
   const [multiUploadHistoryFiles, setMultiUploadHistoryFiles] = useState<any[]>([]);
-  const [allLicenses, setAllLicenses] = useState<any[]>([]);
   
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmDeleteRespId, setConfirmDeleteRespId] = useState<string | null>(null);
@@ -311,15 +267,13 @@ export default function Dashboard() {
       const meData = await meRes.json();
       setUser(meData.user);
 
-      const [tareasRes, respRes, licRes] = await Promise.all([
+      const [tareasRes, respRes] = await Promise.all([
         fetch('/api/tareas'),
-        fetch('/api/responsables'),
-        fetch('/api/licencias?carpetaId=all')
+        fetch('/api/responsables')
       ]);
 
       const tareasData = await tareasRes.json();
       const respData = await respRes.json();
-      const licData = await licRes.json();
 
       if (tareasData.success) {
         setTareas(tareasData.tareas);
@@ -331,10 +285,6 @@ export default function Dashboard() {
         setResponsables(respData.responsables);
       } else {
         setError(respData.error || 'Error al cargar responsables');
-      }
-
-      if (licData.success) {
-        setAllLicenses(licData.licenses || []);
       }
     } catch (err) {
       setError('Error de comunicación con el servidor');
@@ -394,19 +344,11 @@ export default function Dashboard() {
 
   const openMultiUploadModal = async (tareaId: string) => {
     setMultiUploadTaskId(tareaId);
-    
-    // Buscar la tarea para obtener su equipo/máquina asociado
-    const currentTarea = tareas.find(t => t.id === tareaId);
-    const matchedLicense = allLicenses.find(l => 
-      (l.name || '').toLowerCase().replace(/[\s-_]/g, '') === (currentTarea?.equipo || '').toLowerCase().replace(/[\s-_]/g, '')
-    );
-    const defaultLicenseId = matchedLicense ? matchedLicense.id : '';
-
     setMultiUploadSlots([
-      { name: 'Certificado 1', file: null, alsoSaveInLicenses: false, selectedLicenseId: defaultLicenseId, selectedDocType: 'certificado' },
-      { name: 'Certificado 2', file: null, alsoSaveInLicenses: false, selectedLicenseId: defaultLicenseId, selectedDocType: 'certificado' },
-      { name: 'Certificado 3', file: null, alsoSaveInLicenses: false, selectedLicenseId: defaultLicenseId, selectedDocType: 'certificado' },
-      { name: 'Certificado 4', file: null, alsoSaveInLicenses: false, selectedLicenseId: defaultLicenseId, selectedDocType: 'certificado' },
+      { name: 'Certificado 1', file: null },
+      { name: 'Certificado 2', file: null },
+      { name: 'Certificado 3', file: null },
+      { name: 'Certificado 4', file: null },
     ]);
     setMultiUploadHistoryFiles([]);
     setIsMultiUploadOpen(true);
@@ -659,28 +601,6 @@ export default function Dashboard() {
           const data = await res.json();
           throw new Error(data.error || 'Error subiendo uno de los archivos');
         }
-
-        // --- DUPLICAR EN REGISTROS GENERALES (MTO LICENCIAS) ---
-        if (slot.alsoSaveInLicenses && slot.selectedLicenseId) {
-          try {
-            const licenseFormData = new FormData();
-            licenseFormData.append('file', slot.file);
-            licenseFormData.append('id', slot.selectedLicenseId);
-            licenseFormData.append('docType', slot.selectedDocType || 'certificado');
-
-            const licRes = await fetch('/api/licencias/upload', {
-              method: 'POST',
-              body: licenseFormData,
-            });
-
-            if (!licRes.ok) {
-              const licData = await licRes.json();
-              console.error(`Error al duplicar archivo ${slot.name} en Registros Generales:`, licData.error);
-            }
-          } catch (licErr) {
-            console.error(`Error de red al duplicar archivo ${slot.name} en Registros Generales:`, licErr);
-          }
-        }
       }
 
       // Refresh data
@@ -690,7 +610,7 @@ export default function Dashboard() {
         setTareas(prev => prev.map(t => t.id === multiUploadTaskId ? data.tarea : t));
       }
 
-      showFeedback('success', 'Todos los archivos han sido cargados (y duplicados si se seleccionó la opción).');
+      showFeedback('success', 'Todos los archivos han sido cargados.');
       setIsMultiUploadOpen(false);
     } catch (err: any) {
       showFeedback('error', err.message || 'Error en la subida múltiple');
@@ -861,61 +781,16 @@ export default function Dashboard() {
     const month = parseInt(parts[1], 10) - 1; // 0-indexed
     const day = parseInt(parts[2], 10);
 
-    const date = new Date(year, month, day);
-
-    if (months === -1) {
-      // Semanal: +7 días
-      date.setDate(date.getDate() + 7);
-    } else if (months === -2) {
-      // Quincenal: +15 días
-      date.setDate(date.getDate() + 15);
-    } else {
-      // Meses normales
-      date.setDate(1);
-      date.setMonth(date.getMonth() + months);
-      const maxDays = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-      const targetDay = Math.min(day, maxDays);
-      date.setDate(targetDay);
-    }
+    const date = new Date(year, month, 1);
+    date.setMonth(date.getMonth() + months);
+    const maxDays = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    const targetDay = Math.min(day, maxDays);
+    date.setDate(targetDay);
 
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, '0');
     const dd = String(date.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
-  };
-
-  const getUpcomingAlertThreshold = (frecuenciaMeses: number | null | undefined): number => {
-    if (!frecuenciaMeses) return 0;
-    if (frecuenciaMeses >= 1) return 15; // 15 días antes para 1, 2, 3, 4, 6, 12 meses
-    if (frecuenciaMeses === -2) return 7; // 7 días antes para quincenal
-    if (frecuenciaMeses === -1) return 7; // 7 días antes para semanal (siguiente semana)
-    return 0;
-  };
-
-  const isTaskUpcomingAlert = (t: Tarea, todayStr: string): boolean => {
-    if (t.equipo && (t.equipo.toUpperCase().includes('COMPRESOR') || t.equipo.toUpperCase().includes('COMPRESORA'))) {
-      return false;
-    }
-    if (!t.frecuenciaMeses || t.esRecurrente === false) {
-      return false;
-    }
-
-    let targetDate: string | null = null;
-    if (t.fechaCulminado) {
-      targetDate = addMonths(t.fechaCulminado, t.frecuenciaMeses);
-    } else if (t.estado === 'CULMINADO' || t.estado === 'HECHO') {
-      targetDate = t.proximaEjecucion || null;
-    } else {
-      targetDate = t.fecha || null;
-    }
-
-    if (!targetDate) return false;
-
-    const diff = getDaysDiff(todayStr, targetDate);
-    if (diff < 0) return false;
-
-    const threshold = getUpcomingAlertThreshold(t.frecuenciaMeses);
-    return threshold > 0 && diff <= threshold;
   };
 
   const renderProximoBadge = (t: Tarea) => {
@@ -957,47 +832,18 @@ export default function Dashboard() {
       if (diff < 0) {
         const absDiff = Math.abs(diff);
         return (
-          <div className="flex flex-col items-center justify-center gap-1">
-            <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
-                isPremiumDarkMode
-                  ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
-                  : 'bg-rose-50 border-rose-200 text-rose-700'
-              }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'} animate-pulse`}></span>
-                <span>Vence hace {absDiff} d</span>
-              </span>
-            </div>
-            <span className={`text-[11px] font-semibold transition-colors duration-300 ${
-              isPremiumDarkMode ? 'text-rose-400/90' : 'text-rose-700/95'
+          <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
+              isPremiumDarkMode
+                ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
+                : 'bg-rose-50 border-rose-200 text-rose-700'
             }`}>
-              {formatSmallDate(targetDate)}
+              <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
+              <span>Vence hace {absDiff} d</span>
             </span>
           </div>
         );
       } else {
-        const threshold = getUpcomingAlertThreshold(t.frecuenciaMeses);
-        if (threshold > 0 && diff <= threshold) {
-          return (
-            <div className="flex flex-col items-center justify-center gap-1">
-              <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
-                  isPremiumDarkMode
-                    ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
-                    : 'bg-amber-50 border-amber-200 text-amber-700'
-                }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-amber-500' : 'bg-amber-600'} animate-pulse`}></span>
-                  <span>Faltan {diff} d</span>
-                </span>
-              </div>
-              <span className={`text-[11px] font-medium transition-colors duration-300 ${
-                isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
-              }`}>
-                {formatSmallDate(targetDate)}
-              </span>
-            </div>
-          );
-        }
         return (
           <span className={`font-medium text-xs select-none transition-colors duration-300 ${
             isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
@@ -1023,47 +869,18 @@ export default function Dashboard() {
       if (diff < 0) {
         const absDiff = Math.abs(diff);
         return (
-          <div className="flex flex-col items-center justify-center gap-1">
-            <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
-                isPremiumDarkMode
-                  ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
-                  : 'bg-rose-50 border-rose-200 text-rose-700'
-              }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'} animate-pulse`}></span>
-                <span>Vence hace {absDiff} d</span>
-              </span>
-            </div>
-            <span className={`text-[11px] font-semibold transition-colors duration-300 ${
-              isPremiumDarkMode ? 'text-rose-400/90' : 'text-rose-700/95'
+          <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
+              isPremiumDarkMode
+                ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
+                : 'bg-rose-50 border-rose-200 text-rose-700'
             }`}>
-              {formatSmallDate(targetDate)}
+              <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
+              <span>Vence hace {absDiff} d</span>
             </span>
           </div>
         );
       } else {
-        const threshold = getUpcomingAlertThreshold(t.frecuenciaMeses);
-        if (threshold > 0 && diff <= threshold) {
-          return (
-            <div className="flex flex-col items-center justify-center gap-1">
-              <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
-                  isPremiumDarkMode
-                    ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
-                    : 'bg-amber-50 border-amber-200 text-amber-700'
-                }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-amber-500' : 'bg-amber-600'} animate-pulse`}></span>
-                  <span>Faltan {diff} d</span>
-                </span>
-              </div>
-              <span className={`text-[11px] font-medium transition-colors duration-300 ${
-                isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
-              }`}>
-                {formatSmallDate(targetDate)}
-              </span>
-            </div>
-          );
-        }
         return (
           <span className={`font-medium text-xs select-none transition-colors duration-300 ${
             isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
@@ -1088,47 +905,18 @@ export default function Dashboard() {
     if (diff < 0) {
       const absDiff = Math.abs(diff);
       return (
-        <div className="flex flex-col items-center justify-center gap-1">
-          <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
-              isPremiumDarkMode
-                ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
-                : 'bg-rose-50 border-rose-200 text-rose-700'
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'} animate-pulse`}></span>
-              <span>Vence hace {absDiff} d</span>
-            </span>
-          </div>
-          <span className={`text-[11px] font-semibold transition-colors duration-300 ${
-            isPremiumDarkMode ? 'text-rose-400/90' : 'text-rose-700/95'
+        <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
+            isPremiumDarkMode
+              ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
+              : 'bg-rose-50 border-rose-200 text-rose-700'
           }`}>
-            {formatSmallDate(targetDate)}
+            <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-rose-500' : 'bg-rose-600'}`}></span>
+            <span>Vence hace {absDiff} d</span>
           </span>
         </div>
       );
     } else {
-      const threshold = getUpcomingAlertThreshold(t.frecuenciaMeses);
-      if (threshold > 0 && diff <= threshold) {
-        return (
-          <div className="flex flex-col items-center justify-center gap-1">
-            <div className="relative group/badge inline-block select-none cursor-help" title={tooltipText}>
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-colors ${
-                isPremiumDarkMode
-                  ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
-                  : 'bg-amber-50 border-amber-200 text-amber-700'
-              }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${isPremiumDarkMode ? 'bg-amber-500' : 'bg-amber-600'} animate-pulse`}></span>
-                <span>Faltan {diff} d</span>
-              </span>
-            </div>
-            <span className={`text-[11px] font-medium transition-colors duration-300 ${
-              isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
-            }`}>
-              {formatSmallDate(targetDate)}
-            </span>
-          </div>
-        );
-      }
       return (
         <span className={`font-medium text-xs select-none transition-colors duration-300 ${
           isPremiumDarkMode ? 'text-slate-300' : 'text-slate-600'
@@ -1143,9 +931,12 @@ export default function Dashboard() {
   const filteredTareas = tareas.filter(t => {
     // Equipo/Máquina filter
     if (selectedEquipoFilter) {
-      if (!matchEquipo(t.equipo || '', selectedEquipoFilter)) {
-        return false;
-      }
+      const eqLower = (t.equipo || '').toLowerCase();
+      const filterLower = selectedEquipoFilter.toLowerCase();
+      const isMatch = eqLower === filterLower || 
+        eqLower.split(' | ').map(s => s.trim()).includes(filterLower);
+      
+      if (!isMatch) return false;
     }
 
     // Sede filter
@@ -1165,7 +956,7 @@ export default function Dashboard() {
 
     // Document filter
     if (selectedDocFilter === 'CON_DOC' && !t.certificadoPath) return false;
-    if (selectedDocFilter === 'SIN_DOC' && t.estado !== 'PENDIENTE' && t.estado !== 'EN_PROCESO') return false;
+    if (selectedDocFilter === 'SIN_DOC' && t.certificadoPath) return false;
 
     // Frecuencia filter
     if (selectedFrecuenciaFilter) {
@@ -1201,13 +992,11 @@ export default function Dashboard() {
   const totalCount = tareas.length;
   const pendientesCount = tareas.filter(t => t.estado === 'PENDIENTE').length;
   const enProcesoCount = tareas.filter(t => t.estado === 'EN_PROCESO').length;
-  const alertasCount = tareas.filter(t => isTaskUpcomingAlert(t, todayStr)).length;
   const culminadasCount = tareas.filter(t => t.estado === 'CULMINADO' || t.estado === 'HECHO').length;
 
   // CMMS KPI Counters (calculated over the entire dataset to support arbitrary task years and stay stable)
   const conDocsProximosCount = tareas.filter(t => t.certificadoPath).length;
-  const sinDocsProximosCount = tareas.filter(t => t.estado === 'PENDIENTE' || t.estado === 'EN_PROCESO').length;
-  const atencionRequeridaCount = tareas.filter(t => t.estado === 'PENDIENTE' || isTaskUpcomingAlert(t, todayStr)).length;
+  const sinDocsProximosCount = tareas.filter(t => !t.certificadoPath).length;
   const estaSemanaCount = tareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getDaysDiff(todayStr, t.fecha) >= 0 && getDaysDiff(todayStr, t.fecha) <= 7).length;
   const esteMesCount = tareas.filter(t => t.estado !== 'CULMINADO' && t.fecha && getIsCurrentMonth(t.fecha)).length;
 
@@ -1215,8 +1004,6 @@ export default function Dashboard() {
   const finalFilteredTareas = filteredTareas.filter(t => {
     if (statusFilter === 'ALL') return true;
     if (statusFilter === 'PENDIENTE') return t.estado === 'PENDIENTE';
-    if (statusFilter === 'ALERTAS') return isTaskUpcomingAlert(t, todayStr);
-    if (statusFilter === 'ATENCION_REQUERIDA') return t.estado === 'PENDIENTE' || isTaskUpcomingAlert(t, todayStr);
     if (statusFilter === 'EN_PROCESO') return t.estado === 'EN_PROCESO';
     if (statusFilter === 'CULMINADO') return t.estado === 'CULMINADO' || t.estado === 'HECHO';
     return true;
@@ -1430,9 +1217,7 @@ export default function Dashboard() {
 
       const targetDate = (t.estado === 'CULMINADO' || t.estado === 'HECHO') ? t.proximaEjecucion : t.fecha;
       const proximoText = targetDate ? formatSmallDate(targetDate) : '-';
-      const frecuenciaText = t.frecuenciaMeses === -1 ? 'Semanal' :
-                             t.frecuenciaMeses === -2 ? 'Quincenal' :
-                             t.frecuenciaMeses ? `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
+      const frecuenciaText = t.frecuenciaMeses ? `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
 
       return `
         ${headerRow}
@@ -1655,9 +1440,7 @@ export default function Dashboard() {
 
       // Recurrence / Next execution details
       let proximoText = 'Sin recurrencia';
-      let frecuenciaText = t.frecuenciaMeses === -1 ? 'Semanal' :
-                           t.frecuenciaMeses === -2 ? 'Quincenal' :
-                           t.frecuenciaMeses ? `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
+      let frecuenciaText = t.frecuenciaMeses ? `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}` : 'Única';
       const isCompTask = !!(t.equipo && (t.equipo.toUpperCase().includes('COMPRESOR') || t.equipo.toUpperCase().includes('COMPRESORA')));
       const proximoFormatStyle = isCompTask ? '' : "mso-number-format:'dd\\/mm\\/yyyy';";
 
@@ -1906,21 +1689,21 @@ export default function Dashboard() {
           <nav className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-2xl p-1 shrink-0">
             <button
               onClick={() => router.push('/')}
-              className="py-1.5 px-4.5 rounded-xl text-sm font-bold text-white bg-white/10 transition-all cursor-pointer hover:bg-white/15"
+              className="py-1.5 px-4 rounded-xl text-xs font-bold text-white bg-white/10 transition-all cursor-pointer hover:bg-white/15"
             >
               Reporte Semanal
             </button>
             <button
               onClick={() => router.push('/repuestos')}
-              className="py-1.5 px-4.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-all cursor-pointer"
+              className="py-1.5 px-4 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer"
             >
               Repuestos
             </button>
             <button
               onClick={() => router.push('/licencias')}
-              className="py-1.5 px-4.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-all cursor-pointer"
+              className="py-1.5 px-4 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer"
             >
-              Registros Generales
+              Licencias
             </button>
           </nav>
 
@@ -2024,18 +1807,12 @@ export default function Dashboard() {
               setCurrentPage(1);
               handleSearchTrigger();
             }}
-            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card relative ${
+            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
               statusFilter === 'PENDIENTE'
                 ? 'bg-rose-50/25 border-rose-500 shadow-md shadow-rose-500/5 ring-2 ring-rose-500/10 scale-[1.02]'
                 : 'bg-white border-slate-100 shadow-xs hover:border-rose-200 hover:scale-[1.02] hover:shadow-sm'
             }`}
           >
-            {pendientesCount > 0 && (
-              <span className="absolute top-2.5 right-2.5 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-              </span>
-            )}
             <div>
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Pendientes</span>
               <span className="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight block mt-1">{pendientesCount}</span>
@@ -2146,39 +1923,33 @@ export default function Dashboard() {
             </div>
           </button>
 
-          {/* Card: ATENCIÓN REQUERIDA */}
+          {/* Card: SIN DOCUMENTOS */}
           <button
             type="button"
             onClick={() => {
-              setStatusFilter('ATENCION_REQUERIDA');
-              setSelectedDocFilter('ALL');
+              setStatusFilter('ALL');
+              setSelectedDocFilter('SIN_DOC');
               setQuickRange('ALL');
               setFromDate('');
               setToDate('');
               setCurrentPage(1);
               handleSearchTrigger();
             }}
-            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card relative ${
-              statusFilter === 'ATENCION_REQUERIDA'
+            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
+              selectedDocFilter === 'SIN_DOC'
                 ? 'bg-rose-50/25 border-rose-500 shadow-md shadow-rose-500/5 ring-2 ring-rose-500/10 scale-[1.02]'
                 : 'bg-white border-slate-100 shadow-xs hover:border-rose-200 hover:scale-[1.02] hover:shadow-sm'
             }`}
           >
-            {atencionRequeridaCount > 0 && (
-              <span className="absolute top-2.5 right-2.5 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-              </span>
-            )}
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Atención Requerida</span>
-              <span className="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight block mt-1">{atencionRequeridaCount}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Pendientes y Alertas</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Sin Documentos</span>
+              <span className="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight block mt-1">{sinDocsProximosCount}</span>
+              <span className="text-[10px] text-slate-500 mt-1 block">Registros totales</span>
             </div>
             <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
-              statusFilter === 'ATENCION_REQUERIDA' ? 'bg-rose-100 text-rose-600 scale-110' : 'bg-rose-50 text-rose-500 group-hover/card:bg-rose-100 group-hover/card:text-rose-600 group-hover/card:scale-110'
+              selectedDocFilter === 'SIN_DOC' ? 'bg-rose-100 text-rose-600 scale-110' : 'bg-rose-50 text-rose-500 group-hover/card:bg-rose-100 group-hover/card:text-rose-600 group-hover/card:scale-110'
             }`}>
-              <AlertCircle className={`w-6 h-6 ${statusFilter === 'ATENCION_REQUERIDA' ? 'animate-pulse' : ''}`} />
+              <AlertCircle className="w-6 h-6" />
             </div>
           </button>
 
@@ -2198,7 +1969,7 @@ export default function Dashboard() {
             }`}
           >
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Inspecciones Municipales</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Esta Semana</span>
               <span className="text-2xl sm:text-3xl font-extrabold text-violet-600 tracking-tight block mt-1">{estaSemanaCount}</span>
               <span className="text-[10px] text-slate-500 mt-1 block">Siguientes 7 días</span>
             </div>
@@ -2225,7 +1996,7 @@ export default function Dashboard() {
             }`}
           >
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Inspecciones Hospitales y Clínicas</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Este Mes</span>
               <span className="text-2xl sm:text-3xl font-extrabold text-cyan-600 tracking-tight block mt-1">{esteMesCount}</span>
               <span className="text-[10px] text-slate-500 mt-1 block">Mes calendario actual</span>
             </div>
@@ -2389,8 +2160,6 @@ export default function Dashboard() {
               <option value="ALL">ESTADO: TODOS</option>
               <option value="PENDIENTE">PENDIENTE</option>
               <option value="EN_PROCESO">EN PROCESO</option>
-              <option value="ALERTAS">ALERTAS</option>
-              <option value="ATENCION_REQUERIDA">ATENCIÓN REQUERIDA</option>
               <option value="CULMINADO">CULMINADO</option>
             </select>
 
@@ -2406,46 +2175,6 @@ export default function Dashboard() {
               <option value="">SEDE: TODAS</option>
               <option value="Lima">LIMA</option>
               <option value="Trujillo">TRUJILLO</option>
-            </select>
-
-            <select
-              value={selectedEquipoFilter ?? ''}
-              onChange={(e) => { setSelectedEquipoFilter(e.target.value === '' ? null : e.target.value); handleSearchTrigger(); }}
-              className={`text-[10px] font-bold rounded-xl px-2 py-2 border outline-none transition-all ${
-                isPremiumDarkMode 
-                  ? 'bg-slate-900/50 border-slate-800 text-slate-300 focus:border-sky-500/50' 
-                  : 'bg-slate-50 border-slate-200 text-slate-600 focus:border-brand-500/50'
-              }`}
-            >
-              <option value="">EQUIPO: TODOS</option>
-              <option value="OE 4XL 1">OE 4XL 1</option>
-              <option value="OE 5XL 2">OE 5XL 2</option>
-              <option value="OE 4XL 3">OE 4XL 3</option>
-              <option value="OE 5XL 4">OE 5XL 4</option>
-              <option value="OE 5XL 5">OE 5XL 5</option>
-              <option value="OE 5XL 6">OE 5XL 6</option>
-              <option value="OE 8XL 7">OE 8XL 7</option>
-              <option value="OE 8XL 8">OE 8XL 8</option>
-              <option value="OE 4XL 9">OE 4XL 9</option>
-              <option value="OE 5XL 10">OE 5XL 10</option>
-              <option value="OE 4 XL TRUJILLO">OE 4 XL TRUJILLO</option>
-              <option value="OE 5 XL TRUJILLO">OE 5 XL TRUJILLO</option>
-              <option value="AUTOCLAVE V1">AUTOCLAVE V1</option>
-              <option value="AUTOCLAVE V2">AUTOCLAVE V2</option>
-              <option value="AUTOCLAVE V3">AUTOCLAVE V3</option>
-              <option value="AUTOCLAVE V4">AUTOCLAVE V4</option>
-              <option value="AUTOCLAVE V5">AUTOCLAVE V5</option>
-              <option value="AUTOCLAVE V6">AUTOCLAVE V6</option>
-              <option value="PLASMA P1">PLASMA P1</option>
-              <option value="PLASMA P2">PLASMA P2</option>
-              <option value="PLASMA P3">PLASMA P3</option>
-              <option value="FORMALDEHIDO F01">FORMALDEHIDO F01</option>
-              <option value="AUTOCLAVE V-2 TRUJILLO">AUTOCLAVE V-2 TRUJILLO</option>
-              <option value="AUTOCLAVE V-5 TRUJILLO">AUTOCLAVE V-5 TRUJILLO</option>
-              <option value="LAVADORA">LAVADORA</option>
-              <option value="CALDERA">CALDERA</option>
-              <option value="COMPRESOR 25HP">COMPRESOR 25HP</option>
-              <option value="COMPRESOR 10HP">COMPRESOR 10HP</option>
             </select>
 
             <select
@@ -2474,7 +2203,7 @@ export default function Dashboard() {
             >
               <option value="ALL">DOC: TODOS</option>
               <option value="CON_DOC">CON DOCUMENTO</option>
-              <option value="SIN_DOC">PENDIENTES Y EN PROCESO</option>
+              <option value="SIN_DOC">SIN DOCUMENTO</option>
             </select>
 
             <select
@@ -2490,9 +2219,7 @@ export default function Dashboard() {
               <option value="UNICA">ÚNICA</option>
               <option value="RECURRENTE">RECURRENTE</option>
               {frecuenciaOptions.map(f => (
-                <option key={f} value={f}>
-                  {f === '-1' ? 'SEMANAL' : f === '-2' ? 'QUINCENAL' : `${f} MESES`}
-                </option>
+                <option key={f} value={f}>{f} MESES</option>
               ))}
             </select>
 
@@ -2506,9 +2233,9 @@ export default function Dashboard() {
               }`}
             >
               <option value="ALL">PERÍODO: TODOS</option>
-              <option value="ESTA_SEMANA">INSPECCIONES MUNICIPALES</option>
+              <option value="ESTA_SEMANA">ESTA SEMANA (LUN - DOM)</option>
               <option value="SEMANA_PASADA">SEMANA PASADA</option>
-              <option value="ESTE_MES">INSPECCIONES HOSPITALES Y CLÍNICAS</option>
+              <option value="ESTE_MES">ESTE MES</option>
               <option value="MES_PASADO">MES PASADO</option>
             </select>
           </div>
@@ -2830,14 +2557,17 @@ export default function Dashboard() {
                                    (isAutoclave(t.equipo || '') || isSteriVac(t.equipo || '')) && (
                                     <a
                                       href={`/api/tareas/export/excel?id=${t.id}`}
+                                      download={`Informe_Conformidad_${t.equipo?.replace(/\s+/g, '_') || 'tarea'}.xlsx`}
+                                      rel="noreferrer noopener"
                                       className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold rounded-full transition-colors cursor-pointer ${
                                         isPremiumDarkMode
                                           ? 'bg-emerald-500/10 border border-emerald-400/30 text-emerald-400 hover:bg-emerald-500/20'
                                           : 'bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 text-emerald-700'
                                       }`}
-                                      title="Descargar Conformidad (Excel)"
+                                      title="Descargar informe de conformidad"
+                                      aria-label="Descargar informe de conformidad"
                                     >
-                                      <span>📊 Excel</span>
+                                      <span>📊 Conformidad</span>
                                     </a>
                                   )}
                                 </>
@@ -3005,12 +2735,11 @@ export default function Dashboard() {
                           }`}>
                             <div className="flex flex-col items-center gap-1.5 justify-center">
                               {t.estado === 'PENDIENTE' && (
-                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold rounded-full border transition-colors ${
+                                <span className={`inline-flex px-3 py-1.5 text-[10px] font-semibold rounded-full border transition-colors ${
                                   isPremiumDarkMode
                                     ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
                                     : 'bg-rose-50 border-rose-200 text-rose-700'
                                 }`}>
-                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0"></span>
                                   <span>PENDIENTE</span>
                                 </span>
                               )}
@@ -3075,9 +2804,7 @@ export default function Dashboard() {
                                   ? 'bg-[#1e1b4b] border-indigo-500/30 text-indigo-400'
                                   : 'bg-indigo-50 border-indigo-100 text-indigo-700'
                               }`}>
-                                {t.frecuenciaMeses === -1 ? 'Semanal' :
-                                 t.frecuenciaMeses === -2 ? 'Quincenal' :
-                                 `${t.frecuenciaMeses} ${t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}`}
+                                {t.frecuenciaMeses} {t.frecuenciaMeses === 1 ? 'Mes' : 'Meses'}
                               </span>
                             ) : (
                               <span className={`inline-flex px-2.5 py-1 text-[10px] font-medium rounded-full border transition-colors ${
@@ -3301,9 +3028,7 @@ export default function Dashboard() {
                       <div>
                         <span className="text-slate-400">Frecuencia:</span>{' '}
                         <span className={`font-semibold ${isPremiumDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                          {t.frecuenciaMeses === -1 ? '🔄 Semanal' :
-                           t.frecuenciaMeses === -2 ? '🔄 Quincenal' :
-                           t.frecuenciaMeses ? `🔄 ${t.frecuenciaMeses} M` : 'Única'}
+                          {t.frecuenciaMeses ? `🔄 ${t.frecuenciaMeses} M` : 'Única'}
                         </span>
                       </div>
                       <div className="col-span-2 flex items-center gap-1.5 mt-1">
@@ -3699,80 +3424,6 @@ export default function Dashboard() {
                   {slot.file && (
                     <div className="mt-1 text-[9px] text-slate-400 truncate">
                       Archivo: {slot.file.name}
-                    </div>
-                  )}
-
-                  {/* Opción de guardar en Registros Generales */}
-                  {slot.file && (
-                    <div className={`mt-3 pt-2.5 border-t border-dashed ${
-                      isPremiumDarkMode ? 'border-slate-800/80' : 'border-slate-200'
-                    }`}>
-                      <label className="flex items-center gap-2 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={slot.alsoSaveInLicenses || false}
-                          onChange={(e) => {
-                            const newSlots = [...multiUploadSlots];
-                            newSlots[idx].alsoSaveInLicenses = e.target.checked;
-                            setMultiUploadSlots(newSlots);
-                          }}
-                          className="rounded border-slate-300 dark:border-slate-700 text-brand-600 focus:ring-brand-500 w-3.5 h-3.5"
-                        />
-                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                          ¿También deseas guardarlo en Registros Generales?
-                        </span>
-                      </label>
-
-                      {slot.alsoSaveInLicenses && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2">
-                          <div>
-                            <label className="text-[9px] font-bold text-slate-400 block mb-0.5">Seleccionar Equipo / Máquina</label>
-                            <select
-                              value={slot.selectedLicenseId || ''}
-                              onChange={(e) => {
-                                const newSlots = [...multiUploadSlots];
-                                newSlots[idx].selectedLicenseId = e.target.value;
-                                setMultiUploadSlots(newSlots);
-                              }}
-                              className={`w-full text-[10px] rounded-lg px-2 py-1.5 border outline-none font-medium ${
-                                isPremiumDarkMode 
-                                  ? 'bg-slate-950 border-slate-800 text-slate-200' 
-                                  : 'bg-white border-slate-200 text-slate-800'
-                              }`}
-                            >
-                              <option value="">-- Seleccionar Equipo --</option>
-                              {allLicenses.map((lic: any) => (
-                                <option key={lic.id} value={lic.id}>
-                                  {lic.name} ({lic.entity})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-[9px] font-bold text-slate-400 block mb-0.5">Seleccionar Categoría (Carpeta)</label>
-                            <select
-                              value={slot.selectedDocType || 'certificado'}
-                              onChange={(e) => {
-                                const newSlots = [...multiUploadSlots];
-                                newSlots[idx].selectedDocType = e.target.value;
-                                setMultiUploadSlots(newSlots);
-                              }}
-                              className={`w-full text-[10px] rounded-lg px-2 py-1.5 border outline-none font-medium ${
-                                isPremiumDarkMode 
-                                  ? 'bg-slate-950 border-slate-800 text-slate-200' 
-                                  : 'bg-white border-slate-200 text-slate-800'
-                              }`}
-                            >
-                              <option value="certificado">CERTIFICADO</option>
-                              <option value="protocolo">PROTOCOLO</option>
-                              <option value="informeTecnico">INFORME TÉCNICO</option>
-                              <option value="factura">FACTURA</option>
-                              <option value="presupuesto">PRESUPUESTO</option>
-                              <option value="checklist">CHECK LIST</option>
-                            </select>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   )}
                   {matchedExistingFile && (

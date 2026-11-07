@@ -308,6 +308,20 @@ export async function PUT(
       return updated;
     });
 
+    // AUTO-GENERACIÓN Y GUARDADO AUTOMÁTICO EN REGISTROS GENERALES SI ESTÁ CULMINADO
+    if (
+      (TareaResult.estado === 'CULMINADO' || TareaResult.estado === 'HECHO') &&
+      (TareaResult.tipo || '').toUpperCase() === 'PREVENTIVO' &&
+      Number(TareaResult.frecuenciaMeses) === 12
+    ) {
+      try {
+        const { generateAndSaveExcelConformidad } = await import('../export/excel/route');
+        await generateAndSaveExcelConformidad(TareaResult.id);
+      } catch (autoErr) {
+        console.error('[AUTO-SAVE] Error al generar automáticamente el Excel de conformidad tras actualizar tarea:', autoErr);
+      }
+    }
+
     return NextResponse.json({ success: true, tarea: TareaResult });
   } catch (error: any) {
     console.error(`Error updating tarea ${id}:`, error);

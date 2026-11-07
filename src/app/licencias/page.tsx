@@ -130,7 +130,7 @@ const sectionMachines: Record<SectionName, string[]> = {
     'COMPRESOR 25HP',
     'COMPRESOR 10HP'
   ],
-  'ELÉCTRICO': [],
+  ELÉCTRICO: [],
   PLANTA: []
 };
 
@@ -141,33 +141,6 @@ const parseDetails = (details: string | null): Record<string, string> => {
   } catch (e) {
     return {};
   }
-};
-
-export const excelMachineData: Record<string, Record<string, string>> = {
-  'OE 4XL 1': { equipo: '4XL 1', marca: '3M', modelo: '400 DGP', serie: '522415', capacidad: '115L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
-  'OE 5XL 2': { equipo: '5XL 2', marca: '3M', modelo: '487 AGP', serie: '701573', capacidad: '136L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
-  'OE 4XL 3': { equipo: '4XL 3', marca: '3M', modelo: '400 DGP', serie: '522048', capacidad: '115L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
-  'OE 5XL 4': { equipo: '5XL 4', marca: '3M', modelo: '487 AGP', serie: '701922', capacidad: '136L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
-  'OE 5XL 5': { equipo: '5XL 5', marca: '3M', modelo: '487 AGP', serie: '701643', capacidad: '136L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
-  'OE 5XL 6': { equipo: '5XL 6', marca: '3M', modelo: '487 AGP', serie: '701744', capacidad: '136L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
-  'OE 8XL 7': { equipo: '8XL 7', marca: '3M', modelo: '790 AGP', serie: '300578', capacidad: '223L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
-  'OE 8XL 8': { equipo: '8XL 8', marca: '3M', modelo: '790 BGP', serie: '350119', capacidad: '223L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
-  'OE 4XL 9': { equipo: '4XL 9', marca: '3M', modelo: '400 DGP', serie: '522822', capacidad: '115L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
-  'OE 5XL 10': { equipo: '5XL 10', marca: '3M', modelo: '487 BGP', serie: '780094', capacidad: '136L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
-  'OE 4 XL': { equipo: '4 XL', marca: '3M', modelo: '400 DGP', serie: '522954', capacidad: '115L', estado: 'OPERATIVO', sede: 'Trujillo', procesos: '', garantia: '' },
-  'OE 5 XL': { equipo: '5 XL', marca: '3M', modelo: '487 BGP', serie: '780057', capacidad: '136L', estado: 'OPERATIVO', sede: 'Trujillo', procesos: '', garantia: '' },
-  'AUTOCLAVE V1': { equipo: 'AUTOCLAVE V1', marca: 'MATACHANA', modelo: '1012V -1', serie: 'SN E-32514', capacidad: '893L', estado: 'OPERATIVO', sede: 'Lima', procesos: '5 a 6', garantia: '' },
-  'AUTOCLAVE V2': { equipo: 'AUTOCLAVE V2', marca: 'MATACHANA', modelo: '1012V -1', serie: 'SN E-33890', capacidad: '893L', estado: 'OPERATIVO', sede: 'Lima', procesos: '5 a 6', garantia: '' },
-  'AUTOCLAVE V3': { equipo: 'AUTOCLAVE V3', marca: 'MATACHANA', modelo: '1012V -1', serie: 'SN E-35152', capacidad: '893L', estado: 'OPERATIVO', sede: 'Lima', procesos: '6 a 7', garantia: '' },
-  'AUTOCLAVE V4': { equipo: 'AUTOCLAVE V4', marca: 'MATACHANA', modelo: '820 L1', serie: '1520283', capacidad: '820L', estado: 'OPERATIVO', sede: 'Lima', procesos: '3 a 5', garantia: '' },
-  'AUTOCLAVE V5': { equipo: 'AUTOCLAVE V5', marca: 'MATACHANA', modelo: '490 L2', serie: '559410', capacidad: '593L', estado: 'OPERATIVO', sede: 'Lima', procesos: '3 a 5', garantia: '' },
-  'AUTOCLAVE V6': { equipo: 'AUTOCLAVE V6', marca: 'MATACHANA', modelo: '637 L1', serie: '1358549', capacidad: '760L', estado: 'OPERATIVO', sede: 'Lima', procesos: '3 a 5', garantia: '' },
-  'PLASMA P1': { equipo: 'PLASMA P1', marca: 'MATACHANA', modelo: '130HPO-2', serie: 'E-31216', capacidad: '145L', estado: 'OPERATIVO', sede: 'Lima', procesos: '3 a 4', garantia: '' },
-  'PLASMA P2': { equipo: 'PLASMA P2', marca: 'MATACHANA', modelo: '130HPO-2', serie: 'E-31712', capacidad: '145L', estado: 'OPERATIVO', sede: 'Lima', procesos: '3 a 4', garantia: 'Garantía Medstep' },
-  'PLASMA P3': { equipo: 'PLASMA P3', marca: 'MATACHANA', modelo: '130HPO-2', serie: 'E-33085', capacidad: '145L', estado: 'OPERATIVO', sede: 'Lima', procesos: '', garantia: '' },
-  'FORMALDEHIDO F01': { equipo: 'FORMALDEHIDO F01', marca: 'MATACHANA', modelo: '130LF-1', serie: 'E-29117', capacidad: '135L', estado: 'OPERATIVO', sede: 'Lima', procesos: '1', garantia: '' },
-  'AUTOCLAVE V-2': { equipo: 'AUTOCLAVE V-2', marca: 'MATACHANA', modelo: '490 L2', serie: '559413', capacidad: '593L', estado: 'OPERATIVO', sede: 'Trujillo', procesos: '1', garantia: '' },
-  'AUTOCLAVE V-5': { equipo: 'AUTOCLAVE V-5', marca: 'MATACHANA', modelo: 'SC500 E-2', serie: 'E-28213', capacidad: '300L', estado: 'OPERATIVO', sede: 'Trujillo', procesos: '1', garantia: '' },
 };
 
 export default function LicensesPage() {
@@ -186,11 +159,6 @@ export default function LicensesPage() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formName, setFormName] = useState('');
-  const [formEntity, setFormEntity] = useState('');
-  const [formCode, setFormCode] = useState('');
-  const [formIssueDate, setFormIssueDate] = useState('');
-  const [formExpiryDate, setFormExpiryDate] = useState('');
-  const [formStatus, setFormStatus] = useState('VIGENTE');
   const [detailEquipo, setDetailEquipo] = useState('');
   const [detailMarca, setDetailMarca] = useState('');
   const [detailModelo, setDetailModelo] = useState('');
@@ -199,20 +167,13 @@ export default function LicensesPage() {
   const [detailEstado, setDetailEstado] = useState('');
   const [detailSede, setDetailSede] = useState('');
   const [detailProcesos, setDetailProcesos] = useState('');
-  const [detailGarantia, setDetailGarantia] = useState('');
 
   const [newMachineName, setNewMachineName] = useState('');
-  const [selectedSedeFilter, setSelectedSedeFilter] = useState<'TODAS' | 'LIMA' | 'TRUJILLO'>('TODAS');
   const [machineError, setMachineError] = useState('');
 
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [currentDocUploadLicenseId, setCurrentDocUploadLicenseId] = useState<string | null>(null);
   const [currentDocUploadType, setCurrentDocUploadType] = useState<LicenseDocType>('certificado');
-  const [uploadEntity, setUploadEntity] = useState('');
-  const [uploadCode, setUploadCode] = useState('');
-  const [uploadIssueDate, setUploadIssueDate] = useState('');
-  const [uploadExpiryDate, setUploadExpiryDate] = useState('');
-  const [uploadStatus, setUploadStatus] = useState('VIGENTE');
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState<string | null>(null);
@@ -230,211 +191,6 @@ export default function LicensesPage() {
   const [actionLoading, setActionLoading] = useState(false);
 
   const [deletedPlaceholders, setDeletedPlaceholders] = useState<string[]>([]);
-
-  // State variables for Electric section Google Drive file manager
-  const [loadingElectric, setLoadingElectric] = useState(false);
-  const [electricParentId, setElectricParentId] = useState<string | null>(null);
-  const [electricFolders, setElectricFolders] = useState<any[]>([]);
-  const [electricFiles, setElectricFiles] = useState<any[]>([]);
-  const [electricPath, setElectricPath] = useState<Array<{ id: string; nombre: string }>>([]);
-  const [electricViewMode, setElectricViewMode] = useState<'grid' | 'list'>('grid');
-  
-  const [isElectricFolderModalOpen, setIsElectricFolderModalOpen] = useState(false);
-  const [isElectricRenameModalOpen, setIsElectricRenameModalOpen] = useState(false);
-  const [electricNewFolderName, setElectricNewFolderName] = useState('');
-  
-  const [electricRenameId, setElectricRenameId] = useState<string | null>(null);
-  const [electricRenameType, setElectricRenameType] = useState<'folder' | 'file'>('folder');
-  const [electricRenameName, setElectricRenameName] = useState('');
-  const [electricSearchQuery, setElectricSearchQuery] = useState('');
-
-  const [isDraggingOver, setIsDraggingOver] = useState(false);
-  const [uploadingFile, setUploadingFile] = useState(false);
-
-  const fetchElectricContents = async () => {
-    try {
-      setLoadingElectric(true);
-      const parentQuery = electricParentId ? `?parentId=${electricParentId}` : '';
-      const res = await fetch(`/api/licencias/electrico/carpetas${parentQuery}`);
-      const data = await res.json();
-      if (data.success) {
-        setElectricFolders(data.folders || []);
-        setElectricFiles(data.files || []);
-        setElectricPath(data.path || []);
-      }
-    } catch (err) {
-      console.error('Error fetching electric content:', err);
-    } finally {
-      setLoadingElectric(false);
-    }
-  };
-
-  const formatBytes = (bytes: number, decimals = 2) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (user?.role === 'VIEWER') return;
-    setIsDraggingOver(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDraggingOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDraggingOver(false);
-    if (user?.role === 'VIEWER') return;
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleUploadElectricFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const openElectricFilePreview = (file: any) => {
-    const url = `/api/licencias/electrico/archivos?id=${file.id}`;
-    const ext = file.extension.toLowerCase();
-    setPreviewUrl(url);
-    setPreviewName(file.nombre);
-    setPreviewExt(ext);
-    setIsPreviewOpen(true);
-  };
-
-  const handleGoBack = () => {
-    if (electricPath.length <= 1) {
-      setElectricParentId(null);
-    } else {
-      const parentFolder = electricPath[electricPath.length - 2];
-      setElectricParentId(parentFolder.id);
-    }
-  };
-
-  useEffect(() => {
-    if (currentSection === 'ELÉCTRICO') {
-      fetchElectricContents();
-    }
-  }, [currentSection, electricParentId]);
-
-  const handleCreateElectricFolder = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!electricNewFolderName.trim()) return;
-    try {
-      const res = await fetch('/api/licencias/electrico/carpetas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre: electricNewFolderName.trim(),
-          parentId: electricParentId,
-          usuarioCreacion: user?.name || user?.username || 'Sistema'
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setIsElectricFolderModalOpen(false);
-        setElectricNewFolderName('');
-        fetchElectricContents();
-      } else {
-        alert(data.error || 'Error al crear la carpeta.');
-      }
-    } catch (err) {
-      console.error('Error creating electric folder:', err);
-    }
-  };
-
-  const handleUploadElectricFile = async (file: File) => {
-    try {
-      setUploadingFile(true);
-      const formData = new FormData();
-      formData.append('file', file);
-      if (electricParentId) {
-        formData.append('parentId', electricParentId);
-      }
-      formData.append('usuarioSubida', user?.name || user?.username || 'Sistema');
-
-      const res = await fetch('/api/licencias/electrico/archivos', {
-        method: 'POST',
-        body: formData
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchElectricContents();
-      } else {
-        alert(data.error || 'Error al subir el archivo.');
-      }
-    } catch (err) {
-      console.error('Error uploading electric file:', err);
-    } finally {
-      setUploadingFile(false);
-    }
-  };
-
-  const handleDeleteElectricFolder = async (id: string, name: string) => {
-    if (!confirm(`¿Está seguro de eliminar la carpeta "${name}"? Se eliminarán todas las subcarpetas y archivos dentro.`)) return;
-    try {
-      const res = await fetch(`/api/licencias/electrico/carpetas?id=${id}`, {
-        method: 'DELETE'
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchElectricContents();
-      } else {
-        alert(data.error || 'Error al eliminar la carpeta.');
-      }
-    } catch (err) {
-      console.error('Error deleting electric folder:', err);
-    }
-  };
-
-  const handleDeleteElectricFile = async (id: string, name: string) => {
-    if (!confirm(`¿Está seguro de eliminar el archivo "${name}"?`)) return;
-    try {
-      const res = await fetch(`/api/licencias/electrico/archivos?id=${id}`, {
-        method: 'DELETE'
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchElectricContents();
-      } else {
-        alert(data.error || 'Error al eliminar el archivo.');
-      }
-    } catch (err) {
-      console.error('Error deleting electric file:', err);
-    }
-  };
-
-  const handleRenameElectricItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!electricRenameId || !electricRenameName.trim()) return;
-    try {
-      const endpoint = electricRenameType === 'folder' ? 'carpetas' : 'archivos';
-      const res = await fetch(`/api/licencias/electrico/${endpoint}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: electricRenameId,
-          nuevoNombre: electricRenameName.trim()
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setIsElectricRenameModalOpen(false);
-        setElectricRenameId(null);
-        setElectricRenameName('');
-        fetchElectricContents();
-      } else {
-        alert(data.error || 'Error al renombrar el elemento.');
-      }
-    } catch (err) {
-      console.error('Error renaming item:', err);
-    }
-  };
 
   useEffect(() => {
     const saved = localStorage.getItem('deletedPlaceholders');
@@ -569,26 +325,16 @@ export default function LicensesPage() {
   }, []);
 
   const openCreateModal = (defaultName = '') => {
-    const normName = normalizeMachineName(defaultName);
-    const matchedKey = Object.keys(excelMachineData).find(k => normalizeMachineName(k) === normName);
-    const initialData = matchedKey ? excelMachineData[matchedKey] : {};
-
     setEditingId(null);
     setFormName(defaultName || currentSection);
-    setFormEntity('');
-    setFormCode('');
-    setFormIssueDate('');
-    setFormExpiryDate('');
-    setFormStatus('VIGENTE');
-    setDetailEquipo(initialData.equipo || defaultName);
-    setDetailMarca(initialData.marca || '');
-    setDetailModelo(initialData.modelo || '');
-    setDetailSerie(initialData.serie || '');
-    setDetailCapacidad(initialData.capacidad || '');
-    setDetailEstado(initialData.estado || '');
-    setDetailSede(initialData.sede || '');
-    setDetailProcesos(initialData.procesos || '');
-    setDetailGarantia(initialData.garantia || '');
+    setDetailEquipo(defaultName);
+    setDetailMarca('');
+    setDetailModelo('');
+    setDetailSerie('');
+    setDetailCapacidad('');
+    setDetailEstado('');
+    setDetailSede('');
+    setDetailProcesos('');
     setError('');
     setIsModalOpen(true);
   };
@@ -737,10 +483,6 @@ export default function LicensesPage() {
       // fetch files for this license
       if (lic.id) fetchLicenseFiles(lic.id);
     } else {
-      const normName = normalizeMachineName(machineName);
-      const matchedKey = Object.keys(excelMachineData).find(k => normalizeMachineName(k) === normName);
-      const initialData = matchedKey ? excelMachineData[matchedKey] : null;
-
       const dummyLicense: License = {
         id: '',
         name: machineName,
@@ -749,7 +491,7 @@ export default function LicensesPage() {
         issueDate: '',
         expiryDate: '',
         status: 'EN_TRAMITE',
-        details: initialData ? JSON.stringify(initialData) : null,
+        details: null,
         createdAt: '',
         updatedAt: '',
         archivoNombre: null,
@@ -810,11 +552,6 @@ export default function LicensesPage() {
 
     setEditingId(lic.id || null);
     setFormName(lic.name);
-    setFormEntity(lic.entity);
-    setFormCode(lic.code || '');
-    setFormIssueDate(lic.issueDate);
-    setFormExpiryDate(lic.expiryDate);
-    setFormStatus(lic.status);
     setDetailEquipo(parsedDetails.equipo || '');
     setDetailMarca(parsedDetails.marca || '');
     setDetailModelo(parsedDetails.modelo || '');
@@ -823,7 +560,6 @@ export default function LicensesPage() {
     setDetailEstado(parsedDetails.estado || '');
     setDetailSede(parsedDetails.sede || '');
     setDetailProcesos(parsedDetails.procesos || '');
-    setDetailGarantia(parsedDetails.garantia || '');
     setError('');
     setIsModalOpen(true);
   };
@@ -864,19 +600,8 @@ export default function LicensesPage() {
 
     try {
       const carpetaId = await ensureSectionFolderId();
-      const now = new Date();
-      const dd = String(now.getDate()).padStart(2, '0');
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const yyyy = now.getFullYear();
-      const todayStr = `${dd}/${mm}/${yyyy}`;
-      
       const payload = {
         name: formName.trim() || currentSection,
-        entity: formEntity.trim() || 'POR ESPECIFICAR',
-        code: formCode.trim() || 'S/N',
-        issueDate: formIssueDate.trim() || todayStr,
-        expiryDate: formExpiryDate.trim() || todayStr,
-        status: formStatus,
         details: JSON.stringify({
           equipo: detailEquipo.trim(),
           marca: detailMarca.trim(),
@@ -885,8 +610,7 @@ export default function LicensesPage() {
           capacidad: detailCapacidad.trim(),
           estado: detailEstado.trim(),
           sede: detailSede.trim(),
-          procesos: detailProcesos.trim(),
-          garantia: detailGarantia.trim()
+          procesos: detailProcesos.trim()
         }),
         carpetaId
       };
@@ -919,11 +643,6 @@ export default function LicensesPage() {
 
     setCurrentDocUploadLicenseId(licenseId);
     setCurrentDocUploadType(docType);
-    setUploadEntity(license?.entity || '');
-    setUploadCode(license?.code || '');
-    setUploadIssueDate(license?.issueDate || '');
-    setUploadExpiryDate(expiryDate || license?.expiryDate || '');
-    setUploadStatus(license?.status || 'VIGENTE');
     setUploadFile(null);
     setIsDocUploadModalOpen(true);
   };
@@ -931,11 +650,6 @@ export default function LicensesPage() {
   const closeDocUploadModal = () => {
     setCurrentDocUploadLicenseId(null);
     setCurrentDocUploadType('certificado');
-    setUploadEntity('');
-    setUploadCode('');
-    setUploadIssueDate('');
-    setUploadExpiryDate('');
-    setUploadStatus('VIGENTE');
     setUploadFile(null);
     setIsDocUploadModalOpen(false);
   };
@@ -957,21 +671,6 @@ export default function LicensesPage() {
     }
     formData.append('docType', currentDocUploadType);
     formData.append('id', currentDocUploadLicenseId);
-    if (uploadEntity.trim()) {
-      formData.append('entity', uploadEntity.trim());
-    }
-    if (uploadCode.trim()) {
-      formData.append('code', uploadCode.trim());
-    }
-    if (uploadIssueDate.trim()) {
-      formData.append('issueDate', uploadIssueDate.trim());
-    }
-    if (uploadExpiryDate.trim()) {
-      formData.append('expiryDate', uploadExpiryDate.trim());
-    }
-    if (uploadStatus.trim()) {
-      formData.append('status', uploadStatus.trim());
-    }
 
     try {
       const res = await fetch('/api/licencias/upload', {
@@ -1077,28 +776,11 @@ export default function LicensesPage() {
     return !status.hasExpired && status.hasPending;
   }).length;
 
-  const filteredLicenses = licenses.filter((l) => {
-    const matchesSearch =
-      l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      l.entity.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (l.code && l.code.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    if (!matchesSearch) return false;
-
-    if (selectedSedeFilter !== 'TODAS') {
-      const details = parseDetails(l.details);
-      let sede = (details.sede || '').toUpperCase().trim();
-      if (!sede) {
-        sede = (l.name || '').toUpperCase().includes('TRUJILLO') ? 'TRUJILLO' : 'LIMA';
-      }
-      
-      const isTrujillo = sede.includes('TRUJILLO');
-      if (selectedSedeFilter === 'TRUJILLO' && !isTrujillo) return false;
-      if (selectedSedeFilter === 'LIMA' && isTrujillo) return false;
-    }
-
-    return true;
-  });
+  const filteredLicenses = licenses.filter((l) =>
+    l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    l.entity.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (l.code && l.code.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   const normalizeMachineName = (name: string) =>
     name.toUpperCase().replace(/\s+/g, ' ').trim();
@@ -1118,14 +800,6 @@ export default function LicensesPage() {
         (lic) => normalizeMachineName(lic.name || '') === normalizeMachineName(machineName)
       );
       return { machineName, license };
-    })
-    .filter((row) => {
-      if (selectedSedeFilter === 'TODAS') return true;
-      if (row.license) return true;
-      const isTrujillo = row.machineName.toUpperCase().includes('TRUJILLO');
-      if (selectedSedeFilter === 'TRUJILLO') return isTrujillo;
-      if (selectedSedeFilter === 'LIMA') return !isTrujillo;
-      return true;
     });
 
   const extraLicenseRows: DisplayRow[] = filteredLicenses
@@ -1165,21 +839,21 @@ export default function LicensesPage() {
           <nav className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-2xl p-1 shrink-0">
             <button
               onClick={() => router.push('/')}
-              className="py-1.5 px-4.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-all cursor-pointer"
+              className="py-1.5 px-3.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all"
             >
               Reporte Semanal
             </button>
             <button
               onClick={() => router.push('/repuestos')}
-              className="py-1.5 px-4.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-all cursor-pointer"
+              className="py-1.5 px-3.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all"
             >
               Repuestos
             </button>
             <button
               onClick={() => router.push('/licencias')}
-              className="py-1.5 px-4.5 rounded-xl text-sm font-bold text-white bg-white/10 transition-all cursor-pointer hover:bg-white/15"
+              className="py-1.5 px-3.5 rounded-xl text-xs font-semibold text-white bg-white/10 transition-all"
             >
-              Registros Generales
+              Licencias
             </button>
           </nav>
 
@@ -1218,8 +892,8 @@ export default function LicensesPage() {
       <main className="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">Registros Generales</h2>
-            <p className="text-sm text-slate-500">Control de vigencia, fechas de vencimiento y renovación de documentos de equipos y planta.</p>
+            <h2 className="text-2xl font-bold text-slate-800">Licencias y Permisos</h2>
+            <p className="text-sm text-slate-500">Control de vigencia, fechas de vencimiento y renovación de autorizaciones legales.</p>
           </div>
 
           {user?.role !== 'VIEWER' && (
@@ -1241,7 +915,7 @@ export default function LicensesPage() {
               <FileCheck className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-400">Total Registros</p>
+              <p className="text-sm font-semibold text-slate-400">Total Licencias</p>
               <p className="text-2xl font-bold text-slate-800 mt-0.5">{totalLic} registros</p>
             </div>
           </div>
@@ -1250,7 +924,7 @@ export default function LicensesPage() {
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-400">Registros Vencidos</p>
+              <p className="text-sm font-semibold text-slate-400">Licencias Vencidas</p>
               <p className={`text-2xl font-bold mt-0.5 ${expiredLic > 0 ? 'text-rose-600' : 'text-slate-800'}`}>{expiredLic} críticas</p>
             </div>
           </div>
@@ -1308,735 +982,215 @@ export default function LicensesPage() {
           </div>
         </div>
 
-                {(currentSection as string) === 'ELÉCTRICO_OLD_UNUSED' ? (
-          <div 
-            className="space-y-6"
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            {/* Action Bar */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50 border border-slate-200/80 rounded-3xl p-5 shadow-xs">
-              {/* Breadcrumbs Navigation */}
-              <div className="flex items-center flex-wrap gap-2 text-sm font-semibold">
-                {electricParentId !== null && (
-                  <button
-                    type="button"
-                    onClick={handleGoBack}
-                    className="mr-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-pink-600 hover:border-pink-200 hover:bg-pink-50/30 transition shadow-xs cursor-pointer text-xs font-bold"
-                  >
-                    <ArrowLeft className="w-4 h-4 text-slate-500" />
-                    <span>Atrás</span>
-                  </button>
-                )}
-                <button
-                  onClick={() => setElectricParentId(null)}
-                  className="flex items-center gap-1.5 text-pink-600 hover:text-pink-700 transition"
-                >
-                  <Folder className="w-5 h-5 fill-pink-500/10 text-pink-500" />
-                  <span>ELÉCTRICO</span>
-                </button>
-                {electricPath.map((folder, idx) => (
-                  <div key={folder.id} className="flex items-center gap-2">
-                    <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-                    <button
-                      onClick={() => setElectricParentId(folder.id)}
-                      className="text-slate-600 hover:text-slate-900 transition max-w-[150px] truncate"
-                    >
-                      {folder.nombre}
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              {/* Action Buttons & View Toggle */}
-              <div className="flex items-center flex-wrap gap-3">
-                {/* Search Bar inside Drive */}
-                <div className="relative max-w-xs w-full">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Search className="w-4.5 h-4.5" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Buscar en esta carpeta..."
-                    value={electricSearchQuery}
-                    onChange={(e) => setElectricSearchQuery(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-2xl py-2 pl-9 pr-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500/20 text-xs transition-all"
-                  />
-                </div>
-
-                {/* View Mode Toggle */}
-                <div className="flex items-center border border-slate-200 rounded-xl bg-white p-1">
-                  <button
-                    onClick={() => setElectricViewMode('grid')}
-                    className={`p-1.5 rounded-lg transition-colors ${electricViewMode === 'grid' ? 'bg-pink-50 text-pink-600 font-bold' : 'text-slate-400 hover:text-slate-600'}`}
-                    title="Vista Cuadrícula"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <rect x="3" y="3" width="7" height="7" rx="1.5" />
-                      <rect x="14" y="3" width="7" height="7" rx="1.5" />
-                      <rect x="14" y="14" width="7" height="7" rx="1.5" />
-                      <rect x="3" y="14" width="7" height="7" rx="1.5" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => setElectricViewMode('list')}
-                    className={`p-1.5 rounded-lg transition-colors ${electricViewMode === 'list' ? 'bg-pink-50 text-pink-600 font-bold' : 'text-slate-400 hover:text-slate-600'}`}
-                    title="Vista Lista"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <line x1="3" y1="6" x2="21" y2="6" />
-                      <line x1="3" y1="12" x2="21" y2="12" />
-                      <line x1="3" y1="18" x2="21" y2="18" />
-                    </svg>
-                  </button>
-                </div>
-
-                {/* Create Folder & Upload Buttons */}
-                {user?.role !== 'VIEWER' && (
-                  <>
-                    <button
-                      onClick={() => setIsElectricFolderModalOpen(true)}
-                      className="inline-flex items-center gap-2 rounded-2xl bg-white border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-xs cursor-pointer"
-                    >
-                      <FolderPlus className="w-4 h-4 text-slate-500" />
-                      <span>Nueva Carpeta</span>
-                    </button>
-
-                    <label className="inline-flex items-center gap-2 rounded-2xl bg-pink-600 hover:bg-pink-500 text-white px-4 py-2.5 text-xs font-bold transition shadow-xs cursor-pointer">
-                      <Upload className="w-4 h-4" />
-                      <span>{uploadingFile ? 'Subiendo...' : 'Subir Archivo'}</span>
-                      <input
-                        type="file"
-                        className="hidden"
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            handleUploadElectricFile(e.target.files[0]);
-                          }
-                        }}
-                        disabled={uploadingFile}
-                      />
-                    </label>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Drag & Drop Over Zone Overlay */}
-            <div className="relative min-h-[400px]">
-              {isDraggingOver && (
-                <div className="absolute inset-0 z-10 bg-pink-50/90 border-3 border-dashed border-pink-400 rounded-3xl flex flex-col items-center justify-center p-8 transition-all duration-300">
-                  <div className="w-20 h-20 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center mb-4 animate-bounce">
-                    <Upload className="w-10 h-10" />
-                  </div>
-                  <h4 className="text-lg font-bold text-pink-800">Suelte los archivos para subirlos</h4>
-                  <p className="text-sm text-pink-600 mt-1 font-medium">Se guardarán automáticamente en la carpeta actual</p>
-                </div>
-              )}
-
-              {loadingElectric ? (
-                <div className="flex flex-col items-center justify-center py-24">
-                  <div className="w-12 h-12 border-3 border-pink-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-sm font-semibold text-slate-400 mt-4">Cargando archivos y carpetas...</span>
-                </div>
-              ) : electricFolders.length === 0 && electricFiles.length === 0 ? (
-                /* Empty state */
-                <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200/80 rounded-3xl p-8 text-center shadow-xs">
-                  <div className="w-16 h-16 rounded-2xl bg-pink-50 text-pink-500 flex items-center justify-center mb-4">
-                    <Folder className="w-8 h-8 fill-pink-500/10" />
-                  </div>
-                  <h4 className="text-base font-bold text-slate-800">Esta carpeta está vacía</h4>
-                  <p className="text-xs text-slate-400 mt-1 max-w-sm">
-                    {user?.role !== 'VIEWER' 
-                      ? 'Arrastre y suelte archivos aquí, o use los botones de arriba para crear carpetas o subir nuevos documentos.' 
-                      : 'No hay elementos disponibles en este directorio.'}
-                  </p>
-                </div>
-              ) : (
-                <>
-                  {/* Grid View Mode */}
-                  {electricViewMode === 'grid' ? (
-                    <div className="space-y-6">
-                      {/* Folders Row */}
-                      {electricFolders.length > 0 && (
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Carpetas ({electricFolders.length})</h4>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                            {electricFolders.filter(f => f.nombre.toLowerCase().includes(electricSearchQuery.toLowerCase())).map((folder) => (
-                              <div
-                                key={folder.id}
-                                className="group relative bg-white border border-slate-200 hover:border-pink-300 hover:shadow-md rounded-2xl p-4 transition-all duration-300 cursor-pointer"
-                                onDoubleClick={() => setElectricParentId(folder.id)}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="w-12 h-12 rounded-xl bg-pink-50 text-pink-500 flex items-center justify-center shrink-0">
-                                    <Folder className="w-6 h-6 fill-pink-500/20" />
-                                  </div>
-                                  <div className="min-w-0 pr-6">
-                                    <p className="text-sm font-semibold text-slate-800 truncate" title={folder.nombre}>
-                                      {folder.nombre}
-                                    </p>
-                                    <p className="text-[10px] text-slate-400 mt-0.5">Carpeta</p>
-                                  </div>
-                                </div>
-
-                                {/* Hover Actions */}
-                                {user?.role !== 'VIEWER' && (
-                                  <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setElectricRenameId(folder.id);
-                                        setElectricRenameType('folder');
-                                        setElectricRenameName(folder.nombre);
-                                        setIsElectricRenameModalOpen(true);
-                                      }}
-                                      className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"
-                                      title="Renombrar"
-                                    >
-                                      <Edit3 className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteElectricFolder(folder.id, folder.nombre);
-                                      }}
-                                      className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                                      title="Eliminar"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Files Row */}
-                      {electricFiles.length > 0 && (
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Archivos ({electricFiles.length})</h4>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                            {electricFiles.filter(f => f.nombre.toLowerCase().includes(electricSearchQuery.toLowerCase())).map((file) => {
-                              const isImage = ['.jpg', '.jpeg', '.png', '.gif'].includes(file.extension.toLowerCase());
-                              const isPdf = file.extension.toLowerCase() === '.pdf';
-                              return (
-                                <div
-                                  key={file.id}
-                                  className="group relative bg-white border border-slate-200 hover:border-pink-300 hover:shadow-md rounded-2xl p-4 transition-all duration-300"
-                                >
-                                  <div className="flex flex-col h-full">
-                                    {/* Icon / Thumbnail */}
-                                    <div className="w-full h-32 rounded-xl bg-slate-50 border border-slate-100/80 flex items-center justify-center mb-3 overflow-hidden relative">
-                                      {isImage ? (
-                                        <img
-                                          src={`/api/licencias/electrico/archivos?id=${file.id}`}
-                                          alt={file.nombre}
-                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 animate-in fade-in"
-                                        />
-                                      ) : (
-                                        <FileText className={`w-12 h-12 ${isPdf ? 'text-rose-500' : 'text-blue-500'}`} />
-                                      )}
-                                      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <a
-                                          href={`/api/licencias/electrico/archivos?id=${file.id}`}
-                                          download={file.nombre}
-                                          className="p-1 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-slate-800 shadow-sm transition"
-                                          title="Descargar"
-                                        >
-                                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                          </svg>
-                                        </a>
-                                        {user?.role !== 'VIEWER' && (
-                                          <>
-                                            <button
-                                              onClick={() => {
-                                                setElectricRenameId(file.id);
-                                                setElectricRenameType('file');
-                                                setElectricRenameName(file.nombre);
-                                                setIsElectricRenameModalOpen(true);
-                                              }}
-                                              className="p-1 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-slate-800 shadow-sm transition"
-                                              title="Renombrar"
-                                            >
-                                              <Edit3 className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button
-                                              onClick={() => handleDeleteElectricFile(file.id, file.nombre)}
-                                              className="p-1 rounded-md bg-white border border-slate-200 text-rose-500 hover:text-rose-700 hover:bg-rose-50 shadow-sm transition"
-                                              title="Eliminar"
-                                            >
-                                              <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                          </>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    {/* Info */}
-                                    <div className="min-w-0 flex-1">
-                                      <p 
-                                        className="text-sm font-semibold text-slate-800 truncate cursor-pointer hover:text-pink-600 transition"
-                                        title={file.nombre}
-                                        onClick={() => openElectricFilePreview(file)}
-                                      >
-                                        {file.nombre}
-                                      </p>
-                                      <div className="flex items-center justify-between mt-1 text-[10px] text-slate-400 font-medium">
-                                        <span>{formatBytes(file.tamano)}</span>
-                                        <span className="font-mono">{new Date(file.fechaSubida).toLocaleDateString()}</span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    /* List View Mode */
-                    <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs w-full max-w-none">
-                      <div className="overflow-x-auto">
-                        <table className="w-full min-w-[800px] text-left border-collapse text-sm">
-                          <thead className="bg-[#0f172a] text-white shadow-sm">
-                            <tr className="text-[10px] tracking-[0.24em] uppercase font-bold border-b border-slate-800">
-                              <th className="p-4 pl-6">Nombre</th>
-                              <th className="p-4">Tipo</th>
-                              <th className="p-4">Tamaño</th>
-                              <th className="p-4">Fecha</th>
-                              <th className="p-4">Creado/Subido Por</th>
-                              <th className="p-4 text-center w-36">Acciones</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
-                            {/* Folders in List */}
-                            {electricFolders.filter(f => f.nombre.toLowerCase().includes(electricSearchQuery.toLowerCase())).map((folder) => (
-                              <tr 
-                                key={folder.id} 
-                                className="hover:bg-slate-50/50 transition-colors cursor-pointer group"
-                                onDoubleClick={() => setElectricParentId(folder.id)}
-                              >
-                                <td className="p-4 pl-6 font-semibold text-slate-800">
-                                  <div className="flex items-center gap-3">
-                                    <Folder className="w-5 h-5 fill-pink-500/10 text-pink-500 shrink-0" />
-                                    <span className="truncate max-w-md">{folder.nombre}</span>
-                                  </div>
-                                </td>
-                                <td className="p-4 text-slate-500 text-xs">Carpeta de archivos</td>
-                                <td className="p-4 text-slate-400 text-xs">-</td>
-                                <td className="p-4 text-slate-500 text-xs font-mono">{new Date(folder.fechaCreacion).toLocaleDateString()}</td>
-                                <td className="p-4 text-slate-500 text-xs">{folder.usuarioCreacion}</td>
-                                <td className="p-4 text-center">
-                                  <div className="flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setElectricParentId(folder.id);
-                                      }}
-                                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"
-                                      title="Abrir"
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                    </button>
-                                    {user?.role !== 'VIEWER' && (
-                                      <>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setElectricRenameId(folder.id);
-                                            setElectricRenameType('folder');
-                                            setElectricRenameName(folder.nombre);
-                                            setIsElectricRenameModalOpen(true);
-                                          }}
-                                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"
-                                          title="Renombrar"
-                                        >
-                                          <Edit3 className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteElectricFolder(folder.id, folder.nombre);
-                                          }}
-                                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                                          title="Eliminar"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </button>
-                                      </>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-
-                            {/* Files in List */}
-                            {electricFiles.filter(f => f.nombre.toLowerCase().includes(electricSearchQuery.toLowerCase())).map((file) => (
-                              <tr 
-                                key={file.id} 
-                                className="hover:bg-slate-50/50 transition-colors group"
-                              >
-                                <td className="p-4 pl-6 font-semibold text-slate-800">
-                                  <div className="flex items-center gap-3">
-                                    <FileText className="w-5 h-5 text-blue-500 shrink-0" />
-                                    <span 
-                                      className="truncate max-w-md cursor-pointer hover:text-pink-600 transition"
-                                      onClick={() => openElectricFilePreview(file)}
-                                    >
-                                      {file.nombre}
-                                    </span>
-                                  </div>
-                                </td>
-                                <td className="p-4 text-slate-500 text-xs uppercase">{file.extension.replace('.', '') || 'Archivo'}</td>
-                                <td className="p-4 text-slate-500 text-xs font-mono">{formatBytes(file.tamano)}</td>
-                                <td className="p-4 text-slate-500 text-xs font-mono">{new Date(file.fechaSubida).toLocaleDateString()}</td>
-                                <td className="p-4 text-slate-500 text-xs">{file.usuarioSubida}</td>
-                                <td className="p-4 text-center">
-                                  <div className="flex items-center justify-center gap-1.5">
-                                    <button
-                                      onClick={() => openElectricFilePreview(file)}
-                                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"
-                                      title="Previsualizar"
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                    </button>
-                                    <a
-                                      href={`/api/licencias/electrico/archivos?id=${file.id}`}
-                                      download={file.nombre}
-                                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"
-                                      title="Descargar"
-                                    >
-                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                      </svg>
-                                    </a>
-                                    {user?.role !== 'VIEWER' && (
-                                      <>
-                                        <button
-                                          onClick={() => {
-                                            setElectricRenameId(file.id);
-                                            setElectricRenameType('file');
-                                            setElectricRenameName(file.nombre);
-                                            setIsElectricRenameModalOpen(true);
-                                          }}
-                                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"
-                                          title="Renombrar"
-                                        >
-                                          <Edit3 className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                          onClick={() => handleDeleteElectricFile(file.id, file.nombre)}
-                                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                                          title="Eliminar"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </button>
-                                      </>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+        <div className="mb-6 relative max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <Search className="w-4.5 h-4.5" />
           </div>
-        ) : (
-          <>
-            <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
-              <div className="relative flex-1 w-full max-w-md">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Search className="w-4.5 h-4.5" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Buscar registro por nombre, entidad o código..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 text-sm transition-all shadow-xs"
-                />
-              </div>
+          <input
+            type="text"
+            placeholder="Buscar licencia por nombre, entidad o código..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 text-sm transition-all"
+          />
+        </div>
 
-              <div className="w-full sm:w-56">
-                <select
-                  value={selectedSedeFilter}
-                  onChange={(e) => setSelectedSedeFilter(e.target.value as any)}
-                  className="w-full bg-white border border-slate-200 rounded-2xl py-3 px-4 text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 text-sm font-semibold transition-all cursor-pointer shadow-xs"
-                >
-                  <option value="TODAS">📍 SEDE: TODAS</option>
-                  <option value="LIMA">📍 LIMA</option>
-                  <option value="TRUJILLO">📍 TRUJILLO</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs w-full max-w-none">
-              <div className="overflow-x-auto overflow-y-auto max-h-[68vh]">
-                <table className="w-full min-w-[1100px] text-left border-collapse text-sm">
-                  <thead className="bg-[#0f172a] text-white shadow-sm sticky top-0 z-20">
-                    <tr className="text-[10px] tracking-[0.24em] uppercase font-bold border-b border-slate-800">
-                      <th className="p-4 text-center border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">N°</th>
-                      <th className="p-4 border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">NOMBRE/MAQUINA</th>
-                      <th className="p-4 border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">DETALLES</th>
-                      <th className="p-4 border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">CERTIFICADO</th>
-                      <th className="p-4 border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">PROTOCOLO</th>
-                      <th className="p-4 border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">INFORME TÉCNICO</th>
-                      <th className="p-4 text-center border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">FACTURA</th>
-                      <th className="p-4 text-center border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">PRESUPUESTO</th>
-                      <th className="p-4 text-center border-r border-white/5 sticky top-0 bg-[#0f172a] z-20">CHECK LIST</th>
-                      <th className="p-4 text-center w-32 sticky top-0 bg-[#0f172a] z-20">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {displayRows.length === 0 ? (
-                      <tr>
-                        <td colSpan={10} className="p-12 text-center text-slate-400">
-                          No hay máquinas ni registros guardados en esta sección. Usa el botón "Crear Máquina" para comenzar.
-                        </td>
-                      </tr>
-                    ) : (
-                      displayRows.map((row, index) => {
-                        if (!row.license) {
-                          return (
-                            <tr key={`placeholder-${row.machineName}`} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="p-4 text-left align-top font-mono text-slate-700">{index + 1}</td>
-                              <td className="p-4 text-left align-top font-semibold text-slate-800">
-                                <div>{row.machineName}</div>
-                                <span className={`inline-flex items-center px-2 py-0.5 mt-1.5 text-[9px] font-bold rounded-md border ${
-                                  row.machineName.toUpperCase().includes('TRUJILLO')
-                                    ? 'bg-purple-50 border-purple-200/50 text-purple-700'
-                                    : 'bg-sky-50 border-sky-200/50 text-sky-700'
-                                }`}>
-                                  {row.machineName.toUpperCase().includes('TRUJILLO') ? 'TRUJILLO' : 'LIMA'}
-                                </span>
-                              </td>
-                              <td className="p-4 text-left align-top text-slate-600">
-                                <button
-                                  type="button"
-                                  onClick={() => openDetailsModalForMachine(row.machineName)}
-                                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                                >
-                                  <Eye className="w-3.5 h-3.5" />
-                                  Ver
-                                </button>
-                              </td>
-                              {(['certificado', 'protocolo', 'informeTecnico', 'factura', 'presupuesto', 'checklist'] as LicenseDocType[]).map((docType) => {
-                                return (
-                                  <td key={docType} className="p-4 text-center align-top">
-                                    <div className="space-y-2">
-                                      <span className="block text-[11px] text-slate-400">Sin archivo</span>
-                                      {user?.role !== 'VIEWER' && (
-                                        <button
-                                          type="button"
-                                          onClick={() => handleUploadForPlaceholder(row.machineName, docType)}
-                                          className="text-[11px] text-slate-600 hover:text-slate-900 font-semibold rounded-xl px-2 py-1 bg-slate-100 hover:bg-slate-200 transition"
-                                        >
-                                          Subir
-                                        </button>
-                                      )}
-                                    </div>
-                                  </td>
-                                );
-                              })}
-                              <td className="p-4 text-center">
-                                <div className="flex items-center justify-center gap-1">
+        <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs w-full max-w-none">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1100px] text-left border-collapse text-sm">
+              <thead className="bg-[#0f172a] text-white shadow-sm">
+                <tr className="text-[10px] tracking-[0.24em] uppercase font-bold border-b border-slate-800">
+                  <th className="p-4 text-center border-r border-white/5">N°</th>
+                  <th className="p-4 border-r border-white/5">NOMBRE/MAQUINA</th>
+                  <th className="p-4 border-r border-white/5">DETALLES</th>
+                  <th className="p-4 border-r border-white/5">CERTIFICADO</th>
+                  <th className="p-4 border-r border-white/5">PROTOCOLO</th>
+                  <th className="p-4 border-r border-white/5">INFORME TÉCNICO</th>
+                  <th className="p-4 text-center border-r border-white/5">FACTURA</th>
+                  <th className="p-4 text-center border-r border-white/5">PRESUPUESTO</th>
+                  <th className="p-4 text-center border-r border-white/5">CHECK LIST</th>
+                  <th className="p-4 text-center w-32">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {displayRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="p-12 text-center text-slate-400">
+                      No hay máquinas ni licencias registradas en esta sección. Usa el botón "Crear Máquina" para comenzar.
+                    </td>
+                  </tr>
+                ) : (
+                  displayRows.map((row, index) => {
+                    if (!row.license) {
+                      return (
+                        <tr key={`placeholder-${row.machineName}`} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="p-4 text-left align-top font-mono text-slate-700">{index + 1}</td>
+                          <td className="p-4 text-left align-top font-semibold text-slate-800">{row.machineName}</td>
+                          <td className="p-4 text-left align-top text-slate-600">
+                            <button
+                              type="button"
+                              onClick={() => openDetailsModalForMachine(row.machineName)}
+                              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              Ver
+                            </button>
+                          </td>
+                          {(['certificado', 'protocolo', 'informeTecnico', 'factura', 'presupuesto', 'checklist'] as LicenseDocType[]).map((docType) => {
+                            return (
+                              <td key={docType} className="p-4 text-center align-top">
+                                <div className="space-y-2">
+                                  <span className="block text-[11px] text-slate-400">Sin archivo</span>
                                   {user?.role !== 'VIEWER' && (
                                     <button
                                       type="button"
-                                      onClick={() => {
-                                        if (confirm(`¿Está seguro de eliminar la máquina "${row.machineName}" de la lista?`)) {
-                                          handleDeletePlaceholder(row.machineName);
-                                        }
-                                      }}
-                                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                      title="Eliminar"
+                                      onClick={() => handleUploadForPlaceholder(row.machineName, docType)}
+                                      className="text-[11px] text-slate-600 hover:text-slate-900 font-semibold rounded-xl px-2 py-1 bg-slate-100 hover:bg-slate-200 transition"
                                     >
-                                      <Trash2 className="w-4 h-4" />
+                                      Subir
                                     </button>
                                   )}
                                 </div>
                               </td>
-                            </tr>
-                          );
-                        }
+                            );
+                          })}
+                          <td className="p-4 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              {user?.role !== 'VIEWER' && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (confirm(`¿Está seguro de eliminar la máquina "${row.machineName}" de la lista?`)) {
+                                      handleDeletePlaceholder(row.machineName);
+                                    }
+                                  }}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                  title="Eliminar"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
 
-                        const lic = row.license;
-                        return (
-                          <tr key={lic.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="p-4 text-left align-top font-mono text-slate-700">{index + 1}</td>
-                            <td className="p-4 text-left align-top font-semibold text-slate-800">
-                               <div>{lic.name || '-'}</div>
-                               {(() => {
-                                 const details = parseDetails(lic.details);
-                                 let sede = (details.sede || '').toUpperCase().trim();
-                                 if (!sede) {
-                                   sede = (lic.name || '').toUpperCase().includes('TRUJILLO') ? 'TRUJILLO' : 'LIMA';
-                                 }
-                                 const isTrujillo = sede.includes('TRUJILLO');
-                                 return (
-                                   <span className={`inline-flex items-center px-2 py-0.5 mt-1.5 text-[9px] font-bold rounded-md border ${
-                                     isTrujillo
-                                       ? 'bg-purple-50 border-purple-200/50 text-purple-700'
-                                       : 'bg-sky-50 border-sky-200/50 text-sky-700'
-                                   }`}>
-                                     {isTrujillo ? 'TRUJILLO' : 'LIMA'}
-                                   </span>
-                                 );
-                               })()}
-                             </td>
-                            <td className="p-4 text-left align-top text-slate-600">
-                              <button
-                                type="button"
-                                onClick={() => openDetailsModalForMachine(lic.name, lic)}
-                                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                              >
-                                <Eye className="w-3.5 h-3.5" />
-                                Ver
-                              </button>
-                            </td>
-                            {(['certificado', 'protocolo', 'informeTecnico', 'factura', 'presupuesto', 'checklist'] as LicenseDocType[]).map((docType) => {
-                              const field = docTypeFieldMap[docType];
-                              const name = lic[field.nameField] as string | null;
-                              const expiryField = docTypeExpiryFieldMap[docType];
-                              const specificExpiryDate = lic[expiryField] as string | null;
-                              const documentState = getDocumentState(specificExpiryDate);
-                              
-                              const folderStyles = {
-                                active: {
-                                  bg: 'bg-sky-50/50 border-sky-100 hover:border-sky-300',
-                                  iconBg: 'bg-sky-100 text-sky-600 shadow-sky-100/30',
-                                  badge: 'bg-sky-100 text-sky-700 border-sky-200',
-                                  dot: 'bg-sky-500'
-                                },
-                                dueSoon: {
-                                  bg: 'bg-amber-50/50 border-amber-100 hover:border-amber-300',
-                                  iconBg: 'bg-amber-100 text-amber-600 shadow-amber-100/30',
-                                  badge: 'bg-amber-100 text-amber-700 border-amber-200',
-                                  dot: 'bg-amber-500'
-                                },
-                                expired: {
-                                  bg: 'bg-rose-50/50 border-rose-100 hover:border-rose-300',
-                                  iconBg: 'bg-rose-100 text-rose-600 shadow-rose-100/30',
-                                  badge: 'bg-rose-100 text-rose-700 border-rose-200',
-                                  dot: 'bg-rose-500'
-                                },
-                                none: {
-                                  bg: 'bg-slate-50/50 border-slate-100 hover:border-slate-300',
-                                  iconBg: 'bg-slate-100 text-slate-500 shadow-slate-100/30',
-                                  badge: 'bg-slate-100 text-slate-500 border-slate-200',
-                                  dot: 'bg-slate-400'
-                                }
-                              };
-
-                              const folderStyle = folderStyles[documentState.variant as keyof typeof folderStyles] || folderStyles.none;
-
-                              const stateStyles = {
-                                active: 'bg-sky-100 text-sky-700 border-sky-200',
-                                dueSoon: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                                expired: 'bg-rose-100 text-rose-700 border-rose-200',
-                                none: 'bg-slate-100 text-slate-500 border-slate-200'
-                              };
-
-                              return (
-                                <td key={docType} className="p-4 text-center align-top">
-                                  <div className="space-y-2">
-                                    {name ? (
-                                      <>
-                                        <div className={`inline-flex items-center justify-center gap-1 rounded-full border px-3 py-1 text-[11px] font-semibold ${stateStyles[documentState.variant as keyof typeof stateStyles]}`}>
-                                          {documentState.variant === 'active' && <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />}
-                                          {documentState.variant === 'dueSoon' && <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />}
-                                          {documentState.variant === 'expired' && <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />}
-                                          <span>{documentState.label}</span>
-                                        </div>
-                                        <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">{specificExpiryDate || '-'}</p>
-                                        <div className="flex items-center justify-center gap-1">
-                                          <button
-                                            type="button"
-                                            onClick={() => openFilePreview(lic.id, name, docType)}
-                                            className="inline-flex items-center justify-center gap-2 text-[11px] text-brand-600 hover:text-brand-700 font-medium hover:underline bg-brand-50 px-2 py-1 rounded-md border border-brand-100"
-                                          >
-                                            <FileText className="w-3.5 h-3.5 text-brand-500" />
-                                            <span className="truncate max-w-[7rem]">{name}</span>
-                                          </button>
-                                          {user?.role !== 'VIEWER' && (
-                                            <button
-                                              type="button"
-                                              onClick={() => handleDeleteFile(lic.id, docType)}
-                                              className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all duration-200"
-                                              title="Eliminar archivo"
-                                            >
-                                              <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                          )}
-                                        </div>
-                                      </>
-                                    ) : (
-                                      <span className="block text-[11px] text-slate-400">Sin archivo</span>
-                                    )}
-                                    {user?.role !== 'VIEWER' && (
+                    const lic = row.license;
+                    return (
+                      <tr key={lic.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="p-4 text-left align-top font-mono text-slate-700">{index + 1}</td>
+                        <td className="p-4 text-left align-top font-semibold text-slate-800">{lic.name || '-'}</td>
+                        <td className="p-4 text-left align-top text-slate-600">
+                          <button
+                            type="button"
+                            onClick={() => openDetailsModalForMachine(lic.name, lic)}
+                            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            Ver
+                          </button>
+                        </td>
+                        {(['certificado', 'protocolo', 'informeTecnico', 'factura', 'presupuesto', 'checklist'] as LicenseDocType[]).map((docType) => {
+                          const field = docTypeFieldMap[docType];
+                          const name = lic[field.nameField] as string | null;
+                          const expiryField = docTypeExpiryFieldMap[docType];
+                          const specificExpiryDate = lic[expiryField] as string | null;
+                          const documentState = getDocumentState(specificExpiryDate);
+                          const stateStyles = {
+                            active: 'bg-sky-100 text-sky-700 border-sky-200',
+                            dueSoon: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                            expired: 'bg-rose-100 text-rose-700 border-rose-200',
+                            none: 'bg-slate-100 text-slate-500 border-slate-200'
+                          };
+                          return (
+                            <td key={docType} className="p-4 text-center align-top">
+                              <div className="space-y-2">
+                                {name ? (
+                                  <>
+                                    <div className={`inline-flex items-center justify-center gap-1 rounded-full border px-3 py-1 text-[11px] font-semibold ${stateStyles[documentState.variant as keyof typeof stateStyles]}`}>
+                                      {documentState.variant === 'active' && <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />}
+                                      {documentState.variant === 'dueSoon' && <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />}
+                                      {documentState.variant === 'expired' && <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />}
+                                      <span>{documentState.label}</span>
+                                    </div>
+                                    <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">{specificExpiryDate || '-'}</p>
+                                    <div className="flex items-center justify-center gap-1">
                                       <button
                                         type="button"
-                                        onClick={() => openDocUploadModal(lic.id, docType, specificExpiryDate || '')}
-                                        className="text-[11px] text-slate-600 hover:text-slate-900 font-semibold rounded-xl px-2 py-1 bg-slate-100 hover:bg-slate-200 transition"
+                                        onClick={() => openFilePreview(lic.id, name, docType)}
+                                        className="inline-flex items-center justify-center gap-2 text-[11px] text-brand-600 hover:text-brand-700 font-medium hover:underline bg-brand-50 px-2 py-1 rounded-md border border-brand-100"
                                       >
-                                        {name ? 'Editar' : 'Subir'}
+                                        <FileText className="w-3.5 h-3.5 text-brand-500" />
+                                        <span className="truncate max-w-[7rem]">{name}</span>
                                       </button>
-                                    )}
-                                  </div>
-                                  </td>
-                              );
-                            })}
-                            <td className="p-4 text-center">
-                              <div className="flex items-center justify-center gap-1">
+                                      {user?.role !== 'VIEWER' && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteFile(lic.id, docType)}
+                                          className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all duration-200"
+                                          title="Eliminar archivo"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </>
+                                ) : (
+                                  <span className="block text-[11px] text-slate-400">Sin archivo</span>
+                                )}
                                 {user?.role !== 'VIEWER' && (
                                   <button
-                                    onClick={() => {
-                                      if (confirm(`¿Está seguro de eliminar la máquina "${lic.name}" de la lista?`)) {
-                                        fetch(`/api/licencias/${lic.id}`, { method: 'DELETE' })
-                                          .then((res) => res.json())
-                                          .then((data) => {
-                                            if (data.success) {
-                                              handleDeletePlaceholder(lic.name);
-                                              fetchLicenses();
-                                            }
-                                          });
-                                      }
-                                    }}
-                                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                    title="Eliminar"
+                                    type="button"
+                                    onClick={() => openDocUploadModal(lic.id, docType, specificExpiryDate || '')}
+                                    className="text-[11px] text-slate-600 hover:text-slate-900 font-semibold rounded-xl px-2 py-1 bg-slate-100 hover:bg-slate-200 transition"
                                   >
-                                    <Trash2 className="w-4 h-4" />
+                                    {name ? 'Editar' : 'Subir'}
                                   </button>
                                 )}
                               </div>
                             </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </>
-        )}
+                          );
+                        })}
+                        <td className="p-4 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            {user?.role !== 'VIEWER' && (
+                              <button
+                                onClick={() => {
+                                  if (confirm(`¿Está seguro de eliminar la máquina "${lic.name}" de la lista?`)) {
+                                    fetch(`/api/licencias/${lic.id}`, { method: 'DELETE' })
+                                      .then((res) => res.json())
+                                      .then((data) => {
+                                        if (data.success) {
+                                          handleDeletePlaceholder(lic.name);
+                                          fetchLicenses();
+                                        }
+                                      });
+                                  }
+                                }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                title="Eliminar"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </main>
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-md animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-              <h3 className="font-bold text-slate-800 text-base">{editingId ? 'Editar Registro General' : 'Registrar Nuevo Registro General'}</h3>
+              <h3 className="font-bold text-slate-800 text-base">{editingId ? 'Editar Registro de Autorización' : 'Registrar Nueva Licencia / Permiso'}</h3>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
@@ -2051,7 +1205,7 @@ export default function LicensesPage() {
               </div>
             )}
             <form onSubmit={handleSave} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Equipo</label>
                   <input
@@ -2166,7 +1320,7 @@ export default function LicensesPage() {
           <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
               <div>
-                <h3 className="font-bold text-slate-800 text-base">Registrar Nuevo Registro General</h3>
+                <h3 className="font-bold text-slate-800 text-base">Registrar Nueva Licencia / Permiso</h3>
                 <p className="text-xs text-slate-500 mt-1">Subir {docTypeLabels[currentDocUploadType]}</p>
               </div>
               <button
@@ -2410,97 +1564,6 @@ export default function LicensesPage() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modals for Electric section Google Drive file manager */}
-      {isElectricFolderModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-              <h3 className="font-bold text-slate-800 text-base">Crear Nueva Carpeta</h3>
-              <button
-                onClick={() => setIsElectricFolderModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
-              >
-                <X className="w-4.5 h-4.5" />
-              </button>
-            </div>
-            <form onSubmit={handleCreateElectricFolder} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nombre de la Carpeta</label>
-                <input
-                  type="text"
-                  value={electricNewFolderName}
-                  onChange={(e) => setElectricNewFolderName(e.target.value)}
-                  placeholder="Ej. Planos de Tableros"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-700 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
-                  required
-                  autoFocus
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsElectricFolderModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-bold transition-colors cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-colors"
-                >
-                  Crear Carpeta
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {isElectricRenameModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-              <h3 className="font-bold text-slate-800 text-base">Renombrar {electricRenameType === 'folder' ? 'Carpeta' : 'Archivo'}</h3>
-              <button
-                onClick={() => setIsElectricRenameModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
-              >
-                <X className="w-4.5 h-4.5" />
-              </button>
-            </div>
-            <form onSubmit={handleRenameElectricItem} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nuevo Nombre</label>
-                <input
-                  type="text"
-                  value={electricRenameName}
-                  onChange={(e) => setElectricRenameName(e.target.value)}
-                  placeholder="Ej. Nuevo nombre"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-700 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
-                  required
-                  autoFocus
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsElectricRenameModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-bold transition-colors cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-colors"
-                >
-                  Renombrar
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
