@@ -87,14 +87,49 @@ export async function GET(request: NextRequest) {
       try { await fs.access(filePath); } catch { return NextResponse.json({ success: false, error: 'El archivo físico no existe.' }, { status: 404 }); }
 
       const fileBuffer = await fs.readFile(filePath);
-      const extension = path.extname(originalName).toLowerCase();
+
+      // Determine real extension from relativePath on disk if originalName lacks one
+      let extension = path.extname(originalName).toLowerCase();
+      const realExt = path.extname(relativePath).toLowerCase();
+      if (!extension && realExt) {
+        extension = realExt;
+      }
+      if (!extension) {
+        // Check magic bytes for PDF (%PDF-)
+        if (fileBuffer.length > 4 && fileBuffer[0] === 0x25 && fileBuffer[1] === 0x50 && fileBuffer[2] === 0x44 && fileBuffer[3] === 0x46) {
+          extension = '.pdf';
+        } else {
+          extension = '.pdf'; // default fallback for all maintenance docs
+        }
+      }
+
       const mimeTypes: Record<string, string> = {
-        '.pdf': 'application/pdf', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.gif': 'image/gif', '.doc': 'application/msword', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.xls': 'application/vnd.ms-excel', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        '.pdf': 'application/pdf',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.xls': 'application/vnd.ms-excel',
+        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       };
-      const contentType = mimeTypes[extension] || 'application/octet-stream';
+
+      const contentType = mimeTypes[extension] || 'application/pdf';
       const isViewable = ['.pdf', '.jpg', '.jpeg', '.png', '.gif'].includes(extension);
       const disposition = isViewable ? 'inline' : 'attachment';
-      return new Response(fileBuffer, { headers: { 'Content-Type': contentType, 'Content-Disposition': `${disposition}; filename="${encodeURIComponent(originalName)}"` } });
+
+      let downloadName = originalName.trim();
+      if (!downloadName.toLowerCase().endsWith(extension)) {
+        downloadName = `${downloadName}${extension}`;
+      }
+
+      return new Response(fileBuffer, {
+        headers: {
+          'Content-Type': contentType,
+          'Content-Disposition': `${disposition}; filename="${encodeURIComponent(downloadName)}"`
+        }
+      });
     }
 
     return NextResponse.json({ success: false, error: 'Parámetros insuficientes. Use ?file= or ?id=...&list=true or ?id=...&type=...' }, { status: 400 });

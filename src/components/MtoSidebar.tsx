@@ -9,11 +9,11 @@ import {
   Package,
   FileCheck2,
   Users,
-  ChevronsLeft,
-  ChevronsRight,
+  ChevronLeft,
+  ChevronRight,
   ClipboardList,
-  ShieldCheck,
-  CalendarCheck2
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 
 interface MtoSidebarProps {
@@ -22,6 +22,8 @@ interface MtoSidebarProps {
   onToggleCollapse: () => void;
   onCloseMobile: () => void;
   userRole?: string;
+  activeSection?: 'dashboard' | 'tareas';
+  onSelectSection?: (section: 'dashboard' | 'tareas') => void;
 }
 
 export default function MtoSidebar({
@@ -29,30 +31,39 @@ export default function MtoSidebar({
   mobileOpen,
   onToggleCollapse,
   onCloseMobile,
-  userRole
+  userRole,
+  activeSection = 'dashboard',
+  onSelectSection
 }: MtoSidebarProps) {
   const pathname = usePathname();
+  const isHome = pathname === '/';
 
   const navItems = [
     {
+      id: 'dashboard',
       name: 'Dashboard',
-      href: '/',
+      href: '/?tab=dashboard',
       icon: LayoutDashboard,
-      active: pathname === '/'
+      active: isHome ? activeSection === 'dashboard' : false,
+      onClick: isHome && onSelectSection ? () => onSelectSection('dashboard') : undefined
     },
     {
+      id: 'tareas',
       name: 'Tareas de Planta',
-      href: '/',
+      href: '/?tab=tareas',
       icon: ClipboardList,
-      active: pathname === '/'
+      active: isHome ? activeSection === 'tareas' : false,
+      onClick: isHome && onSelectSection ? () => onSelectSection('tareas') : undefined
     },
     {
+      id: 'repuestos',
       name: 'Repuestos',
       href: '/repuestos',
       icon: Package,
       active: pathname.startsWith('/repuestos')
     },
     {
+      id: 'licencias',
       name: 'Registros Generales',
       href: '/licencias',
       icon: FileCheck2,
@@ -61,6 +72,7 @@ export default function MtoSidebar({
     ...(userRole === 'ADMIN'
       ? [
           {
+            id: 'users',
             name: 'Usuarios y Roles',
             href: '/users',
             icon: Users,
@@ -85,6 +97,7 @@ export default function MtoSidebar({
           collapsed ? 'w-16' : 'w-60'
         } ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
+        {/* Top Header inside sidebar */}
         <div className="p-3 border-b border-slate-800/60 flex items-center justify-between">
           {!collapsed && (
             <div className="flex items-center gap-2 px-1">
@@ -97,27 +110,36 @@ export default function MtoSidebar({
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors mx-auto"
-            title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors mx-auto cursor-pointer"
+            title={collapsed ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
           >
-            {collapsed ? <ChevronsRight className="w-4 h-4" /> : <ChevronsLeft className="w-4 h-4" />}
+            {collapsed ? <ChevronsRight className="w-4 h-4 text-cyan-400" /> : <ChevronsLeft className="w-4 h-4 text-slate-400" />}
           </button>
         </div>
 
+        {/* Navigation list */}
         <nav className="flex-1 py-3 px-2 space-y-1">
-          {navItems.map((item, idx) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
+            const handleClick = (e: React.MouseEvent) => {
+              if (item.onClick) {
+                e.preventDefault();
+                item.onClick();
+              }
+              onCloseMobile();
+            };
+
             return (
               <Link
-                key={idx}
+                key={item.id}
                 href={item.href}
-                onClick={onCloseMobile}
+                onClick={handleClick}
                 title={collapsed ? item.name : undefined}
                 className={`flex items-center rounded-xl py-2.5 text-xs font-medium transition-all ${
                   collapsed ? 'justify-center px-0' : 'space-x-3 px-3'
                 } ${
                   item.active
-                    ? 'bg-gradient-to-r from-blue-600/30 to-indigo-600/20 text-white border border-blue-500/30 shadow-md shadow-blue-500/5 font-semibold'
+                    ? 'bg-gradient-to-r from-blue-600/30 to-indigo-600/20 text-white border border-blue-500/30 shadow-md shadow-blue-500/5 font-bold'
                     : 'text-slate-400 hover:text-slate-100 hover:bg-[#121c33]/70'
                 }`}
               >
@@ -132,14 +154,34 @@ export default function MtoSidebar({
           })}
         </nav>
 
-        {/* Bottom Version */}
-        {!collapsed && (
-          <div className="p-3 border-t border-slate-800/60 text-center">
-            <span className="text-[10px] text-slate-500 font-medium">
-              v1.2.0 — ERP Asepsis MTO
-            </span>
-          </div>
-        )}
+        {/* Bottom Colapsar Button & Version */}
+        <div className="p-2 border-t border-slate-800/60 flex flex-col gap-1.5">
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            className={`flex items-center gap-2.5 py-2 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-100 hover:bg-[#121c33] transition-all cursor-pointer ${
+              collapsed ? 'justify-center px-0' : ''
+            }`}
+            title={collapsed ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
+          >
+            {collapsed ? (
+              <ChevronRight className="w-4 h-4 text-cyan-400" />
+            ) : (
+              <>
+                <ChevronLeft className="w-4 h-4 text-cyan-400" />
+                <span>Colapsar</span>
+              </>
+            )}
+          </button>
+
+          {!collapsed && (
+            <div className="text-center pt-0.5 pb-1">
+              <span className="text-[10px] text-slate-500 font-medium">
+                v1.2.0 — MTO Asepsis
+              </span>
+            </div>
+          )}
+        </div>
       </aside>
     </>
   );

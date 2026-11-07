@@ -71,7 +71,7 @@ export default function MtoTopNavbar({
             </svg>
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-sm tracking-wide text-white leading-tight">ERP Asepsis</span>
+            <span className="font-bold text-sm tracking-wide text-white leading-tight">MTO Asepsis</span>
             <span className="text-[10px] font-semibold text-cyan-400 tracking-wider">
               {selectedSede === 'ALL' || !selectedSede ? 'MTO • TODAS' : `MTO • ${selectedSede}`}
             </span>

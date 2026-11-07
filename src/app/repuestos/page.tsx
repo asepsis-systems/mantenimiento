@@ -67,6 +67,23 @@ interface User {
 
 export default function SparePartsPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('mto_sidebar_collapsed');
+      if (saved !== null) setSidebarCollapsed(saved === 'true');
+    }
+  }, []);
+
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('mto_sidebar_collapsed', String(next));
+      }
+      return next;
+    });
+  };
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const router = useRouter();
   const [spareParts, setSpareParts] = useState<SparePart[]>([]);
@@ -538,7 +555,7 @@ export default function SparePartsPage() {
         <MtoSidebar
           collapsed={sidebarCollapsed}
           mobileOpen={mobileSidebarOpen}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onToggleCollapse={handleToggleSidebar}
           onCloseMobile={() => setMobileSidebarOpen(false)}
           userRole={user?.role}
         />

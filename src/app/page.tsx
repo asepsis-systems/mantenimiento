@@ -27,7 +27,8 @@ import {
   ChevronDown,
   Check,
   X,
-  Clock
+  Clock,
+  LayoutDashboard
 } from 'lucide-react';
 
 import { TaskModal } from '@/components/TaskModal';
@@ -188,6 +189,43 @@ export default function Dashboard() {
   const [isPremiumDarkMode, setIsPremiumDarkMode] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'tareas'>('dashboard');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedSidebar = localStorage.getItem('mto_sidebar_collapsed');
+      if (savedSidebar !== null) setSidebarCollapsed(savedSidebar === 'true');
+
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam === 'tareas' || tabParam === 'dashboard') {
+        setActiveTab(tabParam as 'dashboard' | 'tareas');
+      } else {
+        const savedTab = localStorage.getItem('mto_active_tab');
+        if (savedTab === 'tareas' || savedTab === 'dashboard') {
+          setActiveTab(savedTab as 'dashboard' | 'tareas');
+        }
+      }
+    }
+  }, []);
+
+  const handleTabChange = (tab: 'dashboard' | 'tareas') => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mto_active_tab', tab);
+      window.history.replaceState(null, '', tab === 'tareas' ? '/?tab=tareas' : '/?tab=dashboard');
+    }
+  };
+
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('mto_sidebar_collapsed', String(next));
+      }
+      return next;
+    });
+  };
 
   // Modal control states
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -1706,13 +1744,52 @@ export default function Dashboard() {
         <MtoSidebar
           collapsed={sidebarCollapsed}
           mobileOpen={mobileSidebarOpen}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onToggleCollapse={handleToggleSidebar}
           onCloseMobile={() => setMobileSidebarOpen(false)}
           userRole={user?.role}
+          activeSection={activeTab}
+          onSelectSection={handleTabChange}
         />
 
         {/* Main Content Area */}
         <main className="flex-1 min-w-0 bg-[#080d1a] overflow-y-auto px-4 sm:px-6 lg:px-8 py-6">
+
+          {/* Section Navigation Tabs: Dashboard vs Tareas de Planta */}
+          <div className="flex items-center gap-2 mb-6 p-1.5 bg-[#0b1120] border border-slate-800/80 rounded-2xl w-fit shadow-md">
+            <button
+              type="button"
+              onClick={() => handleTabChange('dashboard')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'dashboard'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-[#121c33]/70'
+              }`}
+            >
+              <LayoutDashboard className="w-4 h-4 text-cyan-400" />
+              <span>Dashboard</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleTabChange('tareas')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'tareas'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-[#121c33]/70'
+              }`}
+            >
+              <ClipboardList className="w-4 h-4 text-cyan-400" />
+              <span>Tareas de Planta</span>
+              <span className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                activeTab === 'tareas' ? 'bg-white/20 text-white' : 'bg-slate-800 text-cyan-400 border border-slate-700'
+              }`}>
+                {totalCount}
+              </span>
+            </button>
+          </div>
+
+          {activeTab === 'dashboard' ? (
+            <div className="space-y-6">
           
           {/* Welcome Hero Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -1746,6 +1823,7 @@ export default function Dashboard() {
                 setToDate('');
                 setCurrentPage(1);
                 handleSearchTrigger();
+                handleTabChange('tareas');
               }}
               className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
                 statusFilter === 'ALL' && selectedDocFilter === 'ALL' && quickRange === 'ALL'
@@ -1778,6 +1856,7 @@ export default function Dashboard() {
                 setToDate('');
                 setCurrentPage(1);
                 handleSearchTrigger();
+                handleTabChange('tareas');
               }}
               className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
                 statusFilter === 'PENDIENTE'
@@ -1813,6 +1892,7 @@ export default function Dashboard() {
                 setToDate('');
                 setCurrentPage(1);
                 handleSearchTrigger();
+                handleTabChange('tareas');
               }}
               className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
                 statusFilter === 'EN_PROCESO'
@@ -1845,6 +1925,7 @@ export default function Dashboard() {
                 setToDate('');
                 setCurrentPage(1);
                 handleSearchTrigger();
+                handleTabChange('tareas');
               }}
               className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
                 statusFilter === 'CULMINADO'
@@ -1885,6 +1966,7 @@ export default function Dashboard() {
                 setToDate('');
                 setCurrentPage(1);
                 handleSearchTrigger();
+                handleTabChange('tareas');
               }}
               className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
                 selectedDocFilter === 'CON_DOC'
@@ -1917,6 +1999,7 @@ export default function Dashboard() {
                 setToDate('');
                 setCurrentPage(1);
                 handleSearchTrigger();
+                handleTabChange('tareas');
               }}
               className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
                 selectedDocFilter === 'SIN_DOC'
@@ -1949,6 +2032,7 @@ export default function Dashboard() {
                 setSelectedDocFilter('ALL');
                 handleQuickRangeChange('ESTA_SEMANA');
                 setCurrentPage(1);
+                handleTabChange('tareas');
               }}
               className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
                 quickRange === 'ESTA_SEMANA'
@@ -1978,6 +2062,7 @@ export default function Dashboard() {
                 setSelectedDocFilter('ALL');
                 handleQuickRangeChange('ESTE_MES');
                 setCurrentPage(1);
+                handleTabChange('tareas');
               }}
               className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
                 quickRange === 'ESTE_MES'
@@ -2000,6 +2085,46 @@ export default function Dashboard() {
             </button>
           </section>
 
+
+              {/* Quick Action Banner to Tareas */}
+              <div className="p-6 rounded-2xl bg-gradient-to-r from-[#0d1627] to-[#111e38] border border-slate-800/80 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <ClipboardList className="w-5 h-5 text-cyan-400" />
+                    <span>Gestión Operativa de Tareas de Planta</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Accede a la lista completa de {totalCount} tareas, filtros por fecha, equipo, responsable y exportación en PDF o Excel.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('tareas')}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer shrink-0"
+                >
+                  Ver Listado de Tareas →
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Header for Tareas de Planta */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+                    <ClipboardList className="w-7 h-7 text-cyan-400" />
+                    <span>Tareas de Planta</span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Supervisión, filtros avanzados y control de actividades mecánicas de planta.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-[#121c33] border border-slate-700/60 rounded-xl px-3 py-1.5 text-xs text-slate-300 font-medium">
+                    {totalCount} registros totales
+                  </span>
+                </div>
+              </div>
           {/* --- DYNAMIC FILTER CARD PANEL --- */}
           <section className="bg-[#0f172a]/80 backdrop-blur-md rounded-2xl border border-slate-800/80 shadow-md shadow-black/20 p-4.5 sm:p-6 mb-6">
             <div className="flex items-center gap-2 mb-4">
@@ -3218,6 +3343,9 @@ export default function Dashboard() {
 
         </section>
 
+
+            </div>
+          )}
       </main>
       </div>
 

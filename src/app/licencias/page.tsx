@@ -147,6 +147,23 @@ const parseDetails = (details: string | null): Record<string, string> => {
 
 export default function LicensesPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('mto_sidebar_collapsed');
+      if (saved !== null) setSidebarCollapsed(saved === 'true');
+    }
+  }, []);
+
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('mto_sidebar_collapsed', String(next));
+      }
+      return next;
+    });
+  };
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const router = useRouter();
   const [licenses, setLicenses] = useState<License[]>([]);
@@ -575,16 +592,29 @@ export default function LicensesPage() {
       const idx = name.lastIndexOf('.');
       return idx === -1 ? '' : name.slice(idx).toLowerCase();
     };
-    const ext = getExtension(filename);
+
+    const lic = licenses.find((l) => l.id === id);
+    const field = docTypeFieldMap[docType];
+    const physicalPath = lic ? ((lic as any)[field.pathField] as string | undefined) : undefined;
+
+    let ext = getExtension(filename);
+    if (!ext && physicalPath) {
+      ext = getExtension(physicalPath);
+    }
+    if (!ext) {
+      ext = '.pdf';
+    }
+
     const previewable = ['.pdf', '.jpg', '.jpeg', '.png', '.gif'];
 
-    if (!filename || !previewable.includes(ext)) {
+    if (!previewable.includes(ext)) {
       window.open(url, '_blank');
       return;
     }
 
     setPreviewUrl(url);
-    setPreviewName(filename);
+    const displayName = (filename && filename.toLowerCase().endsWith(ext)) ? filename : `${filename || 'documento'}${ext}`;
+    setPreviewName(displayName);
     setPreviewExt(ext);
     setIsPreviewOpen(true);
   };
@@ -846,7 +876,7 @@ export default function LicensesPage() {
         <MtoSidebar
           collapsed={sidebarCollapsed}
           mobileOpen={mobileSidebarOpen}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onToggleCollapse={handleToggleSidebar}
           onCloseMobile={() => setMobileSidebarOpen(false)}
           userRole={user?.role}
         />
