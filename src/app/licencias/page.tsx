@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import MtoTopNavbar from '@/components/MtoTopNavbar';
+import MtoSidebar from '@/components/MtoSidebar';
 import {
   Plus,
   Trash2,
@@ -144,6 +146,8 @@ const parseDetails = (details: string | null): Record<string, string> => {
 };
 
 export default function LicensesPage() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const router = useRouter();
   const [licenses, setLicenses] = useState<License[]>([]);
   const [user, setUser] = useState<User | null>(null);
@@ -823,84 +827,45 @@ export default function LicensesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-slate-900 text-white shadow-xl shadow-slate-950/10 sticky top-0 z-[40]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-white rounded-xl p-1 shadow-md shrink-0 flex items-center justify-center w-12 h-10">
-              <img src="/logo2.jpg" alt="Asepsis Logo" className="h-8 w-auto object-contain rounded-lg" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight">Mantenimiento</h1>
-              <p className="text-xs text-slate-400 font-light">Control de Reportes de Mantenimiento</p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-[#080d1a] flex flex-col text-slate-100 selection:bg-cyan-500/30 selection:text-cyan-200">
+      {/* Modern ERP TopNavbar */}
+      <MtoTopNavbar
+        user={user}
+        selectedSede="TODAS"
+        onSedeChange={() => {}}
+        searchTerm={searchQuery}
+        onSearchChange={(val) => setSearchQuery(val)}
+        onOpenCreateTask={openCreateMachineModal}
+        onLogout={handleLogout}
+        mobileMenuOpen={mobileSidebarOpen}
+        onToggleMobileMenu={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+      />
 
-          <nav className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-2xl p-1 shrink-0">
-            <button
-              onClick={() => router.push('/')}
-              className="py-1.5 px-3.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all"
-            >
-              Reporte Semanal
-            </button>
-            <button
-              onClick={() => router.push('/repuestos')}
-              className="py-1.5 px-3.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all"
-            >
-              Repuestos
-            </button>
-            <button
-              onClick={() => router.push('/licencias')}
-              className="py-1.5 px-3.5 rounded-xl text-xs font-semibold text-white bg-white/10 transition-all"
-            >
-              Licencias
-            </button>
-          </nav>
+      {/* App Body with Sidebar */}
+      <div className="flex-1 flex min-h-[calc(100vh-3.5rem)]">
+        <MtoSidebar
+          collapsed={sidebarCollapsed}
+          mobileOpen={mobileSidebarOpen}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onCloseMobile={() => setMobileSidebarOpen(false)}
+          userRole={user?.role}
+        />
 
-          <div className="flex items-center gap-4">
-            {user && (
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl py-1.5 px-3">
-                <UserIcon className="w-4 h-4 text-brand-400" />
-                <div className="text-left">
-                  <p className="text-xs font-semibold leading-tight">{user.name}</p>
-                  <p className="text-[10px] text-slate-400 leading-none capitalize">{user.role.toLowerCase()}</p>
-                </div>
-              </div>
-            )}
+        {/* Main Content Area */}
+        <main className="flex-1 min-w-0 bg-[#080d1a] overflow-y-auto px-4 sm:px-6 lg:px-8 py-6">
 
-            {user?.role === 'ADMIN' && (
-              <button
-                onClick={() => router.push('/users')}
-                className="py-2.5 px-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 transition-all active:scale-95 flex items-center gap-2"
-              >
-                <UserIcon className="w-4 h-4 text-brand-400" />
-                <span>Gestionar Usuarios</span>
-              </button>
-            )}
-
-            <button
-              onClick={handleLogout}
-              className="p-2.5 rounded-2xl bg-white/5 hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/30 text-slate-300 hover:text-rose-400 transition-all active:scale-95"
-              title="Cerrar Sesión"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">Licencias y Permisos</h2>
-            <p className="text-sm text-slate-500">Control de vigencia, fechas de vencimiento y renovación de autorizaciones legales.</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Licencias y Permisos</h2>
+            <p className="text-xs text-slate-400 font-light mt-1">Control de vigencia, fechas de vencimiento y renovación de autorizaciones legales.</p>
           </div>
 
           {user?.role !== 'VIEWER' && (
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={openCreateMachineModal}
-                className="flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 px-4 rounded-xl shadow-md shadow-brand-600/10 active:scale-[0.98] transition-all text-xs cursor-pointer"
+                className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all text-xs cursor-pointer border border-blue-400/30"
               >
                 <FolderPlus className="w-4.5 h-4.5" />
                 <span>Crear Máquina</span>
@@ -909,32 +874,35 @@ export default function LicensesPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 flex items-center gap-4 shadow-xs">
-            <div className="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-brand-600">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
+          <div className="bg-[#0c1322] rounded-2xl border border-[#1e293b] p-5 flex items-center justify-between shadow-lg">
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Licencias</p>
+              <p className="text-2xl sm:text-3xl font-black text-white mt-1">{totalLic} <span className="text-xs font-normal text-slate-400">registros</span></p>
+              <p className="text-[11px] text-cyan-400 mt-0.5">Sección {currentSection}</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-md shadow-cyan-500/10">
               <FileCheck className="w-6 h-6" />
             </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-400">Total Licencias</p>
-              <p className="text-2xl font-bold text-slate-800 mt-0.5">{totalLic} registros</p>
-            </div>
           </div>
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 flex items-center gap-4 shadow-xs">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${expiredLic > 0 ? 'bg-rose-50 text-rose-600 animate-pulse' : 'bg-slate-100 text-slate-400'}`}>
+          <div className="bg-[#0c1322] rounded-2xl border border-[#1e293b] p-5 flex items-center justify-between shadow-lg">
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Licencias Vencidas</p>
+              <p className={`text-2xl sm:text-3xl font-black mt-1 ${expiredLic > 0 ? 'text-rose-400' : 'text-white'}`}>{expiredLic} <span className="text-xs font-normal text-slate-400">críticas</span></p>
+              <p className="text-[11px] text-rose-400 mt-0.5">{expiredLic > 0 ? 'Requiere atención urgente' : 'Sin alertas críticas'}</p>
+            </div>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${expiredLic > 0 ? 'bg-rose-500/10 border border-rose-500/20 text-rose-400 animate-pulse shadow-md shadow-rose-500/10' : 'bg-slate-800/60 border border-slate-700/60 text-slate-400'}`}>
               <AlertTriangle className="w-6 h-6" />
             </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-400">Licencias Vencidas</p>
-              <p className={`text-2xl font-bold mt-0.5 ${expiredLic > 0 ? 'text-rose-600' : 'text-slate-800'}`}>{expiredLic} críticas</p>
-            </div>
           </div>
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 flex items-center gap-4 shadow-xs">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
-              <Clock className="w-6 h-6" />
-            </div>
+          <div className="bg-[#0c1322] rounded-2xl border border-[#1e293b] p-5 flex items-center justify-between shadow-lg">
             <div>
-              <p className="text-sm font-semibold text-slate-400">Pendientes por vencer</p>
-              <p className="text-2xl font-bold text-slate-800 mt-0.5">{pendingLic} próximos</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pendientes por vencer</p>
+              <p className="text-2xl sm:text-3xl font-black text-white mt-1">{pendingLic} <span className="text-xs font-normal text-slate-400">próximos</span></p>
+              <p className="text-[11px] text-amber-400 mt-0.5">Dentro de 30 días</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-md shadow-amber-500/10">
+              <Clock className="w-6 h-6" />
             </div>
           </div>
         </div>
@@ -946,18 +914,14 @@ export default function LicensesPage() {
               const isActive = currentSection === section;
 
               // inactive styles per section
-              const inactiveStyle = section === 'EQUIPOS'
-                ? 'bg-slate-100 border-slate-200 text-slate-900'
-                : section === 'ELÉCTRICO'
-                  ? 'bg-pink-50 border-pink-200 text-pink-700'
-                  : 'bg-amber-50 border-amber-200 text-amber-700';
+              const inactiveStyle = 'bg-[#121c33] border-slate-700/60 text-slate-400 hover:text-white hover:bg-[#182544]';
 
-              // active styles per section (keep distinct colors instead of always dark)
+              // active styles per section
               const activeStyle = section === 'EQUIPOS'
-                ? 'bg-blue-600 text-white shadow-sm border-blue-600'
+                ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg shadow-cyan-500/20 border-cyan-400/40'
                 : section === 'ELÉCTRICO'
-                  ? 'bg-pink-600 text-white shadow-sm border-pink-600'
-                  : 'bg-amber-600 text-white shadow-sm border-amber-600';
+                  ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-lg shadow-pink-500/20 border-pink-400/40'
+                  : 'bg-gradient-to-r from-amber-600 to-yellow-600 text-white shadow-lg shadow-amber-500/20 border-amber-400/40';
 
               const iconColor = isActive
                 ? 'text-white'
@@ -991,11 +955,11 @@ export default function LicensesPage() {
             placeholder="Buscar licencia por nombre, entidad o código..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 text-sm transition-all"
+            className="w-full bg-[#121c33] hover:bg-[#182544] border border-slate-700/80 rounded-2xl py-2.5 pl-10 pr-4 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 text-xs sm:text-sm font-semibold transition-all shadow-md"
           />
         </div>
 
-        <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs w-full max-w-none">
+        <div className="bg-[#0b0f19] rounded-2xl border border-[#1e293b] overflow-hidden shadow-xl w-full max-w-none">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1100px] text-left border-collapse text-sm">
               <thead className="bg-[#0f172a] text-white shadow-sm">
@@ -1012,7 +976,7 @@ export default function LicensesPage() {
                   <th className="p-4 text-center w-32">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-800/80">
                 {displayRows.length === 0 ? (
                   <tr>
                     <td colSpan={10} className="p-12 text-center text-slate-400">
@@ -1023,14 +987,14 @@ export default function LicensesPage() {
                   displayRows.map((row, index) => {
                     if (!row.license) {
                       return (
-                        <tr key={`placeholder-${row.machineName}`} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="p-4 text-left align-top font-mono text-slate-700">{index + 1}</td>
-                          <td className="p-4 text-left align-top font-semibold text-slate-800">{row.machineName}</td>
-                          <td className="p-4 text-left align-top text-slate-600">
+                        <tr key={`placeholder-${row.machineName}`} className="hover:bg-[#121c33]/40 transition-colors">
+                          <td className="p-4 text-left align-top font-mono text-slate-400 text-xs">{index + 1}</td>
+                          <td className="p-4 text-left align-top font-semibold text-slate-100 text-xs">{row.machineName}</td>
+                          <td className="p-4 text-left align-top text-slate-300 text-xs">
                             <button
                               type="button"
                               onClick={() => openDetailsModalForMachine(row.machineName)}
-                              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700/80 bg-[#121c33] px-3 py-1.5 text-[11px] font-semibold text-cyan-400 hover:bg-[#182544] hover:text-cyan-300 transition cursor-pointer shadow-xs"
                             >
                               <Eye className="w-3.5 h-3.5" />
                               Ver
@@ -1045,7 +1009,7 @@ export default function LicensesPage() {
                                     <button
                                       type="button"
                                       onClick={() => handleUploadForPlaceholder(row.machineName, docType)}
-                                      className="text-[11px] text-slate-600 hover:text-slate-900 font-semibold rounded-xl px-2 py-1 bg-slate-100 hover:bg-slate-200 transition"
+                                      className="text-[11px] text-slate-300 hover:text-white font-semibold rounded-xl px-2.5 py-1 bg-[#121c33] hover:bg-[#182544] border border-slate-700/80 transition cursor-pointer shadow-xs"
                                     >
                                       Subir
                                     </button>
@@ -1078,14 +1042,14 @@ export default function LicensesPage() {
 
                     const lic = row.license;
                     return (
-                      <tr key={lic.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="p-4 text-left align-top font-mono text-slate-700">{index + 1}</td>
-                        <td className="p-4 text-left align-top font-semibold text-slate-800">{lic.name || '-'}</td>
-                        <td className="p-4 text-left align-top text-slate-600">
+                      <tr key={lic.id} className="hover:bg-[#121c33]/40 transition-colors">
+                        <td className="p-4 text-left align-top font-mono text-slate-400 text-xs">{index + 1}</td>
+                        <td className="p-4 text-left align-top font-semibold text-slate-100 text-xs">{lic.name || '-'}</td>
+                        <td className="p-4 text-left align-top text-slate-300 text-xs">
                           <button
                             type="button"
                             onClick={() => openDetailsModalForMachine(lic.name, lic)}
-                            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700/80 bg-[#121c33] px-3 py-1.5 text-[11px] font-semibold text-cyan-400 hover:bg-[#182544] hover:text-cyan-300 transition cursor-pointer shadow-xs"
                           >
                             <Eye className="w-3.5 h-3.5" />
                             Ver
@@ -1098,10 +1062,10 @@ export default function LicensesPage() {
                           const specificExpiryDate = lic[expiryField] as string | null;
                           const documentState = getDocumentState(specificExpiryDate);
                           const stateStyles = {
-                            active: 'bg-sky-100 text-sky-700 border-sky-200',
-                            dueSoon: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                            expired: 'bg-rose-100 text-rose-700 border-rose-200',
-                            none: 'bg-slate-100 text-slate-500 border-slate-200'
+                            active: 'bg-sky-500/10 text-sky-400 border-sky-500/25',
+                            dueSoon: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
+                            expired: 'bg-rose-500/10 text-rose-400 border-rose-500/25',
+                            none: 'bg-slate-800/40 text-slate-500 border-slate-700/50'
                           };
                           return (
                             <td key={docType} className="p-4 text-center align-top">
@@ -1119,7 +1083,7 @@ export default function LicensesPage() {
                                       <button
                                         type="button"
                                         onClick={() => openFilePreview(lic.id, name, docType)}
-                                        className="inline-flex items-center justify-center gap-2 text-[11px] text-brand-600 hover:text-brand-700 font-medium hover:underline bg-brand-50 px-2 py-1 rounded-md border border-brand-100"
+                                        className="inline-flex items-center justify-center gap-1.5 text-[11px] text-cyan-400 hover:text-cyan-300 font-medium bg-[#131d33] hover:bg-[#182544] px-2.5 py-1 rounded-xl border border-slate-700/80 transition shadow-xs"
                                       >
                                         <FileText className="w-3.5 h-3.5 text-brand-500" />
                                         <span className="truncate max-w-[7rem]">{name}</span>
@@ -1143,7 +1107,7 @@ export default function LicensesPage() {
                                   <button
                                     type="button"
                                     onClick={() => openDocUploadModal(lic.id, docType, specificExpiryDate || '')}
-                                    className="text-[11px] text-slate-600 hover:text-slate-900 font-semibold rounded-xl px-2 py-1 bg-slate-100 hover:bg-slate-200 transition"
+                                    className="text-[11px] text-slate-300 hover:text-white font-semibold rounded-xl px-2.5 py-1 bg-[#121c33] hover:bg-[#182544] border border-slate-700/80 transition cursor-pointer shadow-xs"
                                   >
                                     {name ? 'Editar' : 'Subir'}
                                   </button>
@@ -1185,12 +1149,13 @@ export default function LicensesPage() {
           </div>
         </div>
       </main>
+      </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-md animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-              <h3 className="font-bold text-slate-800 text-base">{editingId ? 'Editar Registro de Autorización' : 'Registrar Nueva Licencia / Permiso'}</h3>
+          <div className="bg-[#0d1527] rounded-3xl border border-slate-700/80 shadow-2xl p-6 w-full max-w-md animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto text-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+              <h3 className="font-bold text-white text-base">{editingId ? 'Editar Registro de Autorización' : 'Registrar Nueva Licencia / Permiso'}</h3>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
@@ -1213,7 +1178,7 @@ export default function LicensesPage() {
                     value={detailEquipo}
                     onChange={(e) => setDetailEquipo(e.target.value)}
                     placeholder="Equipo"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
+                    className="w-full bg-[#131d33] border border-slate-700/80 rounded-xl py-2 px-3 text-slate-200 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1223,7 +1188,7 @@ export default function LicensesPage() {
                     value={detailMarca}
                     onChange={(e) => setDetailMarca(e.target.value)}
                     placeholder="Marca"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
+                    className="w-full bg-[#131d33] border border-slate-700/80 rounded-xl py-2 px-3 text-slate-200 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
                   />
                 </div>
               </div>
@@ -1235,7 +1200,7 @@ export default function LicensesPage() {
                     value={detailModelo}
                     onChange={(e) => setDetailModelo(e.target.value)}
                     placeholder="Modelo"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
+                    className="w-full bg-[#131d33] border border-slate-700/80 rounded-xl py-2 px-3 text-slate-200 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1245,7 +1210,7 @@ export default function LicensesPage() {
                     value={detailSerie}
                     onChange={(e) => setDetailSerie(e.target.value)}
                     placeholder="Serie"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
+                    className="w-full bg-[#131d33] border border-slate-700/80 rounded-xl py-2 px-3 text-slate-200 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
                   />
                 </div>
               </div>
@@ -1257,7 +1222,7 @@ export default function LicensesPage() {
                     value={detailCapacidad}
                     onChange={(e) => setDetailCapacidad(e.target.value)}
                     placeholder="Capacidad"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
+                    className="w-full bg-[#131d33] border border-slate-700/80 rounded-xl py-2 px-3 text-slate-200 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1267,7 +1232,7 @@ export default function LicensesPage() {
                     value={detailEstado}
                     onChange={(e) => setDetailEstado(e.target.value)}
                     placeholder="Estado"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
+                    className="w-full bg-[#131d33] border border-slate-700/80 rounded-xl py-2 px-3 text-slate-200 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
                   />
                 </div>
               </div>
@@ -1279,7 +1244,7 @@ export default function LicensesPage() {
                     value={detailSede}
                     onChange={(e) => setDetailSede(e.target.value)}
                     placeholder="Sede"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
+                    className="w-full bg-[#131d33] border border-slate-700/80 rounded-xl py-2 px-3 text-slate-200 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1289,11 +1254,11 @@ export default function LicensesPage() {
                     value={detailProcesos}
                     onChange={(e) => setDetailProcesos(e.target.value)}
                     placeholder="Nro Procesos x día"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
+                    className="w-full bg-[#131d33] border border-slate-700/80 rounded-xl py-2 px-3 text-slate-200 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
@@ -1317,10 +1282,10 @@ export default function LicensesPage() {
 
       {isDocUploadModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <div className="bg-[#0d1527] rounded-3xl border border-slate-700/80 shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150 text-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
               <div>
-                <h3 className="font-bold text-slate-800 text-base">Registrar Nueva Licencia / Permiso</h3>
+                <h3 className="font-bold text-white text-base">Registrar Nueva Licencia / Permiso</h3>
                 <p className="text-xs text-slate-500 mt-1">Subir {docTypeLabels[currentDocUploadType]}</p>
               </div>
               <button
@@ -1352,7 +1317,7 @@ export default function LicensesPage() {
                   required={!currentDocUploadLicenseId || !(licenses.find(l => l.id === currentDocUploadLicenseId)?.[docTypeFieldMap[currentDocUploadType].nameField])}
                 />
               </div>
-              <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={closeDocUploadModal}
@@ -1375,9 +1340,9 @@ export default function LicensesPage() {
 
       {isMachineModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-              <h3 className="font-bold text-slate-800 text-base">Crear Máquina</h3>
+          <div className="bg-[#0d1527] rounded-3xl border border-slate-700/80 shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-150 text-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+              <h3 className="font-bold text-white text-base">Crear Máquina</h3>
               <button
                 onClick={() => setIsMachineModalOpen(false)}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
@@ -1398,11 +1363,11 @@ export default function LicensesPage() {
                   value={newMachineName}
                   onChange={(e) => setNewMachineName(e.target.value)}
                   placeholder="Ej. AUTOCLAVE V7"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-700 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20"
+                  className="w-full bg-[#131d33] border border-slate-700/80 rounded-xl py-2.5 px-3 text-slate-200 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
                   required
                 />
               </div>
-              <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsMachineModalOpen(false)}
@@ -1424,10 +1389,10 @@ export default function LicensesPage() {
 
       {isDetailsModalOpen && detailsModalLicense && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-lg animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <div className="bg-[#0d1527] rounded-3xl border border-slate-700/80 shadow-2xl p-6 w-full max-w-lg animate-in zoom-in-95 duration-150 text-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
               <div>
-                <h3 className="font-bold text-slate-800 text-base">Detalles de la Máquina</h3>
+                <h3 className="font-bold text-white text-base">Detalles de la Máquina</h3>
                 <p className="text-xs text-brand-600 font-semibold mt-1">{detailsModalLicense.name}</p>
               </div>
               <button
@@ -1453,9 +1418,9 @@ export default function LicensesPage() {
                   { label: 'Garantía', value: details.garantia }
                 ];
                 return items.map((item) => (
-                  <div key={item.label} className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                  <div key={item.label} className="bg-slate-50 p-3 rounded-2xl border border-slate-800">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{item.label}</span>
-                    <span className="font-semibold text-slate-700 mt-1 block whitespace-pre-wrap">{item.value || <span className="text-slate-300 font-normal">No registrado</span>}</span>
+                    <span className="font-semibold text-slate-200 mt-1 block whitespace-pre-wrap">{item.value || <span className="text-slate-300 font-normal">No registrado</span>}</span>
                   </div>
                 ));
               })()}
@@ -1475,7 +1440,7 @@ export default function LicensesPage() {
                     const ext = fileName.split('.').pop()?.toLowerCase() || '';
                     const previewable = ['pdf', 'jpg', 'jpeg', 'png', 'gif'];
                     return (
-                      <div key={fileName} className="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-lg p-3">
+                      <div key={fileName} className="flex items-center justify-between bg-slate-50 border border-slate-800 rounded-lg p-3">
                         <div>
                           <div className="font-semibold text-sm">{fileName}</div>
                           <div className="text-xs text-slate-500">{new Date(f.mtime).toLocaleString()}</div>
@@ -1507,7 +1472,7 @@ export default function LicensesPage() {
               )}
             </div>
 
-            <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
               {user?.role !== 'VIEWER' && (
                 <button
                   type="button"

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import MtoTopNavbar from '@/components/MtoTopNavbar';
+import MtoSidebar from '@/components/MtoSidebar';
 import { 
   Plus, 
   Trash2, 
@@ -64,6 +66,8 @@ interface User {
 }
 
 export default function SparePartsPage() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const router = useRouter();
   const [spareParts, setSpareParts] = useState<SparePart[]>([]);
   const [user, setUser] = useState<User | null>(null);
@@ -515,91 +519,46 @@ export default function SparePartsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Header Banner */}
-      <header className="bg-slate-900 text-white shadow-xl shadow-slate-950/10 sticky top-0 z-[40]">
-        <div className="max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-white rounded-xl p-1 shadow-md shrink-0 flex items-center justify-center w-12 h-10">
-              <img 
-                src="/logo2.jpg" 
-                alt="Asepsis Logo" 
-                className="h-8 w-auto object-contain rounded-lg"
-              />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight">Mantenimiento</h1>
-              <p className="text-xs text-slate-400 font-light">Control de Reportes de Mantenimiento</p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-[#080d1a] flex flex-col text-slate-100 selection:bg-cyan-500/30 selection:text-cyan-200">
+      {/* Modern ERP TopNavbar */}
+      <MtoTopNavbar
+        user={user}
+        selectedSede="TODAS"
+        onSedeChange={() => {}}
+        searchTerm={searchQuery}
+        onSearchChange={(val) => setSearchQuery(val)}
+        onOpenCreateTask={openCreateModal}
+        onLogout={handleLogout}
+        mobileMenuOpen={mobileSidebarOpen}
+        onToggleMobileMenu={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+      />
 
-          {/* Central Navigation Tabs */}
-          <nav className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-2xl p-1 shrink-0">
-            <button
-              onClick={() => router.push('/')}
-              className="py-1.5 px-4.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-all cursor-pointer"
-            >
-              Reporte Semanal
-            </button>
-            <button
-              onClick={() => router.push('/repuestos')}
-              className="py-1.5 px-4.5 rounded-xl text-sm font-bold text-white bg-white/10 transition-all cursor-pointer hover:bg-white/15"
-            >
-              Repuestos
-            </button>
-            <button
-              onClick={() => router.push('/licencias')}
-              className="py-1.5 px-4.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-all cursor-pointer"
-            >
-              Registros Generales
-            </button>
-          </nav>
+      {/* App Body with Sidebar */}
+      <div className="flex-1 flex min-h-[calc(100vh-3.5rem)]">
+        <MtoSidebar
+          collapsed={sidebarCollapsed}
+          mobileOpen={mobileSidebarOpen}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onCloseMobile={() => setMobileSidebarOpen(false)}
+          userRole={user?.role}
+        />
 
-          <div className="flex items-center gap-4">
-            {user && (
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl py-1.5 px-3">
-                <UserIcon className="w-4 h-4 text-brand-400" />
-                <div className="text-left">
-                  <p className="text-xs font-semibold leading-tight">{user.name}</p>
-                  <p className="text-[10px] text-slate-400 leading-none capitalize">{user.role.toLowerCase()}</p>
-                </div>
-              </div>
-            )}
+        {/* Main Content Area */}
+        <main className="flex-1 min-w-0 bg-[#080d1a] overflow-y-auto px-4 sm:px-6 lg:px-8 py-6">
 
-            {user?.role === 'ADMIN' && (
-              <button
-                onClick={() => router.push('/users')}
-                className="py-2.5 px-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 transition-all active:scale-95 flex items-center gap-2"
-              >
-                <UserIcon className="w-4 h-4 text-brand-400" />
-                <span>Gestionar Usuarios</span>
-              </button>
-            )}
-
-            <button
-              onClick={handleLogout}
-              className="p-2.5 rounded-2xl bg-white/5 hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/30 text-slate-300 hover:text-rose-400 transition-all active:scale-95"
-              title="Cerrar Sesión"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 max-w-[1850px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      
+      
         {/* Actions bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">Inventario de Repuestos</h2>
-            <p className="text-sm text-slate-500">Administra los insumos y piezas de repuesto para las máquinas de planta.</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Inventario de Repuestos</h2>
+            <p className="text-xs text-slate-400 font-light mt-1">Administra los insumos y piezas de repuesto para las máquinas de planta.</p>
           </div>
 
           {user?.role !== 'VIEWER' && (
             <div className="flex items-center gap-3">
               {/* Import Excel Button */}
-              <label className="flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold py-3 px-5 rounded-2xl cursor-pointer shadow-xs active:scale-[0.98] transition-all text-sm">
+              <label className="flex items-center justify-center gap-2 bg-[#121c33] hover:bg-[#182544] text-slate-200 border border-slate-700/80 font-bold py-2.5 px-4 rounded-xl cursor-pointer shadow-md active:scale-95 transition-all text-xs">
                 {importLoading ? (
                   <svg className="animate-spin h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -620,7 +579,7 @@ export default function SparePartsPage() {
 
               <button
                 onClick={openCreateModal}
-                className="flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-semibold py-3 px-5 rounded-2xl shadow-lg shadow-brand-600/15 hover:shadow-brand-500/20 active:scale-[0.98] transition-all text-sm"
+                className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all text-xs border border-blue-400/30"
               >
                 <Plus className="w-4.5 h-4.5" />
                 <span>Registrar Repuesto</span>
@@ -630,79 +589,83 @@ export default function SparePartsPage() {
         </div>
 
         {/* Dashboard Widgets */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 flex items-center gap-4 shadow-xs">
-            <div className="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-brand-600">
-              <Package className="w-6 h-6" />
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
+          <div className="bg-[#0c1322] rounded-2xl border border-[#1e293b] p-5 flex items-center justify-between shadow-lg">
             <div>
-              <p className="text-sm font-semibold text-slate-400">Total Repuestos</p>
-              <p className="text-2xl font-bold text-slate-800 mt-0.5">{totalItems} ítems</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Repuestos</p>
+              <p className="text-2xl sm:text-3xl font-black text-white mt-1">{totalItems} <span className="text-xs font-normal text-slate-400">ítems</span></p>
+              <p className="text-[11px] text-cyan-400 mt-0.5">Catálogo {activeTab === 'MATACHANA' ? 'Matachana' : 'Planta'}</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-md shadow-cyan-500/10">
+              <Package className="w-6 h-6" />
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 flex items-center gap-4 shadow-xs">
-            <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-600">
-              <Package className="w-6 h-6" />
-            </div>
+          <div className="bg-[#0c1322] rounded-2xl border border-[#1e293b] p-5 flex items-center justify-between shadow-lg">
             <div>
-              <p className="text-sm font-semibold text-slate-400">Stock Total en Planta</p>
-              <p className="text-2xl font-bold text-slate-800 mt-0.5">{totalStock} unidades</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Stock Total en Planta</p>
+              <p className="text-2xl sm:text-3xl font-black text-emerald-400 mt-1">{totalStock} <span className="text-xs font-normal text-slate-400">unidades</span></p>
+              <p className="text-[11px] text-emerald-400 mt-0.5">Disponibles en almacén</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-md shadow-emerald-500/10">
+              <Package className="w-6 h-6" />
             </div>
           </div>
 
           {activeTab === 'MATACHANA' ? (
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 flex items-center gap-4 shadow-xs animate-in fade-in duration-200">
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
-                <Wrench className="w-6 h-6" />
-              </div>
+            <div className="bg-[#0c1322] rounded-2xl border border-[#1e293b] p-5 flex items-center justify-between shadow-lg animate-in fade-in duration-200">
               <div>
-                <p className="text-sm font-semibold text-slate-400">Total Usados</p>
-                <p className="text-2xl font-bold text-slate-800 mt-0.5">{totalUsados} unidades</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Usados</p>
+                <p className="text-2xl sm:text-3xl font-black text-amber-400 mt-1">{totalUsados} <span className="text-xs font-normal text-slate-400">unidades</span></p>
+                <p className="text-[11px] text-amber-400 mt-0.5">Consumidas en mantenimiento</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-md shadow-amber-500/10">
+                <Wrench className="w-6 h-6" />
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 flex items-center gap-4 shadow-xs animate-in fade-in duration-200">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                <MapPin className="w-6 h-6" />
-              </div>
+            <div className="bg-[#0c1322] rounded-2xl border border-[#1e293b] p-5 flex items-center justify-between shadow-lg animate-in fade-in duration-200">
               <div>
-                <p className="text-sm font-semibold text-slate-400">Ubicaciones Registradas</p>
-                <p className="text-2xl font-bold text-slate-800 mt-0.5">{uniqueLocations} áreas</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ubicaciones Registradas</p>
+                <p className="text-2xl sm:text-3xl font-black text-indigo-400 mt-1">{uniqueLocations} <span className="text-xs font-normal text-slate-400">áreas</span></p>
+                <p className="text-[11px] text-indigo-400 mt-0.5">Estantes y módulos</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-md shadow-indigo-500/10">
+                <MapPin className="w-6 h-6" />
               </div>
             </div>
           )}
         </div>
 
         {/* Navigation Tabs (INVENTARIOS vs REPUESTOS MATACHANA) */}
-        <div className="border-b border-slate-200/85 mb-6 flex items-center justify-between">
-          <div className="flex gap-2 -mb-px">
+        <div className="bg-[#0c1322] border border-[#1e293b] p-1.5 rounded-2xl mb-6 flex items-center justify-between shadow-md">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => handleTabChange('INVENTARIOS')}
-              className={`pb-3.5 pt-1 px-4 text-sm font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+              className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                 activeTab === 'INVENTARIOS'
-                  ? 'border-brand-600 text-brand-600'
-                  : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300'
+                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md shadow-cyan-500/20 border border-cyan-400/30'
+                  : 'text-slate-400 hover:text-slate-100 hover:bg-[#121c33]'
               }`}
             >
-              <Package className={`w-4 h-4 ${activeTab === 'INVENTARIOS' ? 'text-brand-600' : 'text-slate-400'}`} />
+              <Package className={`w-4 h-4 ${activeTab === 'INVENTARIOS' ? 'text-cyan-300' : 'text-slate-400'}`} />
               <span>INVENTARIOS</span>
             </button>
             <button
               onClick={() => handleTabChange('MATACHANA')}
-              className={`pb-3.5 pt-1 px-4 text-sm font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+              className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                 activeTab === 'MATACHANA'
-                  ? 'border-brand-600 text-brand-600'
-                  : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300'
+                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md shadow-cyan-500/20 border border-cyan-400/30'
+                  : 'text-slate-400 hover:text-slate-100 hover:bg-[#121c33]'
               }`}
             >
-              <Wrench className={`w-4 h-4 ${activeTab === 'MATACHANA' ? 'text-brand-600' : 'text-slate-400'}`} />
+              <Wrench className={`w-4 h-4 ${activeTab === 'MATACHANA' ? 'text-cyan-300' : 'text-slate-400'}`} />
               <span>REPUESTOS MATACHANA</span>
             </button>
           </div>
           
-          <div className="pb-3 text-xs text-slate-400 font-semibold hidden sm:block">
-            Mostrando {totalItems} repuestos en esta sección
+          <div className="pr-3 text-xs text-slate-400 font-semibold hidden sm:block">
+            Mostrando <span className="text-cyan-400 font-bold">{totalItems}</span> repuestos en esta sección
           </div>
         </div>
 
@@ -716,12 +679,12 @@ export default function SparePartsPage() {
             placeholder="Buscar repuesto por nombre, código o ubicación..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 text-sm transition-all"
+            className="w-full bg-[#121c33] hover:bg-[#182544] border border-slate-700/80 rounded-2xl py-2.5 pl-10 pr-4 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 text-xs sm:text-sm font-semibold transition-all shadow-md"
           />
         </div>
 
         {/* Data Table */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+        <div className="bg-[#0b0f19] rounded-2xl border border-[#1e293b] overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm">
               <thead className="bg-[#0f172a] text-white shadow-sm">
@@ -757,7 +720,7 @@ export default function SparePartsPage() {
                   {user?.role !== 'VIEWER' && <th className="p-4 text-center w-24">Acciones</th>}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-800/80">
                 {tabTransition ? (
                   <tr>
                     <td 
@@ -794,10 +757,10 @@ export default function SparePartsPage() {
                   filteredParts.map((part) => {
                     const hasNoStock = part.stock === 0;
                     return (
-                      <tr key={part.id} className="hover:bg-slate-50/50 transition-colors">
+                      <tr key={part.id} className="hover:bg-[#121c33]/40 transition-colors">
                         {activeTab === 'INVENTARIOS' ? (
                           <>
-                            <td className="p-4 font-semibold text-slate-700">{part.metodo || '-'}</td>
+                            <td className="p-4 font-semibold text-slate-300">{part.metodo || '-'}</td>
                             <td className="p-4 font-mono font-bold text-xs text-slate-500">{part.code}</td>
                             <td className="p-4 font-semibold text-slate-800">
                               <div className="flex items-center gap-2">
@@ -819,7 +782,7 @@ export default function SparePartsPage() {
                             <td className="p-4 text-slate-500 text-xs max-w-[150px] truncate font-medium" title={part.comentario || ''}>
                               {part.comentario || '-'}
                             </td>
-                            <td className={`p-4 text-center font-bold ${hasNoStock ? 'text-rose-600' : 'text-slate-700'}`}>
+                            <td className={`p-4 text-center font-bold ${hasNoStock ? 'text-rose-600' : 'text-slate-300'}`}>
                               {part.stock}
                             </td>
                             <td className="p-4 text-center">
@@ -853,7 +816,7 @@ export default function SparePartsPage() {
                             </td>
                             <td className="p-4">
                               {part.almacenado ? (
-                                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs bg-slate-100 text-slate-700 border border-slate-200/45 font-medium">
+                                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs bg-slate-100 text-slate-300 border border-slate-200/45 font-medium">
                                   {part.almacenado}
                                 </span>
                               ) : (
@@ -862,7 +825,7 @@ export default function SparePartsPage() {
                             </td>
                             <td className="p-4">
                               {part.seccion ? (
-                                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs bg-slate-100 text-slate-700 border border-slate-200/45 font-medium">
+                                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs bg-slate-100 text-slate-300 border border-slate-200/45 font-medium">
                                   {part.seccion}
                                 </span>
                               ) : (
@@ -872,8 +835,8 @@ export default function SparePartsPage() {
                           </>
                         ) : (
                           <>
-                            <td className="p-4 font-semibold text-slate-700">{part.metodo || '-'}</td>
-                            <td className="p-4 font-semibold text-slate-700">{part.metodo2 || '-'}</td>
+                            <td className="p-4 font-semibold text-slate-300">{part.metodo || '-'}</td>
+                            <td className="p-4 font-semibold text-slate-300">{part.metodo2 || '-'}</td>
                             <td className="p-4 font-mono font-bold text-xs text-slate-500">{part.correlativo || '-'}</td>
                             <td className="p-4 font-semibold text-slate-800">
                               <div className="flex items-center gap-2">
@@ -904,7 +867,7 @@ export default function SparePartsPage() {
                                 <span className="text-slate-300">-</span>
                               )}
                             </td>
-                            <td className={`p-4 text-center font-bold ${hasNoStock ? 'text-rose-600' : 'text-slate-700'}`}>
+                            <td className={`p-4 text-center font-bold ${hasNoStock ? 'text-rose-600' : 'text-slate-300'}`}>
                               {part.stock}
                             </td>
                             <td className="p-4 text-center font-bold text-slate-500">{part.usados ?? 0}</td>
@@ -947,14 +910,15 @@ export default function SparePartsPage() {
           </div>
         </div>
       </main>
+      </div>
 
       {/* EDIT/CREATE DIALOG */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl p-6 w-full max-w-3xl animate-in zoom-in-95 duration-150 my-8">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
               <div>
-                <h3 className="font-bold text-slate-800 text-lg">
+                <h3 className="font-bold text-white text-lg">
                   {editingId ? 'Editar Repuesto' : 'Registrar Nuevo Repuesto'}
                 </h3>
                 <p className="text-xs text-slate-400 font-medium">Completa la ficha técnica para el inventario de planta.</p>
@@ -976,7 +940,7 @@ export default function SparePartsPage() {
             )}
 
             {/* Quick Switch for Matachana Flag */}
-            <div className="mb-5 flex items-center gap-2.5 pt-2 pb-2 bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+            <div className="mb-5 flex items-center gap-2.5 pt-2 pb-2 bg-slate-50 border border-slate-800 p-4 rounded-2xl">
               <input
                 type="checkbox"
                 id="formIsMatachana"
@@ -993,7 +957,7 @@ export default function SparePartsPage() {
                 className="h-4.5 w-4.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500/20 cursor-pointer"
               />
               <div>
-                <label htmlFor="formIsMatachana" className="text-xs font-bold text-slate-700 uppercase tracking-wide cursor-pointer select-none block">
+                <label htmlFor="formIsMatachana" className="text-xs font-bold text-slate-300 uppercase tracking-wide cursor-pointer select-none block">
                   Pertenece a Repuestos Matachana
                 </label>
                 <p className="text-[10px] text-slate-400">Activa esta opción para cambiar el formulario a la estructura médica de Matachana.</p>
@@ -1195,13 +1159,13 @@ export default function SparePartsPage() {
                             />
                           </div>
                           <div>
-                            <span className="text-xs font-bold block text-slate-700">{formFotoNombre || 'Imagen cargada'}</span>
+                            <span className="text-xs font-bold block text-slate-300">{formFotoNombre || 'Imagen cargada'}</span>
                             <span className="text-[10px] text-slate-400 font-medium">Haz clic o arrastra para reemplazar la imagen</span>
                           </div>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center text-center gap-2 text-slate-400">
-                          <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center text-slate-400 border border-slate-100 shadow-sm hover:scale-105 transition-all">
+                          <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center text-slate-400 border border-slate-800 shadow-sm hover:scale-105 transition-all">
                             <Upload className="w-5 h-5 text-brand-500" />
                           </div>
                           <div>
@@ -1399,11 +1363,11 @@ export default function SparePartsPage() {
               )}
 
               {/* Botones del Pie de Página */}
-              <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-bold transition-all hover:text-slate-700 active:scale-95"
+                  className="px-5 py-2.5 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-bold transition-all hover:text-slate-300 active:scale-95"
                 >
                   Cancelar
                 </button>
