@@ -32,6 +32,8 @@ import {
 
 import { TaskModal } from '@/components/TaskModal';
 import { TaskForm } from '@/components/TaskForm';
+import MtoTopNavbar from '@/components/MtoTopNavbar';
+import MtoSidebar from '@/components/MtoSidebar';
 
 interface User {
   id: string;
@@ -183,7 +185,9 @@ export default function Dashboard() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [isPremiumDarkMode, setIsPremiumDarkMode] = useState(false);
+  const [isPremiumDarkMode, setIsPremiumDarkMode] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Modal control states
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -1640,7 +1644,7 @@ export default function Dashboard() {
   let lastGroupDate = '';
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col transition-all duration-300">
+    <div className="min-h-screen bg-[#080d1a] flex flex-col text-slate-100 selection:bg-cyan-500/30 selection:text-cyan-200">
       
       {/* Floating Dark Translucent Toast Notifications */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-sm pointer-events-none">
@@ -1668,421 +1672,407 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Header Banner */}
-      <header className="bg-slate-900 text-white shadow-xl shadow-slate-950/10 no-print sticky top-0 z-30">
-        <div className="max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="bg-white rounded-xl p-1 shadow-md shrink-0 flex items-center justify-center w-11 h-10 transition-transform hover:scale-105 duration-200">
-              <img 
-                src="/logo2.jpg" 
-                alt="T&CH Asepsis Logo" 
-                className="h-8 w-auto object-contain rounded-lg"
-              />
-            </div>
+      {/* Modern ERP TopNavbar */}
+      <MtoTopNavbar
+        user={user}
+        selectedSede={selectedSedeFilter ? selectedSedeFilter.toUpperCase() : 'ALL'}
+        onSedeChange={(sede) => {
+          if (sede === 'ALL') {
+            setSelectedSedeFilter(null);
+          } else if (sede === 'LIMA') {
+            setSelectedSedeFilter('Lima');
+          } else if (sede === 'TRUJILLO') {
+            setSelectedSedeFilter('Trujillo');
+          }
+          setCurrentPage(1);
+          handleSearchTrigger();
+        }}
+        searchTerm={searchTerm}
+        onSearchChange={(val) => {
+          setSearchTerm(val);
+          handleSearchTrigger();
+        }}
+        onOpenCreateTask={() => {
+          setEditingTask(null);
+          setIsTaskModalOpen(true);
+        }}
+        onLogout={handleLogout}
+        mobileMenuOpen={mobileSidebarOpen}
+        onToggleMobileMenu={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+      />
+
+      {/* App Body with Sidebar */}
+      <div className="flex-1 flex min-h-[calc(100vh-3.5rem)]">
+        <MtoSidebar
+          collapsed={sidebarCollapsed}
+          mobileOpen={mobileSidebarOpen}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onCloseMobile={() => setMobileSidebarOpen(false)}
+          userRole={user?.role}
+        />
+
+        {/* Main Content Area */}
+        <main className="flex-1 min-w-0 bg-[#080d1a] overflow-y-auto px-4 sm:px-6 lg:px-8 py-6">
+          
+          {/* Welcome Hero Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-lg font-bold tracking-tight">Mantenimiento</h1>
-              <p className="text-[11px] text-slate-400 font-light">Control de Reportes de Mantenimiento</p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                Bienvenido, {user?.name || user?.username || 'Sistema'}
+              </h2>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <span className="inline-flex items-center gap-1.5 bg-[#121c33] border border-slate-700/60 rounded-xl px-3 py-1 text-xs text-slate-300 font-medium">
+                  <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="capitalize">{new Date().toLocaleDateString('es-PE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                  <span className="text-slate-600">•</span>
+                  <span className="text-cyan-400 font-semibold">Sede {selectedSedeFilter ? selectedSedeFilter : 'Todas'}</span>
+                </span>
+                <span className="text-xs text-slate-400 hidden md:inline">• Supervisión y control integral de actividades mecánicas de planta.</span>
+              </div>
             </div>
           </div>
 
-          {/* Central Navigation Tabs */}
-          <nav className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-2xl p-1 shrink-0">
-            <button
-              onClick={() => router.push('/')}
-              className="py-1.5 px-4 rounded-xl text-xs font-bold text-white bg-white/10 transition-all cursor-pointer hover:bg-white/15"
-            >
-              Reporte Semanal
-            </button>
-            <button
-              onClick={() => router.push('/repuestos')}
-              className="py-1.5 px-4 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer"
-            >
-              Repuestos
-            </button>
-            <button
-              onClick={() => router.push('/licencias')}
-              className="py-1.5 px-4 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer"
-            >
-              Licencias
-            </button>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            {user && (
-              <div className="hidden sm:flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl py-1.5 px-3">
-                <UserIcon className="w-4 h-4 text-brand-400" />
-                <div className="text-left">
-                  <p className="text-xs font-bold leading-tight">{user.name}</p>
-                  <p className="text-[10px] text-slate-400 leading-none capitalize mt-0.5">{user.role.toLowerCase()}</p>
-                </div>
-              </div>
-            )}
-
-            {user?.role === 'ADMIN' && (
-              <button
-                onClick={() => router.push('/users')}
-                className="py-2 px-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-              >
-                <UserIcon className="w-3.5 h-3.5 text-brand-400" />
-                <span>Usuarios</span>
-              </button>
-            )}
-
+          {/* --- STATS CARDS DASHBOARD HEADER --- */}
+          <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            
+            {/* Card: TOTAL */}
             <button
               type="button"
               onClick={() => {
-                setEditingTask(null);
-                setIsTaskModalOpen(true);
+                setStatusFilter('ALL');
+                setSelectedDocFilter('ALL');
+                setQuickRange('ALL');
+                setFromDate('');
+                setToDate('');
+                setCurrentPage(1);
+                handleSearchTrigger();
               }}
-              className="py-2.5 px-5 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 border border-brand-400/20 text-xs font-bold text-white transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-brand-600/20 cursor-pointer"
+              className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
+                statusFilter === 'ALL' && selectedDocFilter === 'ALL' && quickRange === 'ALL'
+                  ? 'bg-[#121c33] border-blue-500 shadow-lg shadow-blue-500/20 ring-1 ring-blue-500/40 scale-[1.02]'
+                  : 'bg-[#0f172a]/80 backdrop-blur-md border-slate-800/80 shadow-md shadow-black/20 hover:border-slate-700 hover:bg-[#121c33]/70 hover:scale-[1.02]'
+              }`}
             >
-              <Plus className="w-4 h-4" />
-              <span>Crear nueva tarea</span>
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total de Tareas</span>
+                <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight block mt-1">{totalCount}</span>
+                <span className="text-[10px] text-slate-400 mt-1 block">Filtradas actualmente</span>
+              </div>
+              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 border ${
+                statusFilter === 'ALL' && selectedDocFilter === 'ALL' && quickRange === 'ALL'
+                  ? 'bg-blue-950/80 border-blue-500/60 text-blue-400 shadow-md shadow-blue-500/20 scale-110'
+                  : 'bg-blue-950/40 border-blue-500/30 text-blue-400 group-hover/card:scale-110 group-hover/card:bg-blue-950/70'
+              }`}>
+                <ClipboardList className="w-5 h-5" />
+              </div>
             </button>
 
+            {/* Card: PENDIENTES */}
             <button
-              onClick={handleLogout}
-              className="p-2 rounded-2xl bg-white/5 hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/30 text-slate-300 hover:text-rose-400 transition-all active:scale-95 cursor-pointer"
-              title="Cerrar Sesión"
+              type="button"
+              onClick={() => {
+                setStatusFilter('PENDIENTE');
+                setSelectedDocFilter('ALL');
+                setQuickRange('ALL');
+                setFromDate('');
+                setToDate('');
+                setCurrentPage(1);
+                handleSearchTrigger();
+              }}
+              className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
+                statusFilter === 'PENDIENTE'
+                  ? 'bg-[#1e1320] border-rose-500 shadow-lg shadow-rose-500/20 ring-1 ring-rose-500/40 scale-[1.02]'
+                  : 'bg-[#0f172a]/80 backdrop-blur-md border-slate-800/80 shadow-md shadow-black/20 hover:border-slate-700 hover:bg-[#161d31] hover:scale-[1.02]'
+              }`}
             >
-              <LogOut className="w-4.5 h-4.5" />
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Pendientes</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                </div>
+                <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight block mt-1">{pendientesCount}</span>
+                <span className="text-[10px] text-rose-400/80 mt-1 block font-medium">Esperando atención</span>
+              </div>
+              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 border ${
+                statusFilter === 'PENDIENTE'
+                  ? 'bg-rose-950/80 border-rose-500/60 text-rose-400 shadow-md shadow-rose-500/20 scale-110'
+                  : 'bg-rose-950/40 border-rose-500/30 text-rose-400 group-hover/card:scale-110 group-hover/card:bg-rose-950/70'
+              }`}>
+                <AlertCircle className="w-5 h-5" />
+              </div>
             </button>
+
+            {/* Card: EN PROCESO */}
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter('EN_PROCESO');
+                setSelectedDocFilter('ALL');
+                setQuickRange('ALL');
+                setFromDate('');
+                setToDate('');
+                setCurrentPage(1);
+                handleSearchTrigger();
+              }}
+              className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
+                statusFilter === 'EN_PROCESO'
+                  ? 'bg-[#221a14] border-amber-500 shadow-lg shadow-amber-500/20 ring-1 ring-amber-500/40 scale-[1.02]'
+                  : 'bg-[#0f172a]/80 backdrop-blur-md border-slate-800/80 shadow-md shadow-black/20 hover:border-slate-700 hover:bg-[#161d31] hover:scale-[1.02]'
+              }`}
+            >
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">En Proceso</span>
+                <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight block mt-1">{enProcesoCount}</span>
+                <span className="text-[10px] text-amber-400/80 mt-1 block font-medium">Siendo ejecutadas</span>
+              </div>
+              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 border ${
+                statusFilter === 'EN_PROCESO'
+                  ? 'bg-amber-950/80 border-amber-500/60 text-amber-400 shadow-md shadow-amber-500/20 scale-110'
+                  : 'bg-amber-950/40 border-amber-500/30 text-amber-400 group-hover/card:scale-110 group-hover/card:bg-amber-950/70'
+              }`}>
+                <TrendingUp className="w-5 h-5" />
+              </div>
+            </button>
+
+            {/* Card: CULMINADAS */}
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter('CULMINADO');
+                setSelectedDocFilter('ALL');
+                setQuickRange('ALL');
+                setFromDate('');
+                setToDate('');
+                setCurrentPage(1);
+                handleSearchTrigger();
+              }}
+              className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
+                statusFilter === 'CULMINADO'
+                  ? 'bg-[#0f241a] border-emerald-500 shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-500/40 scale-[1.02]'
+                  : 'bg-[#0f172a]/80 backdrop-blur-md border-slate-800/80 shadow-md shadow-black/20 hover:border-slate-700 hover:bg-[#161d31] hover:scale-[1.02]'
+              }`}
+            >
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Culminadas</span>
+                <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight block mt-1">{culminadasCount}</span>
+                <span className="text-[10px] text-emerald-400/80 mt-1 block font-medium">Finalizadas con éxito</span>
+              </div>
+              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 border ${
+                statusFilter === 'CULMINADO'
+                  ? 'bg-emerald-950/80 border-emerald-500/60 text-emerald-400 shadow-md shadow-emerald-500/20 scale-110'
+                  : 'bg-emerald-950/40 border-emerald-500/30 text-emerald-400 group-hover/card:scale-110 group-hover/card:bg-emerald-950/70'
+              }`}>
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+            </button>
+
+          </section>
+
+          {/* --- CMMS PREVENTIVE KPI CARDS --- */}
+          <div className="mb-4 flex items-center gap-2">
+            <Clock className="w-4.5 h-4.5 text-cyan-400 shrink-0" />
+            <h3 className="font-extrabold text-slate-200 text-sm tracking-tight">Mantenimiento Preventivo Programado (CMMS)</h3>
           </div>
-        </div>
-      </header>
+          <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Card: CON DOCUMENTOS */}
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter('ALL');
+                setSelectedDocFilter('CON_DOC');
+                setQuickRange('ALL');
+                setFromDate('');
+                setToDate('');
+                setCurrentPage(1);
+                handleSearchTrigger();
+              }}
+              className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
+                selectedDocFilter === 'CON_DOC'
+                  ? 'bg-[#0f241a] border-emerald-500 shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-500/40 scale-[1.02]'
+                  : 'bg-[#0f172a]/80 backdrop-blur-md border-slate-800/80 shadow-md shadow-black/20 hover:border-slate-700 hover:bg-[#161d31] hover:scale-[1.02]'
+              }`}
+            >
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Con Documentos</span>
+                <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight block mt-1">{conDocsProximosCount}</span>
+                <span className="text-[10px] text-slate-400 mt-1 block">Registros totales</span>
+              </div>
+              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 border ${
+                selectedDocFilter === 'CON_DOC'
+                  ? 'bg-emerald-950/80 border-emerald-500/60 text-emerald-400 shadow-md shadow-emerald-500/20 scale-110'
+                  : 'bg-emerald-950/40 border-emerald-500/30 text-emerald-400 group-hover/card:scale-110 group-hover/card:bg-emerald-950/70'
+              }`}>
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+            </button>
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-[1850px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        
-        {/* Actions bar / Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight sm:text-2xl">Control de Tareas de Mantenimiento</h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">Supervisión y control integral de actividades mecánicas de planta.</p>
-          </div>
-        </div>
+            {/* Card: SIN DOCUMENTOS */}
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter('ALL');
+                setSelectedDocFilter('SIN_DOC');
+                setQuickRange('ALL');
+                setFromDate('');
+                setToDate('');
+                setCurrentPage(1);
+                handleSearchTrigger();
+              }}
+              className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
+                selectedDocFilter === 'SIN_DOC'
+                  ? 'bg-[#1e1320] border-rose-500 shadow-lg shadow-rose-500/20 ring-1 ring-rose-500/40 scale-[1.02]'
+                  : 'bg-[#0f172a]/80 backdrop-blur-md border-slate-800/80 shadow-md shadow-black/20 hover:border-slate-700 hover:bg-[#161d31] hover:scale-[1.02]'
+              }`}
+            >
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Atención Requerida</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                </div>
+                <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight block mt-1">{sinDocsProximosCount}</span>
+                <span className="text-[10px] text-rose-400/80 mt-1 block font-medium">Pendientes y Alertas</span>
+              </div>
+              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 border ${
+                selectedDocFilter === 'SIN_DOC'
+                  ? 'bg-rose-950/80 border-rose-500/60 text-rose-400 shadow-md shadow-rose-500/20 scale-110'
+                  : 'bg-rose-950/40 border-rose-500/30 text-rose-400 group-hover/card:scale-110 group-hover/card:bg-rose-950/70'
+              }`}>
+                <AlertCircle className="w-5 h-5" />
+              </div>
+            </button>
 
-        {/* --- STATS CARDS DASHBOARD HEADER --- */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          
-          {/* Card: TOTAL */}
-          <button
-            type="button"
-            onClick={() => {
-              setStatusFilter('ALL');
-              setSelectedDocFilter('ALL');
-              setQuickRange('ALL');
-              setFromDate('');
-              setToDate('');
-              setCurrentPage(1);
-              handleSearchTrigger();
-            }}
-            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
-              statusFilter === 'ALL' && selectedDocFilter === 'ALL' && quickRange === 'ALL'
-                ? 'bg-blue-50/25 border-blue-500 shadow-md shadow-blue-500/5 ring-2 ring-blue-500/10 scale-[1.02]'
-                : 'bg-white border-slate-100 shadow-xs hover:border-blue-200 hover:scale-[1.02] hover:shadow-sm'
-            }`}
-          >
-            <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total de Tareas</span>
-              <span className="text-2xl sm:text-3xl font-extrabold text-blue-600 tracking-tight block mt-1">{totalCount}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Filtradas actualmente</span>
-            </div>
-            <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
-              statusFilter === 'ALL' && selectedDocFilter === 'ALL' && quickRange === 'ALL' ? 'bg-blue-100 text-blue-600 scale-110' : 'bg-blue-50 text-blue-500 group-hover/card:bg-blue-100 group-hover/card:text-blue-600 group-hover/card:scale-110'
-            }`}>
-              <ClipboardList className="w-6 h-6" />
-            </div>
-          </button>
+            {/* Card: ESTA SEMANA */}
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter('ALL');
+                setSelectedDocFilter('ALL');
+                handleQuickRangeChange('ESTA_SEMANA');
+                setCurrentPage(1);
+              }}
+              className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
+                quickRange === 'ESTA_SEMANA'
+                  ? 'bg-[#1b1429] border-purple-500 shadow-lg shadow-purple-500/20 ring-1 ring-purple-500/40 scale-[1.02]'
+                  : 'bg-[#0f172a]/80 backdrop-blur-md border-slate-800/80 shadow-md shadow-black/20 hover:border-slate-700 hover:bg-[#161d31] hover:scale-[1.02]'
+              }`}
+            >
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Esta Semana</span>
+                <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight block mt-1">{estaSemanaCount}</span>
+                <span className="text-[10px] text-purple-400/80 mt-1 block font-medium">Siguientes 7 días</span>
+              </div>
+              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 border ${
+                quickRange === 'ESTA_SEMANA'
+                  ? 'bg-purple-950/80 border-purple-500/60 text-purple-400 shadow-md shadow-purple-500/20 scale-110'
+                  : 'bg-purple-950/40 border-purple-500/30 text-purple-400 group-hover/card:scale-110 group-hover/card:bg-purple-950/70'
+              }`}>
+                <Clock className="w-5 h-5" />
+              </div>
+            </button>
 
-          {/* Card: PENDIENTES */}
-          <button
-            type="button"
-            onClick={() => {
-              setStatusFilter('PENDIENTE');
-              setSelectedDocFilter('ALL');
-              setQuickRange('ALL');
-              setFromDate('');
-              setToDate('');
-              setCurrentPage(1);
-              handleSearchTrigger();
-            }}
-            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
-              statusFilter === 'PENDIENTE'
-                ? 'bg-rose-50/25 border-rose-500 shadow-md shadow-rose-500/5 ring-2 ring-rose-500/10 scale-[1.02]'
-                : 'bg-white border-slate-100 shadow-xs hover:border-rose-200 hover:scale-[1.02] hover:shadow-sm'
-            }`}
-          >
-            <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Pendientes</span>
-              <span className="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight block mt-1">{pendientesCount}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Esperando atención</span>
-            </div>
-            <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
-              statusFilter === 'PENDIENTE' ? 'bg-rose-100 text-rose-600 scale-110' : 'bg-rose-50 text-rose-500 group-hover/card:bg-rose-100 group-hover/card:text-rose-600 group-hover/card:scale-110'
-            }`}>
-              <AlertCircle className="w-6 h-6" />
-            </div>
-          </button>
+            {/* Card: ESTE MES */}
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter('ALL');
+                setSelectedDocFilter('ALL');
+                handleQuickRangeChange('ESTE_MES');
+                setCurrentPage(1);
+              }}
+              className={`flex items-center justify-between p-5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
+                quickRange === 'ESTE_MES'
+                  ? 'bg-[#0f222e] border-cyan-500 shadow-lg shadow-cyan-500/20 ring-1 ring-cyan-500/40 scale-[1.02]'
+                  : 'bg-[#0f172a]/80 backdrop-blur-md border-slate-800/80 shadow-md shadow-black/20 hover:border-slate-700 hover:bg-[#161d31] hover:scale-[1.02]'
+              }`}
+            >
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Este Mes</span>
+                <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight block mt-1">{esteMesCount}</span>
+                <span className="text-[10px] text-cyan-400/80 mt-1 block font-medium">Mes calendario actual</span>
+              </div>
+              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 border ${
+                quickRange === 'ESTE_MES'
+                  ? 'bg-cyan-950/80 border-cyan-500/60 text-cyan-400 shadow-md shadow-cyan-500/20 scale-110'
+                  : 'bg-cyan-950/40 border-cyan-500/30 text-cyan-400 group-hover/card:scale-110 group-hover/card:bg-cyan-950/70'
+              }`}>
+                <RotateCcw className="w-5 h-5" />
+              </div>
+            </button>
+          </section>
 
-          {/* Card: EN PROCESO */}
-          <button
-            type="button"
-            onClick={() => {
-              setStatusFilter('EN_PROCESO');
-              setSelectedDocFilter('ALL');
-              setQuickRange('ALL');
-              setFromDate('');
-              setToDate('');
-              setCurrentPage(1);
-              handleSearchTrigger();
-            }}
-            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
-              statusFilter === 'EN_PROCESO'
-                ? 'bg-amber-50/25 border-amber-500 shadow-md shadow-amber-500/5 ring-2 ring-amber-500/10 scale-[1.02]'
-                : 'bg-white border-slate-100 shadow-xs hover:border-amber-200 hover:scale-[1.02] hover:shadow-sm'
-            }`}
-          >
-            <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">En Proceso</span>
-              <span className="text-2xl sm:text-3xl font-extrabold text-amber-500 tracking-tight block mt-1">{enProcesoCount}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Siendo ejecutadas</span>
+          {/* --- DYNAMIC FILTER CARD PANEL --- */}
+          <section className="bg-[#0f172a]/80 backdrop-blur-md rounded-2xl border border-slate-800/80 shadow-md shadow-black/20 p-4.5 sm:p-6 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Search className="w-4.5 h-4.5 text-cyan-400 shrink-0" />
+              <h3 className="font-extrabold text-slate-100 text-sm">Filtros y Búsqueda</h3>
             </div>
-            <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
-              statusFilter === 'EN_PROCESO' ? 'bg-amber-100 text-amber-600 scale-110' : 'bg-amber-50 text-amber-500 group-hover/card:bg-amber-100 group-hover/card:text-amber-600 group-hover/card:scale-110'
-            }`}>
-              <TrendingUp className="w-6 h-6" />
-            </div>
-          </button>
 
-          {/* Card: CULMINADAS */}
-          <button
-            type="button"
-            onClick={() => {
-              setStatusFilter('CULMINADO');
-              setSelectedDocFilter('ALL');
-              setQuickRange('ALL');
-              setFromDate('');
-              setToDate('');
-              setCurrentPage(1);
-              handleSearchTrigger();
-            }}
-            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
-              statusFilter === 'CULMINADO'
-                ? 'bg-emerald-50/25 border-emerald-500 shadow-md shadow-emerald-500/5 ring-2 ring-emerald-500/10 scale-[1.02]'
-                : 'bg-white border-slate-100 shadow-xs hover:border-emerald-200 hover:scale-[1.02] hover:shadow-sm'
-            }`}
-          >
-            <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Culminadas</span>
-              <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600 tracking-tight block mt-1">{culminadasCount}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Finalizadas con éxito</span>
-            </div>
-            <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
-              statusFilter === 'CULMINADO' ? 'bg-emerald-100 text-emerald-600 scale-110' : 'bg-emerald-50 text-emerald-500 group-hover/card:bg-emerald-100 group-hover/card:text-emerald-600 group-hover/card:scale-110'
-            }`}>
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-          </button>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              {/* Input Calendar: Desde */}
+              <div className="md:col-span-3">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Desde</label>
+                <div className="relative">
+                  <Calendar className="absolute left-3.5 top-3 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => { setFromDate(e.target.value); handleSearchTrigger(); }}
+                    className="w-full bg-[#131d33] hover:bg-[#182544] border border-slate-700/80 rounded-xl py-2 px-3 pl-10 text-xs sm:text-sm font-semibold text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                  />
+                </div>
+              </div>
 
-        </section>
+              {/* Input Calendar: Hasta */}
+              <div className="md:col-span-3">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Hasta</label>
+                <div className="relative">
+                  <Calendar className="absolute left-3.5 top-3 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => { setToDate(e.target.value); handleSearchTrigger(); }}
+                    className="w-full bg-[#131d33] hover:bg-[#182544] border border-slate-700/80 rounded-xl py-2 px-3 pl-10 text-xs sm:text-sm font-semibold text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                  />
+                </div>
+              </div>
 
-        {/* --- CMMS PREVENTIVE KPI CARDS --- */}
-        <div className="mb-4 flex items-center gap-2">
-          <Clock className="w-4.5 h-4.5 text-indigo-500 shrink-0" />
-          <h3 className="font-extrabold text-slate-800 text-sm tracking-tight">Mantenimiento Preventivo Programado (CMMS)</h3>
-        </div>
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {/* Card: CON DOCUMENTOS */}
-          <button
-            type="button"
-            onClick={() => {
-              setStatusFilter('ALL');
-              setSelectedDocFilter('CON_DOC');
-              setQuickRange('ALL');
-              setFromDate('');
-              setToDate('');
-              setCurrentPage(1);
-              handleSearchTrigger();
-            }}
-            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
-              selectedDocFilter === 'CON_DOC'
-                ? 'bg-emerald-50/25 border-emerald-500 shadow-md shadow-emerald-500/5 ring-2 ring-emerald-500/10 scale-[1.02]'
-                : 'bg-white border-slate-100 shadow-xs hover:border-emerald-200 hover:scale-[1.02] hover:shadow-sm'
-            }`}
-          >
-            <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Con Documentos</span>
-              <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600 tracking-tight block mt-1">{conDocsProximosCount}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Registros totales</span>
-            </div>
-            <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
-              selectedDocFilter === 'CON_DOC' ? 'bg-emerald-100 text-emerald-600 scale-110' : 'bg-emerald-50 text-emerald-500 group-hover/card:bg-emerald-100 group-hover/card:text-emerald-600 group-hover/card:scale-110'
-            }`}>
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-          </button>
+              {/* Quick Multi-column Search */}
+              <div className="md:col-span-4">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Búsqueda rápida</label>
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => { setSearchTerm(e.target.value); handleSearchTrigger(); }}
+                    placeholder="Responsable, equipo, falla, descripción..."
+                    className="w-full bg-[#131d33] hover:bg-[#182544] border border-slate-700/80 rounded-xl py-2.5 px-3 pl-10 text-xs sm:text-sm font-semibold text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-all placeholder-slate-500"
+                  />
+                </div>
+              </div>
 
-          {/* Card: SIN DOCUMENTOS */}
-          <button
-            type="button"
-            onClick={() => {
-              setStatusFilter('ALL');
-              setSelectedDocFilter('SIN_DOC');
-              setQuickRange('ALL');
-              setFromDate('');
-              setToDate('');
-              setCurrentPage(1);
-              handleSearchTrigger();
-            }}
-            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
-              selectedDocFilter === 'SIN_DOC'
-                ? 'bg-rose-50/25 border-rose-500 shadow-md shadow-rose-500/5 ring-2 ring-rose-500/10 scale-[1.02]'
-                : 'bg-white border-slate-100 shadow-xs hover:border-rose-200 hover:scale-[1.02] hover:shadow-sm'
-            }`}
-          >
-            <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Sin Documentos</span>
-              <span className="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight block mt-1">{sinDocsProximosCount}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Registros totales</span>
-            </div>
-            <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
-              selectedDocFilter === 'SIN_DOC' ? 'bg-rose-100 text-rose-600 scale-110' : 'bg-rose-50 text-rose-500 group-hover/card:bg-rose-100 group-hover/card:text-rose-600 group-hover/card:scale-110'
-            }`}>
-              <AlertCircle className="w-6 h-6" />
-            </div>
-          </button>
-
-          {/* Card: ESTA SEMANA */}
-          <button
-            type="button"
-            onClick={() => {
-              setStatusFilter('ALL');
-              setSelectedDocFilter('ALL');
-              handleQuickRangeChange('ESTA_SEMANA');
-              setCurrentPage(1);
-            }}
-            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
-              quickRange === 'ESTA_SEMANA'
-                ? 'bg-violet-50/25 border-violet-500 shadow-md shadow-violet-500/5 ring-2 ring-violet-500/10 scale-[1.02]'
-                : 'bg-white border-slate-100 shadow-xs hover:border-violet-200 hover:scale-[1.02] hover:shadow-sm'
-            }`}
-          >
-            <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Esta Semana</span>
-              <span className="text-2xl sm:text-3xl font-extrabold text-violet-600 tracking-tight block mt-1">{estaSemanaCount}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Siguientes 7 días</span>
-            </div>
-            <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
-              quickRange === 'ESTA_SEMANA' ? 'bg-violet-100 text-violet-600 scale-110' : 'bg-violet-50 text-violet-500 group-hover/card:bg-violet-100 group-hover/card:text-violet-600 group-hover/card:scale-110'
-            }`}>
-              <Clock className="w-6 h-6" />
-            </div>
-          </button>
-
-          {/* Card: ESTE MES */}
-          <button
-            type="button"
-            onClick={() => {
-              setStatusFilter('ALL');
-              setSelectedDocFilter('ALL');
-              handleQuickRangeChange('ESTE_MES');
-              setCurrentPage(1);
-            }}
-            className={`flex items-center justify-between p-4.5 rounded-2xl border text-left transition-all duration-300 outline-none select-none cursor-pointer w-full group/card ${
-              quickRange === 'ESTE_MES'
-                ? 'bg-cyan-50/25 border-cyan-500 shadow-md shadow-cyan-500/5 ring-2 ring-cyan-500/10 scale-[1.02]'
-                : 'bg-white border-slate-100 shadow-xs hover:border-cyan-200 hover:scale-[1.02] hover:shadow-sm'
-            }`}
-          >
-            <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Este Mes</span>
-              <span className="text-2xl sm:text-3xl font-extrabold text-cyan-600 tracking-tight block mt-1">{esteMesCount}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Mes calendario actual</span>
-            </div>
-            <div className={`rounded-2xl p-3 shrink-0 transition-all duration-300 ${
-              quickRange === 'ESTE_MES' ? 'bg-cyan-100 text-cyan-600 scale-110' : 'bg-cyan-50 text-cyan-500 group-hover/card:bg-cyan-100 group-hover/card:text-cyan-600 group-hover/card:scale-110'
-            }`}>
-              <RotateCcw className="w-6 h-6" />
-            </div>
-          </button>
-        </section>
-
-        {/* --- DYNAMIC FILTER CARD PANEL --- */}
-        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4.5 sm:p-6 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Search className="w-4.5 h-4.5 text-brand-500 shrink-0" />
-            <h3 className="font-extrabold text-slate-800 text-sm">Filtros y Búsqueda</h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            {/* Input Calendar: Desde */}
-            <div className="md:col-span-3">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Desde</label>
-              <div className="relative">
-                <Calendar className="absolute left-3.5 top-3 w-4 h-4 text-slate-400 pointer-events-none" />
-                <input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => { setFromDate(e.target.value); handleSearchTrigger(); }}
-                  className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl py-2 px-3 pl-10 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition-all"
-                />
+              {/* Actions Filters Buttons */}
+              <div className="md:col-span-2 flex items-end gap-2">
+                <button
+                  type="button"
+                  onClick={handleSearchTrigger}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700/80 text-white font-bold text-xs shadow-md transition-all duration-200 active:scale-95 cursor-pointer text-center"
+                >
+                  Buscar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClearFilters}
+                  className="p-2.5 rounded-xl bg-[#131d33] hover:bg-slate-800 border border-slate-700/80 text-slate-400 hover:text-white transition-all duration-200 cursor-pointer"
+                  title="Limpiar Filtros"
+                >
+                  <RotateCcw className="w-4.5 h-4.5" />
+                </button>
               </div>
             </div>
+          </section>
 
-            {/* Input Calendar: Hasta */}
-            <div className="md:col-span-3">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Hasta</label>
-              <div className="relative">
-                <Calendar className="absolute left-3.5 top-3 w-4 h-4 text-slate-400 pointer-events-none" />
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => { setToDate(e.target.value); handleSearchTrigger(); }}
-                  className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl py-2 px-3 pl-10 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Quick Multi-column Search */}
-            <div className="md:col-span-4">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Búsqueda rápida</label>
-              <div className="relative">
-                <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => { setSearchTerm(e.target.value); handleSearchTrigger(); }}
-                  placeholder="Responsable, equipo, falla, descripción..."
-                  className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl py-2.5 px-3 pl-10 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition-all placeholder-slate-400"
-                />
-              </div>
-            </div>
-
-            {/* Actions Filters Buttons */}
-            <div className="md:col-span-2 flex items-end gap-2">
-              <button
-                type="button"
-                onClick={handleSearchTrigger}
-                className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-sm transition-all duration-200 active:scale-95 cursor-pointer text-center"
-              >
-                Buscar
-              </button>
-              <button
-                type="button"
-                onClick={handleClearFilters}
-                className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 hover:text-slate-800 transition-all duration-200 cursor-pointer"
-                title="Limpiar Filtros"
-              >
-                <RotateCcw className="w-4.5 h-4.5" />
-              </button>
-            </div>
-          </div>
-
-
-        </section>
-
-        {/* --- MAIN MODERN DATA GRID CONTAINER --- */}
+          {/* --- MAIN MODERN DATA GRID CONTAINER --- */}
         <section className={`rounded-2xl border transition-all duration-300 relative shadow-sm ${
           isPremiumDarkMode 
             ? 'bg-[#0b0f19] border-[#1e293b]' 
@@ -3229,6 +3219,7 @@ export default function Dashboard() {
         </section>
 
       </main>
+      </div>
 
       {/* --- MODALS & DIALOGS --- */}
 
