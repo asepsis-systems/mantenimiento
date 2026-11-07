@@ -114,9 +114,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [spareParts, setSpareParts] = useState<any[]>([]);
   const [loadingParts, setLoadingParts] = useState(false);
   const [useInventory, setUseInventory] = useState(() => {
-    // Si ya tiene repuestos asignados como texto libre, no forzar inventario por defecto
-    if (initialValues.repuestos) return false;
-    return true;
+    // Por defecto al crear una nueva tarea se marca Texto Libre (false)
+    if (initialValues?.sparePartId) return true;
+    return false;
   });
   const [selectedSparePart, setSelectedSparePart] = useState<any | null>(null);
   const [partSearchQuery, setPartSearchQuery] = useState('');
