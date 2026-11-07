@@ -19,11 +19,11 @@ interface MtoTopNavbarProps {
     username?: string;
     role?: string;
   } | null;
-  selectedSede: string;
-  onSedeChange: (sede: string) => void;
-  searchTerm: string;
-  onSearchChange: (search: string) => void;
-  onOpenCreateTask: () => void;
+  selectedSede?: string;
+  onSedeChange?: (sede: string) => void;
+  searchTerm?: string;
+  onSearchChange?: (search: string) => void;
+  onOpenCreateTask?: () => void;
   onLogout: () => void;
   mobileMenuOpen: boolean;
   onToggleMobileMenu: () => void;
@@ -31,10 +31,10 @@ interface MtoTopNavbarProps {
 
 export default function MtoTopNavbar({
   user,
-  selectedSede,
-  onSedeChange,
-  searchTerm,
-  onSearchChange,
+  selectedSede = 'ALL',
+  onSedeChange = () => {},
+  searchTerm = '',
+  onSearchChange = () => {},
   onOpenCreateTask,
   onLogout,
   mobileMenuOpen,
@@ -113,16 +113,18 @@ export default function MtoTopNavbar({
 
       {/* Right: Action button + Notifications + User Profile + Logout */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Create Task Button */}
-        <button
-          type="button"
-          onClick={onOpenCreateTask}
-          className="py-1.5 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 border border-blue-400/30 text-xs font-bold text-white transition-all active:scale-95 flex items-center gap-1.5 shadow-lg shadow-blue-600/20 cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">Crear nueva tarea</span>
-          <span className="sm:hidden">Nueva</span>
-        </button>
+        {/* Create Task Button (rendered if handler provided) */}
+        {onOpenCreateTask && (
+          <button
+            type="button"
+            onClick={onOpenCreateTask}
+            className="py-1.5 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 border border-blue-400/30 text-xs font-bold text-white transition-all active:scale-95 flex items-center gap-1.5 shadow-lg shadow-blue-600/20 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Crear nueva tarea</span>
+            <span className="sm:hidden">Nueva</span>
+          </button>
+        )}
 
         {/* User Profile */}
         {user && (

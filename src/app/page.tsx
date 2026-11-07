@@ -3600,70 +3600,92 @@ export default function Dashboard() {
           closePreview();
         }}
       >
-        <div className="space-y-3">
+        <div className="space-y-4">
           {modalLoadingFiles ? (
-            <div className="flex items-center justify-center p-6">
-              <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
             </div>
           ) : (
             <>
               {isPreviewOpen && previewUrl ? (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="font-semibold">{previewName}</div>
-                    <div>
-                      <button onClick={closePreview} className="px-3 py-1 rounded-lg bg-white border text-xs">Cerrar</button>
-                      <a href={previewUrl} download={previewName || undefined} className="ml-2 px-3 py-1 rounded-lg bg-white border text-xs">Descargar</a>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between bg-[#121c33] border border-slate-800 rounded-2xl p-3 px-4">
+                    <div className="font-bold text-white text-sm truncate mr-3" title={previewName || ''}>
+                      {previewName}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button 
+                        type="button"
+                        onClick={closePreview} 
+                        className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition-all cursor-pointer"
+                      >
+                        Cerrar Vista
+                      </button>
+                      <a 
+                        href={previewUrl} 
+                        download={previewName || undefined} 
+                        className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer"
+                      >
+                        Descargar
+                      </a>
                     </div>
                   </div>
-                  <div className="border rounded-md overflow-hidden bg-white">
+                  <div className="border border-slate-800 rounded-2xl overflow-hidden bg-slate-950 shadow-inner">
                     {previewExt === 'pdf' ? (
-                      <iframe src={previewUrl} className="w-full h-[60vh]" />
+                      <iframe src={previewUrl} className="w-full h-[65vh] border-0" />
                     ) : (
-                      <img src={previewUrl || undefined} alt={previewName || 'Archivo'} className="w-full h-[60vh] object-contain bg-slate-900" />
+                      <img src={previewUrl || undefined} alt={previewName || 'Archivo'} className="w-full h-[65vh] object-contain bg-slate-950" />
                     )}
                   </div>
                 </div>
               ) : modalFiles.length === 0 ? (
-                <p className="text-sm text-slate-500">No hay archivos en el historial.</p>
+                <div className="text-center py-8 text-slate-400 text-sm bg-[#121c33]/40 border border-slate-800 rounded-2xl">
+                  No hay archivos registrados en el historial para esta tarea.
+                </div>
               ) : (
-                modalFiles.map((f: any) => {
-                  const fileName = (f.path || '').split('/').pop();
-                  return (
-                    <div key={f.id} className="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-lg p-3">
-                      <div>
-                        <div className="font-semibold text-sm">{f.originalName}</div>
-                        <div className="text-xs text-slate-500">{new Date(f.createdAt).toLocaleString()}</div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openPreview(fileName, f.originalName)}
-                          className="px-3 py-1 rounded-lg bg-sky-50 border border-sky-100 text-sky-700 text-xs font-semibold cursor-pointer hover:bg-sky-100 transition-colors"
-                        >
-                          Ver
-                        </button>
-                        <a
-                          href={`/api/tareas/archivo?file=${encodeURIComponent(fileName)}`}
-                          download={f.originalName}
-                          className="px-3 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors"
-                        >
-                          Descargar
-                        </a>
-                        {user?.role !== 'VIEWER' && (
+                <div className="space-y-2.5">
+                  {modalFiles.map((f: any) => {
+                    const fileName = (f.path || '').split('/').pop();
+                    return (
+                      <div key={f.id} className="flex items-center justify-between bg-[#121c33] border border-slate-800/90 rounded-2xl p-3.5 hover:border-slate-700 transition-all">
+                        <div className="min-w-0 pr-3">
+                          <div className="font-bold text-sm text-white select-text truncate" title={f.originalName}>
+                            {f.originalName}
+                          </div>
+                          <div className="text-xs text-slate-400 mt-0.5">
+                            {new Date(f.createdAt).toLocaleString('es-PE')}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
                           <button
                             type="button"
-                            onClick={() => handleDeleteHistoryFile(f.id)}
-                            className="p-1.5 rounded-lg bg-rose-50 border border-rose-100 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
-                            title="Eliminar archivo del historial"
+                            onClick={() => openPreview(fileName, f.originalName)}
+                            className="px-3.5 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-bold cursor-pointer transition-all"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            Ver
                           </button>
-                        )}
+                          <a
+                            href={`/api/tareas/archivo?file=${encodeURIComponent(fileName)}`}
+                            download={f.originalName}
+                            className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition-all"
+                          >
+                            Descargar
+                          </a>
+                          {user?.role !== 'VIEWER' && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteHistoryFile(f.id)}
+                              className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 hover:text-rose-300 transition-all cursor-pointer"
+                              title="Eliminar archivo del historial"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })
+                    );
+                  })}
+                </div>
               )}
             </>
           )}
