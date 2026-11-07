@@ -282,6 +282,7 @@ export async function generateAndSaveExcelConformidad(id: string): Promise<{ suc
           entity: 'POR ESPECIFICAR',
           code: 'S/N',
           issueDate: tarea.fechaCulminado || tarea.fecha || new Date().toISOString().split('T')[0],
+          expiryDate: tarea.proximaEjecucion || tarea.fecha || new Date().toISOString().split('T')[0],
           status: 'VIGENTE'
         }
       });
@@ -342,7 +343,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: res.error }, { status: 400 });
     }
 
-    return new NextResponse(res.buffer, {
+    return new NextResponse(res.buffer ? new Uint8Array(res.buffer as unknown as ArrayBuffer) : null, {
       status: 200,
       headers: {
         'Content-Disposition': `attachment; filename="${res.fileName}"`,
