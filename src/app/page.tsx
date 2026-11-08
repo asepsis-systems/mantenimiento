@@ -2172,145 +2172,6 @@ export default function Dashboard() {
                   </span>
                 </div>
               </div>
-          {/* --- DYNAMIC FILTER CARD PANEL --- */}
-          <section className="bg-[#0f172a]/80 backdrop-blur-md rounded-2xl border border-slate-800/80 shadow-md shadow-black/20 p-4 sm:p-5 mb-6">
-            <div className="flex items-center justify-between gap-2 mb-3.5">
-              <div className="flex items-center gap-2">
-                <Search className="w-4.5 h-4.5 text-cyan-400 shrink-0" />
-                <h3 className="font-extrabold text-slate-100 text-sm tracking-wide">Filtros y Búsqueda</h3>
-              </div>
-              {(fromDate || toDate || searchTerm || selectedEquipoFilter || selectedSedeFilter || selectedTipoFilter || selectedDocFilter !== 'ALL' || selectedFrecuenciaFilter || statusFilter !== 'ALL') && (
-                <button
-                  type="button"
-                  onClick={handleClearFilters}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-cyan-400 transition-colors cursor-pointer"
-                  title="Restablecer todos los filtros"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Restablecer filtros</span>
-                </button>
-              )}
-            </div>
-
-            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
-              {/* Quick Multi-column Search */}
-              <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => { setSearchTerm(e.target.value); handleSearchTrigger(); }}
-                  placeholder="Responsable, equipo, falla, descripción..."
-                  className="w-full bg-[#131d33] hover:bg-[#182544] border border-slate-700/80 rounded-xl py-2.5 px-3 pl-10 pr-9 text-xs sm:text-sm font-semibold text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-all placeholder-slate-500"
-                />
-                {searchTerm && (
-                  <button
-                    type="button"
-                    onClick={() => { setSearchTerm(''); handleSearchTrigger(); }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 rounded transition-colors cursor-pointer"
-                    title="Borrar texto"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-
-              {/* Botón Popover: Filtrar Fechas */}
-              <div className="relative" ref={datePopoverRef}>
-                <button
-                  type="button"
-                  onClick={handleOpenDatePopover}
-                  className={`w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-semibold transition-all select-none cursor-pointer whitespace-nowrap ${
-                    fromDate || toDate
-                      ? 'bg-blue-600/20 border-blue-500/70 text-blue-300 shadow-sm shadow-blue-500/10'
-                      : 'bg-[#131d33] hover:bg-[#182544] border-slate-700/80 text-slate-300 hover:text-white'
-                  }`}
-                >
-                  <Calendar className={`w-4 h-4 ${fromDate || toDate ? 'text-blue-400' : 'text-slate-400'}`} />
-                  <span>Filtrar Fechas</span>
-                  {(fromDate || toDate) && (
-                    <span className="ml-1 px-1.5 py-0.5 rounded-md bg-blue-500/30 border border-blue-400/40 text-[10px] text-blue-200 font-mono font-medium">
-                      {fromDate && toDate
-                        ? `${formatSmallDate(fromDate)} - ${formatSmallDate(toDate)}`
-                        : fromDate
-                        ? `Desde ${formatSmallDate(fromDate)}`
-                        : `Hasta ${formatSmallDate(toDate)}`}
-                    </span>
-                  )}
-                </button>
-
-                {/* Popover Floating Menu */}
-                {isDatePopoverOpen && (
-                  <div className="absolute top-full mt-2 left-0 md:left-auto md:right-0 z-50 w-full sm:w-80 bg-[#0e1726] border border-slate-700/80 rounded-2xl shadow-2xl shadow-black/80 p-5 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150">
-                    <h4 className="text-sm font-bold text-white mb-3">Rango de fechas</h4>
-                    
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-xs font-semibold text-slate-400 block mb-1.5">Desde</label>
-                        <input
-                          type="date"
-                          value={tempFromDate}
-                          onChange={(e) => setTempFromDate(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') handleApplyDateFilter(); }}
-                          className="w-full bg-[#131d33] hover:bg-[#16223b] border border-slate-700/80 rounded-xl py-2 px-3 text-xs sm:text-sm font-medium text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all cursor-pointer [color-scheme:dark]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-slate-400 block mb-1.5">Hasta</label>
-                        <input
-                          type="date"
-                          value={tempToDate}
-                          onChange={(e) => setTempToDate(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') handleApplyDateFilter(); }}
-                          className="w-full bg-[#131d33] hover:bg-[#16223b] border border-slate-700/80 rounded-xl py-2 px-3 text-xs sm:text-sm font-medium text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all cursor-pointer [color-scheme:dark]"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-5">
-                      <button
-                        type="button"
-                        onClick={handleClearDateFilter}
-                        className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer px-1 py-1.5"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                        <span>Limpiar</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleApplyDateFilter}
-                        className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition-all cursor-pointer"
-                      >
-                        Aplicar
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Actions Filters Buttons */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleSearchTrigger}
-                  className="flex-1 md:flex-none py-2.5 px-5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700/80 text-white font-bold text-xs sm:text-sm shadow-md transition-all duration-200 active:scale-95 cursor-pointer text-center"
-                >
-                  Buscar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleClearFilters}
-                  className="p-2.5 rounded-xl bg-[#131d33] hover:bg-slate-800 border border-slate-700/80 text-slate-400 hover:text-white transition-all duration-200 cursor-pointer"
-                  title="Limpiar Filtros"
-                >
-                  <RotateCcw className="w-4.5 h-4.5" />
-                </button>
-              </div>
-            </div>
-          </section>
-
           {/* --- MAIN MODERN DATA GRID CONTAINER --- */}
         <section className={`rounded-2xl border transition-all duration-300 relative shadow-sm ${
           isPremiumDarkMode 
@@ -2318,52 +2179,20 @@ export default function Dashboard() {
             : 'bg-white border-slate-200'
         }`}>
           
-          <div className={`px-6 py-4.5 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-t-2xl transition-colors duration-300 ${
+          {/* TABLE HEADER & RECORD COUNTER */}
+          <div className={`px-6 py-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-t-2xl transition-colors duration-300 ${
             isPremiumDarkMode 
               ? 'border-[#1e293b] bg-[#0d1324]/60' 
               : 'border-slate-100 bg-slate-50/50'
           }`}>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <h3 className={`font-extrabold text-base transition-colors duration-300 ${
-                  isPremiumDarkMode ? 'text-slate-100' : 'text-slate-900'
-                }`}>Listado de Tareas de Planta</h3>
-                
-                {isTableLoading && <Loader2 className="animate-spin h-4 w-4 text-brand-500 shrink-0" />}
-              </div>
-
-              <button
-                type="button"
-                onClick={handleExportTasksPDF}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-[11px] font-bold transition-all cursor-pointer border ${
-                  isPremiumDarkMode 
-                    ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700' 
-                    : 'bg-white text-slate-700 border-slate-200 shadow-sm hover:bg-slate-50'
-                }`}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span>Exportar PDF</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleExportTasksExcel}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-[11px] font-bold transition-all cursor-pointer border ${
-                  isPremiumDarkMode 
-                    ? 'bg-[#064e3b]/80 text-emerald-300 border-emerald-800/60 hover:bg-emerald-900/60 shadow-md' 
-                    : 'bg-emerald-50 text-emerald-800 border-emerald-200 shadow-sm hover:bg-emerald-100'
-                }`}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                  <polyline points="10 9 9 9 8 9"/>
-                </svg>
-                <span>Exportar Excel</span>
-              </button>
+            <div className="flex items-center gap-3">
+              <h3 className={`font-extrabold text-base transition-colors duration-300 ${
+                isPremiumDarkMode ? 'text-slate-100' : 'text-slate-900'
+              }`}>Listado de Tareas de Planta</h3>
+              
+              {isTableLoading && <Loader2 className="animate-spin h-4 w-4 text-cyan-400 shrink-0" />}
             </div>
+
             <div className={`text-xs font-semibold transition-colors duration-300 ${
               isPremiumDarkMode ? 'text-slate-400' : 'text-slate-500'
             }`}>
@@ -2371,18 +2200,116 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* INTEGRATED QUICK FILTER BAR */}
-          <div className={`px-4 py-3 border-b grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 transition-colors duration-300 ${
+          {/* UNIFIED TOOLBAR: BÚSQUEDA + FILTRAR FECHAS + FILTROS DESPLEGABLES + EXPORTAR */}
+          <div className={`px-5 py-3 border-b flex flex-wrap items-center gap-2.5 transition-colors duration-300 ${
             isPremiumDarkMode 
-              ? 'bg-[#0f172a]/40 border-[#1e293b]' 
+              ? 'bg-[#0f172a]/50 border-[#1e293b]' 
               : 'bg-white border-slate-100'
           }`}>
+            {/* Quick Multi-column Search */}
+            <div className="relative min-w-[200px] flex-1 max-w-xs sm:max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); handleSearchTrigger(); }}
+                placeholder="Responsable, equipo, falla, descripción..."
+                className="w-full bg-[#131d33] hover:bg-[#182544] border border-slate-700/80 rounded-xl py-2 px-3 pl-9 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-all placeholder-slate-500"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => { setSearchTerm(''); handleSearchTrigger(); }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 rounded transition-colors cursor-pointer"
+                  title="Borrar texto"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Botón Popover: Filtrar Fechas */}
+            <div className="relative" ref={datePopoverRef}>
+              <button
+                type="button"
+                onClick={handleOpenDatePopover}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all select-none cursor-pointer whitespace-nowrap ${
+                  fromDate || toDate
+                    ? 'bg-blue-600/20 border-blue-500/70 text-blue-300 shadow-sm shadow-blue-500/10'
+                    : 'bg-[#131d33] hover:bg-[#182544] border-slate-700/80 text-slate-300 hover:text-white'
+                }`}
+              >
+                <Calendar className={`w-3.5 h-3.5 ${fromDate || toDate ? 'text-blue-400' : 'text-slate-400'}`} />
+                <span>Filtrar Fechas</span>
+                {(fromDate || toDate) && (
+                  <span className="ml-1 px-1.5 py-0.5 rounded-md bg-blue-500/30 border border-blue-400/40 text-[10px] text-blue-200 font-mono font-medium">
+                    {fromDate && toDate
+                      ? `${formatSmallDate(fromDate)} - ${formatSmallDate(toDate)}`
+                      : fromDate
+                      ? `Desde ${formatSmallDate(fromDate)}`
+                      : `Hasta ${formatSmallDate(toDate)}`}
+                  </span>
+                )}
+              </button>
+
+              {/* Popover Floating Menu */}
+              {isDatePopoverOpen && (
+                <div className="absolute top-full mt-2 left-0 z-50 w-72 sm:w-80 bg-[#0e1726] border border-slate-700/80 rounded-2xl shadow-2xl shadow-black/80 p-4 sm:p-5 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150">
+                  <h4 className="text-sm font-bold text-white mb-3">Rango de fechas</h4>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-semibold text-slate-400 block mb-1.5">Desde</label>
+                      <input
+                        type="date"
+                        value={tempFromDate}
+                        onChange={(e) => setTempFromDate(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleApplyDateFilter(); }}
+                        className="w-full bg-[#131d33] hover:bg-[#16223b] border border-slate-700/80 rounded-xl py-2 px-3 text-xs sm:text-sm font-medium text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all cursor-pointer [color-scheme:dark]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-slate-400 block mb-1.5">Hasta</label>
+                      <input
+                        type="date"
+                        value={tempToDate}
+                        onChange={(e) => setTempToDate(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleApplyDateFilter(); }}
+                        className="w-full bg-[#131d33] hover:bg-[#16223b] border border-slate-700/80 rounded-xl py-2 px-3 text-xs sm:text-sm font-medium text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all cursor-pointer [color-scheme:dark]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-4.5 pt-2 border-t border-slate-800">
+                    <button
+                      type="button"
+                      onClick={handleClearDateFilter}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer px-1 py-1"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      <span>Limpiar</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleApplyDateFilter}
+                      className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition-all cursor-pointer"
+                    >
+                      Aplicar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Dropdown Filters */}
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value as any); handleSearchTrigger(); }}
-              className={`text-[10px] font-bold rounded-xl px-2 py-2 border outline-none transition-all ${
+              className={`text-[10px] font-bold rounded-xl px-2.5 py-2 border outline-none transition-all cursor-pointer ${
                 isPremiumDarkMode 
-                  ? 'bg-slate-900/50 border-slate-800 text-slate-300 focus:border-sky-500/50' 
+                  ? 'bg-slate-900/60 border-slate-800 text-slate-300 focus:border-sky-500/50' 
                   : 'bg-slate-50 border-slate-200 text-slate-600 focus:border-brand-500/50'
               }`}
             >
@@ -2395,9 +2322,9 @@ export default function Dashboard() {
             <select
               value={selectedSedeFilter ?? ''}
               onChange={(e) => { setSelectedSedeFilter(e.target.value === '' ? null : e.target.value as any); handleSearchTrigger(); }}
-              className={`text-[10px] font-bold rounded-xl px-2 py-2 border outline-none transition-all ${
+              className={`text-[10px] font-bold rounded-xl px-2.5 py-2 border outline-none transition-all cursor-pointer ${
                 isPremiumDarkMode 
-                  ? 'bg-slate-900/50 border-slate-800 text-slate-300 focus:border-sky-500/50' 
+                  ? 'bg-slate-900/60 border-slate-800 text-slate-300 focus:border-sky-500/50' 
                   : 'bg-slate-50 border-slate-200 text-slate-600 focus:border-brand-500/50'
               }`}
             >
@@ -2409,9 +2336,9 @@ export default function Dashboard() {
             <select
               value={selectedTipoFilter ?? ''}
               onChange={(e) => { setSelectedTipoFilter(e.target.value === '' ? null : e.target.value); handleSearchTrigger(); }}
-              className={`text-[10px] font-bold rounded-xl px-2 py-2 border outline-none transition-all ${
+              className={`text-[10px] font-bold rounded-xl px-2.5 py-2 border outline-none transition-all cursor-pointer ${
                 isPremiumDarkMode 
-                  ? 'bg-slate-900/50 border-slate-800 text-slate-300 focus:border-sky-500/50' 
+                  ? 'bg-slate-900/60 border-slate-800 text-slate-300 focus:border-sky-500/50' 
                   : 'bg-slate-50 border-slate-200 text-slate-600 focus:border-brand-500/50'
               }`}
             >
@@ -2424,9 +2351,9 @@ export default function Dashboard() {
             <select
               value={selectedDocFilter}
               onChange={(e) => { setSelectedDocFilter(e.target.value as any); handleSearchTrigger(); }}
-              className={`text-[10px] font-bold rounded-xl px-2 py-2 border outline-none transition-all ${
+              className={`text-[10px] font-bold rounded-xl px-2.5 py-2 border outline-none transition-all cursor-pointer ${
                 isPremiumDarkMode 
-                  ? 'bg-slate-900/50 border-slate-800 text-slate-300 focus:border-sky-500/50' 
+                  ? 'bg-slate-900/60 border-slate-800 text-slate-300 focus:border-sky-500/50' 
                   : 'bg-slate-50 border-slate-200 text-slate-600 focus:border-brand-500/50'
               }`}
             >
@@ -2438,9 +2365,9 @@ export default function Dashboard() {
             <select
               value={selectedFrecuenciaFilter ?? ''}
               onChange={(e) => { setSelectedFrecuenciaFilter(e.target.value === '' ? null : e.target.value); handleSearchTrigger(); }}
-              className={`text-[10px] font-bold rounded-xl px-2 py-2 border outline-none transition-all ${
+              className={`text-[10px] font-bold rounded-xl px-2.5 py-2 border outline-none transition-all cursor-pointer ${
                 isPremiumDarkMode 
-                  ? 'bg-slate-900/50 border-slate-800 text-slate-300 focus:border-sky-500/50' 
+                  ? 'bg-slate-900/60 border-slate-800 text-slate-300 focus:border-sky-500/50' 
                   : 'bg-slate-50 border-slate-200 text-slate-600 focus:border-brand-500/50'
               }`}
             >
@@ -2455,9 +2382,9 @@ export default function Dashboard() {
             <select
               value={quickRange}
               onChange={(e) => handleQuickRangeChange(e.target.value)}
-              className={`text-[10px] font-bold rounded-xl px-2 py-2 border outline-none transition-all ${
+              className={`text-[10px] font-bold rounded-xl px-2.5 py-2 border outline-none transition-all cursor-pointer ${
                 isPremiumDarkMode 
-                  ? 'bg-slate-900/50 border-slate-800 text-slate-300 focus:border-sky-500/50' 
+                  ? 'bg-slate-900/60 border-slate-800 text-slate-300 focus:border-sky-500/50' 
                   : 'bg-slate-50 border-slate-200 text-slate-600 focus:border-brand-500/50'
               }`}
             >
@@ -2467,6 +2394,52 @@ export default function Dashboard() {
               <option value="ESTE_MES">ESTE MES</option>
               <option value="MES_PASADO">MES PASADO</option>
             </select>
+
+            {/* Acciones de exportación y reseteo a la derecha */}
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                type="button"
+                onClick={handleExportTasksPDF}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-bold transition-all cursor-pointer border ${
+                  isPremiumDarkMode 
+                    ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700' 
+                    : 'bg-white text-slate-700 border-slate-200 shadow-sm hover:bg-slate-50'
+                }`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Exportar PDF</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportTasksExcel}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-bold transition-all cursor-pointer border ${
+                  isPremiumDarkMode 
+                    ? 'bg-[#064e3b]/80 text-emerald-300 border-emerald-800/60 hover:bg-emerald-900/60 shadow-md' 
+                    : 'bg-emerald-50 text-emerald-800 border-emerald-200 shadow-sm hover:bg-emerald-100'
+                }`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                <span>Exportar Excel</span>
+              </button>
+
+              {(fromDate || toDate || searchTerm || selectedEquipoFilter || selectedSedeFilter || selectedTipoFilter || selectedDocFilter !== 'ALL' || selectedFrecuenciaFilter || statusFilter !== 'ALL' || quickRange !== 'ALL') && (
+                <button
+                  type="button"
+                  onClick={handleClearFilters}
+                  className="p-2 rounded-xl bg-[#131d33] hover:bg-slate-800 border border-slate-700/80 text-slate-400 hover:text-cyan-400 transition-all cursor-pointer"
+                  title="Restablecer todos los filtros"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* TOP PAGINATION BAR */}
