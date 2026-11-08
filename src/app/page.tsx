@@ -179,6 +179,12 @@ export default function Dashboard() {
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDIENTE' | 'EN_PROCESO' | 'CULMINADO'>('ALL');
   const [quickRange, setQuickRange] = useState<string>('ALL');
 
+  // Date Filter Popover State
+  const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
+  const [tempFromDate, setTempFromDate] = useState('');
+  const [tempToDate, setTempToDate] = useState('');
+  const datePopoverRef = useRef<HTMLDivElement>(null);
+
   // Sorting
   const [sortField, setSortField] = useState<'fecha' | 'responsable' | 'equipo' | 'estado' | 'cantidad'>('fecha');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -742,6 +748,21 @@ export default function Dashboard() {
     setCurrentPage(1);
   }, [fromDate, toDate, searchTerm, selectedEquipoFilter, pageSize]);
 
+  // Close date popover on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (datePopoverRef.current && !datePopoverRef.current.contains(event.target as Node)) {
+        setIsDatePopoverOpen(false);
+      }
+    };
+    if (isDatePopoverOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDatePopoverOpen]);
+
   // Extract task date in YYYY-MM-DD format
   const getTaskDate = (t: Tarea) => {
     if (t.fechaCulminado && (t.estado === 'CULMINADO' || t.estado === 'HECHO')) {
@@ -1205,11 +1226,37 @@ export default function Dashboard() {
     handleSearchTrigger();
   };
 
+  // Popover date filter handlers
+  const handleOpenDatePopover = () => {
+    setTempFromDate(fromDate);
+    setTempToDate(toDate);
+    setIsDatePopoverOpen((prev) => !prev);
+  };
+
+  const handleApplyDateFilter = () => {
+    setFromDate(tempFromDate);
+    setToDate(tempToDate);
+    setIsDatePopoverOpen(false);
+    handleSearchTrigger();
+  };
+
+  const handleClearDateFilter = () => {
+    setTempFromDate('');
+    setTempToDate('');
+    setFromDate('');
+    setToDate('');
+    setIsDatePopoverOpen(false);
+    handleSearchTrigger();
+  };
+
   // Clear all advanced date filters and search terms
   const handleClearFilters = () => {
     setIsTableLoading(true);
     setFromDate('');
     setToDate('');
+    setTempFromDate('');
+    setTempToDate('');
+    setIsDatePopoverOpen(false);
     setSearchTerm('');
     setSelectedEquipoFilter(null);
     setSelectedSedeFilter(null);
@@ -2126,62 +2173,129 @@ export default function Dashboard() {
                 </div>
               </div>
           {/* --- DYNAMIC FILTER CARD PANEL --- */}
-          <section className="bg-[#0f172a]/80 backdrop-blur-md rounded-2xl border border-slate-800/80 shadow-md shadow-black/20 p-4.5 sm:p-6 mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Search className="w-4.5 h-4.5 text-cyan-400 shrink-0" />
-              <h3 className="font-extrabold text-slate-100 text-sm">Filtros y Búsqueda</h3>
+          <section className="bg-[#0f172a]/80 backdrop-blur-md rounded-2xl border border-slate-800/80 shadow-md shadow-black/20 p-4 sm:p-5 mb-6">
+            <div className="flex items-center justify-between gap-2 mb-3.5">
+              <div className="flex items-center gap-2">
+                <Search className="w-4.5 h-4.5 text-cyan-400 shrink-0" />
+                <h3 className="font-extrabold text-slate-100 text-sm tracking-wide">Filtros y Búsqueda</h3>
+              </div>
+              {(fromDate || toDate || searchTerm || selectedEquipoFilter || selectedSedeFilter || selectedTipoFilter || selectedDocFilter !== 'ALL' || selectedFrecuenciaFilter || statusFilter !== 'ALL') && (
+                <button
+                  type="button"
+                  onClick={handleClearFilters}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-cyan-400 transition-colors cursor-pointer"
+                  title="Restablecer todos los filtros"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Restablecer filtros</span>
+                </button>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              {/* Input Calendar: Desde */}
-              <div className="md:col-span-3">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Desde</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3.5 top-3 w-4 h-4 text-slate-400 pointer-events-none" />
-                  <input
-                    type="date"
-                    value={fromDate}
-                    onChange={(e) => { setFromDate(e.target.value); handleSearchTrigger(); }}
-                    className="w-full bg-[#131d33] hover:bg-[#182544] border border-slate-700/80 rounded-xl py-2 px-3 pl-10 text-xs sm:text-sm font-semibold text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Input Calendar: Hasta */}
-              <div className="md:col-span-3">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Hasta</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3.5 top-3 w-4 h-4 text-slate-400 pointer-events-none" />
-                  <input
-                    type="date"
-                    value={toDate}
-                    onChange={(e) => { setToDate(e.target.value); handleSearchTrigger(); }}
-                    className="w-full bg-[#131d33] hover:bg-[#182544] border border-slate-700/80 rounded-xl py-2 px-3 pl-10 text-xs sm:text-sm font-semibold text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-all"
-                  />
-                </div>
-              </div>
-
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
               {/* Quick Multi-column Search */}
-              <div className="md:col-span-4">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Búsqueda rápida</label>
-                <div className="relative">
-                  <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => { setSearchTerm(e.target.value); handleSearchTrigger(); }}
-                    placeholder="Responsable, equipo, falla, descripción..."
-                    className="w-full bg-[#131d33] hover:bg-[#182544] border border-slate-700/80 rounded-xl py-2.5 px-3 pl-10 text-xs sm:text-sm font-semibold text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-all placeholder-slate-500"
-                  />
-                </div>
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => { setSearchTerm(e.target.value); handleSearchTrigger(); }}
+                  placeholder="Responsable, equipo, falla, descripción..."
+                  className="w-full bg-[#131d33] hover:bg-[#182544] border border-slate-700/80 rounded-xl py-2.5 px-3 pl-10 pr-9 text-xs sm:text-sm font-semibold text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-all placeholder-slate-500"
+                />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => { setSearchTerm(''); handleSearchTrigger(); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 rounded transition-colors cursor-pointer"
+                    title="Borrar texto"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Botón Popover: Filtrar Fechas */}
+              <div className="relative" ref={datePopoverRef}>
+                <button
+                  type="button"
+                  onClick={handleOpenDatePopover}
+                  className={`w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-semibold transition-all select-none cursor-pointer whitespace-nowrap ${
+                    fromDate || toDate
+                      ? 'bg-blue-600/20 border-blue-500/70 text-blue-300 shadow-sm shadow-blue-500/10'
+                      : 'bg-[#131d33] hover:bg-[#182544] border-slate-700/80 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  <Calendar className={`w-4 h-4 ${fromDate || toDate ? 'text-blue-400' : 'text-slate-400'}`} />
+                  <span>Filtrar Fechas</span>
+                  {(fromDate || toDate) && (
+                    <span className="ml-1 px-1.5 py-0.5 rounded-md bg-blue-500/30 border border-blue-400/40 text-[10px] text-blue-200 font-mono font-medium">
+                      {fromDate && toDate
+                        ? `${formatSmallDate(fromDate)} - ${formatSmallDate(toDate)}`
+                        : fromDate
+                        ? `Desde ${formatSmallDate(fromDate)}`
+                        : `Hasta ${formatSmallDate(toDate)}`}
+                    </span>
+                  )}
+                </button>
+
+                {/* Popover Floating Menu */}
+                {isDatePopoverOpen && (
+                  <div className="absolute top-full mt-2 left-0 md:left-auto md:right-0 z-50 w-full sm:w-80 bg-[#0e1726] border border-slate-700/80 rounded-2xl shadow-2xl shadow-black/80 p-5 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150">
+                    <h4 className="text-sm font-bold text-white mb-3">Rango de fechas</h4>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs font-semibold text-slate-400 block mb-1.5">Desde</label>
+                        <input
+                          type="date"
+                          value={tempFromDate}
+                          onChange={(e) => setTempFromDate(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleApplyDateFilter(); }}
+                          className="w-full bg-[#131d33] hover:bg-[#16223b] border border-slate-700/80 rounded-xl py-2 px-3 text-xs sm:text-sm font-medium text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all cursor-pointer [color-scheme:dark]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-slate-400 block mb-1.5">Hasta</label>
+                        <input
+                          type="date"
+                          value={tempToDate}
+                          onChange={(e) => setTempToDate(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleApplyDateFilter(); }}
+                          className="w-full bg-[#131d33] hover:bg-[#16223b] border border-slate-700/80 rounded-xl py-2 px-3 text-xs sm:text-sm font-medium text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all cursor-pointer [color-scheme:dark]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-5">
+                      <button
+                        type="button"
+                        onClick={handleClearDateFilter}
+                        className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer px-1 py-1.5"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        <span>Limpiar</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleApplyDateFilter}
+                        className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition-all cursor-pointer"
+                      >
+                        Aplicar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Actions Filters Buttons */}
-              <div className="md:col-span-2 flex items-end gap-2">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleSearchTrigger}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700/80 text-white font-bold text-xs shadow-md transition-all duration-200 active:scale-95 cursor-pointer text-center"
+                  className="flex-1 md:flex-none py-2.5 px-5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700/80 text-white font-bold text-xs sm:text-sm shadow-md transition-all duration-200 active:scale-95 cursor-pointer text-center"
                 >
                   Buscar
                 </button>
