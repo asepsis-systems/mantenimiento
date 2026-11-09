@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import MtoTopNavbar from '@/components/MtoTopNavbar';
 import MtoSidebar from '@/components/MtoSidebar';
+import MtoLoadingScreen from '@/components/MtoLoadingScreen';
 import {
   Plus,
   Trash2,
@@ -855,6 +856,15 @@ export default function LicensesPage() {
     if (isPendingByDate(lic.expiryDate)) return 'pending';
     return 'ok';
   };
+
+  if (loading) {
+    return (
+      <MtoLoadingScreen 
+        message="Cargando Registros Generales..." 
+        submessage="Consultando licencias y carpetas técnicas de planta"
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#080d1a] flex flex-col text-slate-100 selection:bg-cyan-500/30 selection:text-cyan-200">

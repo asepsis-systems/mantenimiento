@@ -35,6 +35,7 @@ import { TaskModal } from '@/components/TaskModal';
 import { TaskForm } from '@/components/TaskForm';
 import MtoTopNavbar from '@/components/MtoTopNavbar';
 import MtoSidebar from '@/components/MtoSidebar';
+import MtoLoadingScreen from '@/components/MtoLoadingScreen';
 
 interface User {
   id: string;
@@ -1718,10 +1719,10 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-        <Loader2 className="animate-spin h-10 w-10 text-brand-500" />
-        <span className="text-slate-600 font-semibold animate-pulse text-sm">Cargando panel de tareas empresariales...</span>
-      </div>
+      <MtoLoadingScreen 
+        message="Cargando Tareas de Planta y Dashboard..." 
+        submessage="Sincronizando información de mantenimiento"
+      />
     );
   }
 
