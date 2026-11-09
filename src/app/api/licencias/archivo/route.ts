@@ -3,6 +3,51 @@ import { db } from '@/lib/db';
 import fs from 'fs/promises';
 import path from 'path';
 
+async function findPhysicalFile(fileParam: string): Promise<string | null> {
+  const directPath = path.join(process.cwd(), fileParam);
+  try {
+    await fs.access(directPath);
+    return directPath;
+  } catch {}
+
+  const safeName = path.basename(fileParam);
+  const candidates = [
+    path.join(process.cwd(), 'uploads', 'licencias', safeName),
+    path.join(process.cwd(), 'uploads', 'lima', 'licencias', safeName),
+    path.join(process.cwd(), 'uploads', 'trujillo', 'licencias', safeName),
+    path.join(process.cwd(), 'uploads', 'cochera', 'licencias', safeName),
+    path.join(process.cwd(), 'uploads', 'general', 'licencias', safeName),
+  ];
+
+  for (const c of candidates) {
+    try {
+      await fs.access(c);
+      return c;
+    } catch {}
+  }
+
+  // Recursive search under uploads/ if still not found
+  try {
+    const uploadsRoot = path.join(process.cwd(), 'uploads');
+    const findInDir = async (dir: string): Promise<string | null> => {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          const res = await findInDir(full);
+          if (res) return res;
+        } else if (entry.name === safeName) {
+          return full;
+        }
+      }
+      return null;
+    };
+    return await findInDir(uploadsRoot);
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -11,25 +56,26 @@ export async function GET(request: NextRequest) {
     const list = searchParams.get('list');
     const type = searchParams.get('type');
 
-    const uploadDir = path.join(process.cwd(), 'uploads', 'licencias');
-
-    // 1) Serve a physical file by filename
+    // 1) Serve a physical file by filename or relative path across any sede folder
     if (file) {
-      const safeName = path.basename(file);
-      const filePath = path.join(uploadDir, safeName);
-      try {
-        await fs.access(filePath);
-      } catch {
+      const filePath = await findPhysicalFile(file);
+      if (!filePath) {
         return NextResponse.json({ success: false, error: 'Archivo no encontrado.' }, { status: 404 });
       }
+
       const fileBuffer = await fs.readFile(filePath);
+      const safeName = path.basename(filePath);
       const ext = path.extname(safeName).toLowerCase();
       const mime: Record<string, string> = {
         '.pdf': 'application/pdf',
         '.jpg': 'image/jpeg',
         '.jpeg': 'image/jpeg',
         '.png': 'image/png',
-        '.gif': 'image/gif'
+        '.gif': 'image/gif',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.xls': 'application/vnd.ms-excel',
+        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       };
       const contentType = mime[ext] || 'application/octet-stream';
       const isViewable = ['.pdf', '.jpg', '.jpeg', '.png', '.gif'].includes(ext);
@@ -42,22 +88,95 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 2) List files for a given license id
+    // 2) List files for a given license id (from database metadata and sede directories)
     if (id && list === 'true') {
       try {
-        await fs.mkdir(uploadDir, { recursive: true });
-        const names = await fs.readdir(uploadDir);
         const matched: any[] = [];
-        for (const n of names) {
-          if (n.includes(id)) {
-            const stat = await fs.stat(path.join(uploadDir, n));
-            matched.push({ fileName: n, size: stat.size, mtime: stat.mtime });
+        const seenNames = new Set<string>();
+
+        // From DB record
+        const license = await db.license.findUnique({ where: { id } });
+        const docTypes = [
+          { type: 'certificado', name: 'archivoNombreCertificado', path: 'archivoPathCertificado', label: 'Certificado de Operatividad' },
+          { type: 'protocolo', name: 'archivoNombreProtocolo', path: 'archivoPathProtocolo', label: 'Protocolo de Prueba' },
+          { type: 'informeTecnico', name: 'archivoNombreInformeTecnico', path: 'archivoPathInformeTecnico', label: 'Informe Técnico' },
+          { type: 'factura', name: 'archivoNombreFactura', path: 'archivoPathFactura', label: 'Factura / Comprobante' },
+          { type: 'presupuesto', name: 'archivoNombrePresupuesto', path: 'archivoPathPresupuesto', label: 'Presupuesto' },
+          { type: 'checklist', name: 'archivoNombreCheckList', path: 'archivoPathCheckList', label: 'Checklist de Inspección' }
+        ];
+
+        if (license) {
+          for (const d of docTypes) {
+            const originalName = (license as any)[d.name];
+            const relativePath = (license as any)[d.path];
+            if (originalName && relativePath) {
+              const base = path.basename(relativePath);
+              seenNames.add(base);
+              let size = 0;
+              let mtime = license.updatedAt || new Date();
+              try {
+                const stat = await fs.stat(path.join(process.cwd(), relativePath));
+                size = stat.size;
+                mtime = stat.mtime;
+              } catch {}
+
+              matched.push({
+                fileName: base,
+                originalName: originalName,
+                docType: d.type,
+                docTypeName: d.label,
+                relativePath: relativePath,
+                size,
+                mtime
+              });
+            }
           }
         }
-        matched.sort((a, b) => (b.mtime as Date).getTime() - (a.mtime as Date).getTime());
+
+        // From physical folders
+        const dirsToScan = [
+          path.join(process.cwd(), 'uploads', 'licencias'),
+          path.join(process.cwd(), 'uploads', 'lima', 'licencias'),
+          path.join(process.cwd(), 'uploads', 'trujillo', 'licencias'),
+          path.join(process.cwd(), 'uploads', 'cochera', 'licencias'),
+          path.join(process.cwd(), 'uploads', 'general', 'licencias'),
+        ];
+
+        for (const dir of dirsToScan) {
+          try {
+            await fs.mkdir(dir, { recursive: true });
+            const files = await fs.readdir(dir);
+            for (const f of files) {
+              if (f.includes(id) && !seenNames.has(f)) {
+                seenNames.add(f);
+                const stat = await fs.stat(path.join(dir, f));
+                let docTypeName = 'Documento Adjunto';
+                let docType = 'documento';
+                const lower = f.toLowerCase();
+                if (lower.includes('informetecnico')) { docTypeName = 'Informe Técnico'; docType = 'informeTecnico'; }
+                else if (lower.includes('certificado')) { docTypeName = 'Certificado de Operatividad'; docType = 'certificado'; }
+                else if (lower.includes('protocolo')) { docTypeName = 'Protocolo de Prueba'; docType = 'protocolo'; }
+                else if (lower.includes('factura')) { docTypeName = 'Factura / Comprobante'; docType = 'factura'; }
+                else if (lower.includes('presupuesto')) { docTypeName = 'Presupuesto'; docType = 'presupuesto'; }
+                else if (lower.includes('checklist')) { docTypeName = 'Checklist'; docType = 'checklist'; }
+
+                matched.push({
+                  fileName: f,
+                  originalName: f,
+                  docType,
+                  docTypeName,
+                  size: stat.size,
+                  mtime: stat.mtime
+                });
+              }
+            }
+          } catch {}
+        }
+
+        matched.sort((a, b) => new Date(b.mtime).getTime() - new Date(a.mtime).getTime());
         return NextResponse.json({ success: true, files: matched });
       } catch (err: any) {
-        console.error('Error reading licencias upload dir:', err);
+        console.error('Error reading licencias files:', err);
         return NextResponse.json({ success: false, error: err.message || String(err) }, { status: 500 });
       }
     }
@@ -83,23 +202,21 @@ export async function GET(request: NextRequest) {
       const relativePath = (license as any)[docFields.pathField] as string | undefined;
       if (!originalName || !relativePath) return NextResponse.json({ success: false, error: 'Documento no encontrado para este tipo.' }, { status: 404 });
 
-      const filePath = path.join(process.cwd(), relativePath);
-      try { await fs.access(filePath); } catch { return NextResponse.json({ success: false, error: 'El archivo físico no existe.' }, { status: 404 }); }
+      const filePath = await findPhysicalFile(relativePath);
+      if (!filePath) return NextResponse.json({ success: false, error: 'El archivo físico no existe.' }, { status: 404 });
 
       const fileBuffer = await fs.readFile(filePath);
 
-      // Determine real extension from relativePath on disk if originalName lacks one
       let extension = path.extname(originalName).toLowerCase();
-      const realExt = path.extname(relativePath).toLowerCase();
+      const realExt = path.extname(filePath).toLowerCase();
       if (!extension && realExt) {
         extension = realExt;
       }
       if (!extension) {
-        // Check magic bytes for PDF (%PDF-)
         if (fileBuffer.length > 4 && fileBuffer[0] === 0x25 && fileBuffer[1] === 0x50 && fileBuffer[2] === 0x44 && fileBuffer[3] === 0x46) {
           extension = '.pdf';
         } else {
-          extension = '.pdf'; // default fallback for all maintenance docs
+          extension = '.pdf';
         }
       }
 
@@ -172,11 +289,13 @@ export async function DELETE(request: NextRequest) {
 
     // 1) Delete physical file if exists
     if (relativePath) {
-      const filePath = path.join(process.cwd(), relativePath);
-      try {
-        await fs.unlink(filePath);
-      } catch (err) {
-        console.error('Error deleting physical file:', err);
+      const filePath = await findPhysicalFile(relativePath);
+      if (filePath) {
+        try {
+          await fs.unlink(filePath);
+        } catch (err) {
+          console.error('Error deleting physical file:', err);
+        }
       }
     }
 

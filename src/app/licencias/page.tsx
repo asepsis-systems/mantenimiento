@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { SEDE_OPTIONS } from '@/config/sedes';
+import { SEDE_OPTIONS, SedeKey, normalizeSede, formatSedeName } from '@/config/sedes';
 import MtoTopNavbar from '@/components/MtoTopNavbar';
 import MtoSidebar from '@/components/MtoSidebar';
 import MtoLoadingScreen from '@/components/MtoLoadingScreen';
@@ -147,6 +147,18 @@ const parseDetails = (details: string | null): Record<string, string> => {
   }
 };
 
+const getRowSede = (row: { machineName: string; license?: License }): SedeKey => {
+  if (row.license?.details) {
+    const details = parseDetails(row.license.details);
+    const norm = normalizeSede(details.sede);
+    if (norm) return norm;
+  }
+  const upper = row.machineName.toUpperCase();
+  if (upper.includes('TRUJILLO')) return 'TRUJILLO';
+  if (upper.includes('COCHERA')) return 'COCHERA';
+  return 'LIMA';
+};
+
 export default function LicensesPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -173,6 +185,7 @@ export default function LicensesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSedeFilter, setSelectedSedeFilter] = useState<string>('TODAS');
   const [carpetas, setCarpetas] = useState<any[]>([]);
   const [currentSection, setCurrentSection] = useState<SectionName>('EQUIPOS');
 
@@ -192,6 +205,7 @@ export default function LicensesPage() {
   const [detailProcesos, setDetailProcesos] = useState('');
 
   const [newMachineName, setNewMachineName] = useState('');
+  const [newMachineSede, setNewMachineSede] = useState<string>('LIMA');
   const [machineError, setMachineError] = useState('');
 
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -364,6 +378,7 @@ export default function LicensesPage() {
 
   const openCreateMachineModal = () => {
     setNewMachineName('');
+    setNewMachineSede(selectedSedeFilter !== 'TODAS' ? selectedSedeFilter : 'LIMA');
     setMachineError('');
     setIsMachineModalOpen(true);
   };
@@ -409,8 +424,8 @@ export default function LicensesPage() {
           modelo: '',
           serie: '',
           capacidad: '',
-          estado: '',
-          sede: '',
+          estado: 'OPERATIVO',
+          sede: newMachineSede || 'LIMA',
           procesos: '',
           garantia: ''
         }),
@@ -466,8 +481,8 @@ export default function LicensesPage() {
           modelo: '',
           serie: '',
           capacidad: '',
-          estado: '',
-          sede: '',
+          estado: 'OPERATIVO',
+          sede: machineName.toUpperCase().includes('TRUJILLO') ? 'TRUJILLO' : machineName.toUpperCase().includes('COCHERA') ? 'COCHERA' : 'LIMA',
           procesos: '',
           garantia: ''
         }),
@@ -847,9 +862,14 @@ export default function LicensesPage() {
       license: lic
     }));
 
-  const displayRows = [...visibleMachineRows, ...extraLicenseRows].sort((a, b) =>
-    a.machineName.localeCompare(b.machineName, undefined, { numeric: true, sensitivity: 'base' })
-  );
+  const displayRows = [...visibleMachineRows, ...extraLicenseRows]
+    .filter((row) => {
+      if (selectedSedeFilter === 'TODAS') return true;
+      return getRowSede(row) === selectedSedeFilter;
+    })
+    .sort((a, b) =>
+      a.machineName.localeCompare(b.machineName, undefined, { numeric: true, sensitivity: 'base' })
+    );
 
   const rowStatus = (lic?: License) => {
     if (!lic) return null;
@@ -872,8 +892,8 @@ export default function LicensesPage() {
       {/* Modern ERP TopNavbar */}
       <MtoTopNavbar
         user={user}
-        selectedSede="TODAS"
-        onSedeChange={() => {}}
+        selectedSede={selectedSedeFilter}
+        onSedeChange={(val) => setSelectedSedeFilter(val)}
         searchTerm={searchQuery}
         onSearchChange={(val) => setSearchQuery(val)}
         onOpenCreateTask={openCreateMachineModal}
@@ -1007,6 +1027,7 @@ export default function LicensesPage() {
                 <tr className="text-[10px] tracking-[0.24em] uppercase font-bold border-b border-slate-800">
                   <th className="p-4 text-center border-r border-white/5">N°</th>
                   <th className="p-4 border-r border-white/5">NOMBRE/MAQUINA</th>
+                  <th className="p-4 text-center border-r border-white/5">SEDE</th>
                   <th className="p-4 border-r border-white/5">DETALLES</th>
                   <th className="p-4 border-r border-white/5">CERTIFICADO</th>
                   <th className="p-4 border-r border-white/5">PROTOCOLO</th>
@@ -1020,7 +1041,7 @@ export default function LicensesPage() {
               <tbody className="divide-y divide-slate-800/80">
                 {displayRows.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="p-12 text-center text-slate-400">
+                    <td colSpan={11} className="p-12 text-center text-slate-400">
                       No hay máquinas ni licencias registradas en esta sección. Usa el botón "Crear Máquina" para comenzar.
                     </td>
                   </tr>
@@ -1031,6 +1052,21 @@ export default function LicensesPage() {
                         <tr key={`placeholder-${row.machineName}`} className="hover:bg-[#121c33]/40 transition-colors">
                           <td className="p-4 text-left align-top font-mono text-slate-400 text-xs">{index + 1}</td>
                           <td className="p-4 text-left align-top font-semibold text-slate-100 text-xs">{row.machineName}</td>
+                          <td className="p-4 text-center align-top text-xs">
+                            {(() => {
+                              const s = getRowSede(row);
+                              const badgeStyle = s === 'TRUJILLO'
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                : s === 'COCHERA'
+                                ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                                : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30';
+                              return (
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase border ${badgeStyle}`}>
+                                  {s}
+                                </span>
+                              );
+                            })()}
+                          </td>
                           <td className="p-4 text-left align-top text-slate-300 text-xs">
                             <button
                               type="button"
@@ -1086,6 +1122,21 @@ export default function LicensesPage() {
                       <tr key={lic.id} className="hover:bg-[#121c33]/40 transition-colors">
                         <td className="p-4 text-left align-top font-mono text-slate-400 text-xs">{index + 1}</td>
                         <td className="p-4 text-left align-top font-semibold text-slate-100 text-xs">{lic.name || '-'}</td>
+                        <td className="p-4 text-center align-top text-xs">
+                          {(() => {
+                            const s = getRowSede(row);
+                            const badgeStyle = s === 'TRUJILLO'
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                              : s === 'COCHERA'
+                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                              : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30';
+                            return (
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase border ${badgeStyle}`}>
+                                {s}
+                              </span>
+                            );
+                          })()}
+                        </td>
                         <td className="p-4 text-left align-top text-slate-300 text-xs">
                           <button
                             type="button"
@@ -1403,12 +1454,26 @@ export default function LicensesPage() {
                 </div>
               )}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nombre de la Máquina</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Sede</label>
+                <select
+                  value={newMachineSede}
+                  onChange={(e) => setNewMachineSede(e.target.value)}
+                  className="w-full bg-[#131d33] border border-slate-700/80 rounded-xl py-2.5 px-3 text-slate-200 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
+                >
+                  {SEDE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value} className="bg-[#0f172a] text-slate-200">
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Nombre de la Máquina</label>
                 <input
                   type="text"
                   value={newMachineName}
                   onChange={(e) => setNewMachineName(e.target.value)}
-                  placeholder="Ej. AUTOCLAVE V7"
+                  placeholder="Ej. GRUPO ELECTROGENO COCHERA"
                   className="w-full bg-[#131d33] border border-slate-700/80 rounded-xl py-2.5 px-3 text-slate-200 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
                   required
                 />
@@ -1417,13 +1482,13 @@ export default function LicensesPage() {
                 <button
                   type="button"
                   onClick={() => setIsMachineModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-bold transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-slate-400 hover:bg-slate-800 text-xs font-bold transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-colors"
+                  className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-colors cursor-pointer"
                 >
                   Guardar Máquina
                 </button>
@@ -1439,7 +1504,7 @@ export default function LicensesPage() {
             <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
               <div>
                 <h3 className="font-bold text-white text-base">Detalles de la Máquina</h3>
-                <p className="text-xs text-brand-600 font-semibold mt-1">{detailsModalLicense.name}</p>
+                <p className="text-xs text-cyan-400 font-semibold mt-1">{detailsModalLicense.name}</p>
               </div>
               <button
                 onClick={() => setIsDetailsModalOpen(false)}
@@ -1449,67 +1514,97 @@ export default function LicensesPage() {
               </button>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 text-sm pb-4 max-h-[60vh] overflow-y-auto pr-1">
+            <div className="grid grid-cols-2 gap-3 text-sm pb-4 max-h-[50vh] overflow-y-auto pr-1">
               {(() => {
                 const details = parseDetails(detailsModalLicense.details);
+                const inferredSede = detailsModalLicense.name.toUpperCase().includes('TRUJILLO') ? 'Trujillo' : detailsModalLicense.name.toUpperCase().includes('COCHERA') ? 'Cochera' : 'Lima';
                 const items = [
-                  { label: 'Equipo', value: details.equipo },
+                  { label: 'Equipo', value: details.equipo || detailsModalLicense.name },
                   { label: 'Marca', value: details.marca },
                   { label: 'Modelo', value: details.modelo },
                   { label: 'Serie / Identificación', value: details.serie },
                   { label: 'Capacidad', value: details.capacidad },
-                  { label: 'Estado', value: details.estado },
-                  { label: 'Sede', value: details.sede },
+                  { label: 'Estado', value: details.estado || 'OPERATIVO' },
+                  { label: 'Sede', value: formatSedeName(details.sede) !== 'Todas' ? formatSedeName(details.sede) : inferredSede },
                   { label: 'Procesos', value: details.procesos },
                   { label: 'Garantía', value: details.garantia }
                 ];
                 return items.map((item) => (
-                  <div key={item.label} className="bg-slate-50 p-3 rounded-2xl border border-slate-800">
+                  <div key={item.label} className="bg-[#131d33] p-3 rounded-xl border border-slate-700/60">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{item.label}</span>
-                    <span className="font-semibold text-slate-200 mt-1 block whitespace-pre-wrap">{item.value || <span className="text-slate-300 font-normal">No registrado</span>}</span>
+                    <span className="font-semibold text-slate-200 mt-1 block whitespace-pre-wrap text-xs">
+                      {item.value || <span className="text-slate-500 font-normal italic">No registrado</span>}
+                    </span>
                   </div>
                 ));
               })()}
             </div>
 
             {/* Document history section */}
-            <div className="mt-4">
-              <h4 className="font-semibold text-sm text-slate-700 mb-2">Historial de Documentos</h4>
+            <div className="mt-4 pt-4 border-t border-slate-800">
+              <h4 className="font-semibold text-xs text-slate-300 uppercase tracking-wider mb-2.5 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-cyan-400" />
+                Historial de Documentos
+              </h4>
               {licenseFilesLoading ? (
-                <div className="text-sm text-slate-500">Cargando archivos...</div>
+                <div className="text-xs text-slate-400 py-3 text-center">Cargando archivos...</div>
               ) : licenseFiles.length === 0 ? (
-                <div className="text-sm text-slate-500">No se encontraron archivos para esta máquina.</div>
+                <div className="text-xs text-slate-500 py-3 text-center bg-[#131d33]/50 rounded-xl border border-slate-800">
+                  No se encontraron archivos para esta máquina.
+                </div>
               ) : (
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                  {licenseFiles.map((f) => {
-                    const fileName = f.fileName || f.fileName;
-                    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+                  {licenseFiles.map((f, fIdx) => {
+                    const fileName = f.fileName || '';
+                    const displayName = f.docTypeName || (f.originalName && f.originalName !== f.fileName ? f.originalName : null) || 'Documento Adjunto';
+                    const originalName = f.originalName || fileName;
+                    const ext = (originalName.split('.').pop() || fileName.split('.').pop() || '').toLowerCase();
                     const previewable = ['pdf', 'jpg', 'jpeg', 'png', 'gif'];
+                    const fileUrl = `/api/licencias/archivo?file=${encodeURIComponent(fileName)}`;
+
                     return (
-                      <div key={fileName} className="flex items-center justify-between bg-slate-50 border border-slate-800 rounded-lg p-3">
-                        <div>
-                          <div className="font-semibold text-sm">{fileName}</div>
-                          <div className="text-xs text-slate-500">{new Date(f.mtime).toLocaleString()}</div>
+                      <div key={fileName || fIdx} className="flex items-center justify-between bg-[#131d33] border border-slate-700/70 rounded-xl p-3 hover:border-slate-600 transition-colors">
+                        <div className="min-w-0 pr-3">
+                          <div className="font-semibold text-xs text-cyan-300 truncate flex items-center gap-1.5">
+                            <FileCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                            <span>{displayName}</span>
+                          </div>
+                          <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                            {originalName !== displayName && <span className="text-slate-300 mr-2">{originalName}</span>}
+                            <span>{f.mtime ? new Date(f.mtime).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' }) : ''}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           {previewable.includes(ext) ? (
                             <button
                               type="button"
                               onClick={() => {
-                                const url = `/api/licencias/archivo?file=${encodeURIComponent(fileName)}`;
-                                setPreviewUrl(url);
-                                setPreviewName(fileName);
+                                setPreviewUrl(fileUrl);
+                                setPreviewName(originalName);
                                 setPreviewExt(ext);
                                 setIsPreviewOpen(true);
                               }}
-                              className="px-3 py-1 rounded-lg bg-sky-50 border border-sky-100 text-sky-700 text-xs font-semibold"
+                              className="px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 text-xs font-semibold cursor-pointer transition-colors"
                             >
                               Ver
                             </button>
                           ) : (
-                            <a href={`/api/licencias/archivo?file=${encodeURIComponent(fileName)}`} target="_blank" rel="noreferrer" className="px-3 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-semibold">Abrir</a>
+                            <a
+                              href={fileUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 text-xs font-semibold"
+                            >
+                              Abrir
+                            </a>
                           )}
-                          <a href={`/api/licencias/archivo?file=${encodeURIComponent(fileName)}`} download className="px-3 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-semibold">Descargar</a>
+                          <a
+                            href={fileUrl}
+                            download={originalName}
+                            className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 text-xs font-semibold"
+                          >
+                            Descargar
+                          </a>
                         </div>
                       </div>
                     );
@@ -1526,7 +1621,7 @@ export default function LicensesPage() {
                     setIsDetailsModalOpen(false);
                     openEditModal(detailsModalLicense);
                   }}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   <span>Editar</span>

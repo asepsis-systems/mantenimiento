@@ -427,8 +427,23 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         />
       </div>
 
-      {/* Equipo / Máquina, Sede, Falla */}
-      <div className="grid grid-cols-3 gap-4">
+      {/* Fila: Sede y Equipo/Máquina */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Sede</label>
+          <select
+            value={sede}
+            onChange={(e) => setSede(e.target.value)}
+            className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm focus:outline-none focus:border-brand-500 cursor-pointer"
+          >
+            {sedeOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div>
           <label className="text-xs font-semibold text-slate-400 block mb-1">Equipo / Máquina</label>
           <select
@@ -437,7 +452,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
               setEquipo(e.target.value);
               if (e.target.value !== 'Otro') setCustomEquipo('');
             }}
-            className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
+            className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm focus:outline-none focus:border-brand-500 cursor-pointer"
           >
             {equipoOptions.map((option) => (
               <option key={option} value={option} className="uppercase">
@@ -451,7 +466,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
               value={customEquipo}
               onChange={(e) => setCustomEquipo(e.target.value)}
               placeholder="Ingresa equipo personalizado"
-              className="mt-3 w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
+              className="mt-3 w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm focus:outline-none focus:border-brand-500"
             />
           )}
           {/* Multi-equipos: agregar y mostrar tags */}
@@ -466,50 +481,38 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                 setEquipo('');
                 setCustomEquipo('');
               }}
-              className="px-3 py-1.5 rounded-full bg-brand-600 text-white text-xs font-semibold"
-            >Agregar equipo</button>
+              className="px-3 py-1.5 rounded-full bg-brand-600 text-white text-xs font-semibold hover:bg-brand-500 transition-colors cursor-pointer"
+            >+ Agregar equipo</button>
             <div className="flex flex-wrap gap-2">
               {selectedEquipos.map((eq) => (
-                <div key={eq} className="bg-slate-800 text-slate-200 px-2 py-1 rounded-full text-xs flex items-center gap-2">
+                <div key={eq} className="bg-slate-800 text-slate-200 px-2.5 py-1 rounded-full text-xs flex items-center gap-2 border border-slate-700">
                   <span className="capitalize">{eq}</span>
-                  <button type="button" onClick={() => setSelectedEquipos(prev => prev.filter(x => x !== eq))} className="ml-1 text-rose-400">✕</button>
+                  <button type="button" onClick={() => setSelectedEquipos(prev => prev.filter(x => x !== eq))} className="ml-1 text-rose-400 hover:text-rose-300">✕</button>
                 </div>
               ))}
             </div>
           </div>
         </div>
-        <div>
-          <label className="text-xs font-semibold text-slate-400 block mb-1">Sede</label>
-          <select
-            value={sede}
-            onChange={(e) => setSede(e.target.value)}
-            className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
-          >
-            {sedeOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="text-xs font-semibold text-slate-400 block mb-1">Descripción de Actividad</label>
-          <textarea
-            rows={3}
-            value={descripcion}
-            onChange={(e) => setDescripcion(e.target.value)}
-            placeholder="Describe la actividad realizada..."
-            className={`w-full bg-slate-900 border ${
-              errors.descripcion ? 'border-rose-500' : 'border-white/10'
-            } hover:border-white/20 rounded-xl py-2.5 px-3 text-slate-200 text-sm focus:outline-none focus:border-brand-500 font-medium placeholder-slate-600 resize-none`}
-          />
-          {errors.descripcion && (
-            <p className="text-rose-450 text-[10px] mt-1 flex items-center gap-1">
-              <AlertCircle className="w-3 h-3" />
-              <span>{errors.descripcion}</span>
-            </p>
-          )}
-        </div>
+      </div>
+
+      {/* Fila: Descripción de Actividad (Ancho Completo) */}
+      <div>
+        <label className="text-xs font-semibold text-slate-400 block mb-1">Descripción de Actividad</label>
+        <textarea
+          rows={3}
+          value={descripcion}
+          onChange={(e) => setDescripcion(e.target.value)}
+          placeholder="Describe detalladamente la actividad realizada..."
+          className={`w-full bg-slate-900 border ${
+            errors.descripcion ? 'border-rose-500' : 'border-white/10'
+          } hover:border-white/20 rounded-2xl py-3 px-4 text-slate-200 text-sm focus:outline-none focus:border-brand-500 font-medium placeholder-slate-600 resize-none`}
+        />
+        {errors.descripcion && (
+          <p className="text-rose-450 text-[10px] mt-1 flex items-center gap-1">
+            <AlertCircle className="w-3 h-3" />
+            <span>{errors.descripcion}</span>
+          </p>
+        )}
       </div>
 
       {/* Estado */}
