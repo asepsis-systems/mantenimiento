@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
+import { SEDE_OPTIONS, getEquiposPorSede, getAllStandardEquipos } from '@/config/sedes';
 
 function normalizeString(val: string): string {
   return val
@@ -240,19 +241,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Lista base ampliada de Equipos/Máquinas estándar en planta
-  const defaultEquipoOptions = [
-    'OE 4XL 1', 'OE 5XL 2', 'OE 4XL 3', 'OE 5XL 4', 'OE 5XL 5', 'OE 5XL 6',
-    'OE 8XL 7', 'OE 8XL 8', 'OE 4XL 9', 'OE 5XL 10',
-    'OE 4 XL TRUJILLO', 'OE 5 XL TRUJILLO',
-    'AUTOCLAVE V1', 'AUTOCLAVE V2', 'AUTOCLAVE V3', 'AUTOCLAVE V4', 'AUTOCLAVE V5', 'AUTOCLAVE V6',
-    'PLASMA P1', 'PLASMA P2', 'PLASMA P3',
-    'FORMALDEHIDO F01',
-    'AUTOCLAVE V-2 TRUJILLO', 'AUTOCLAVE V-5 TRUJILLO',
-    'LAVADORA',
-    'CALDERA',
-    'COMPRESOR 25HP', 'COMPRESOR 10HP'
-  ];
+  // Lista base ampliada de Equipos/Máquinas estándar según sede seleccionada o todas
+  const defaultEquipoOptions = getEquiposPorSede(sede);
 
   const obsoleteEquipos = new Set([
     '4XL 1', '5XL 2', '4XL 3', '5XL 4', '5XL 5', '5XL 6',
@@ -272,7 +262,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   const equipoOptions = ['', ...mergedEquipos, 'Otro'];
 
-  const sedeOptions = ['', 'Lima', 'Trujillo'];
+  const sedeOptions = [
+    { value: '', label: '-- Seleccionar sede --' },
+    ...SEDE_OPTIONS.map(s => ({ value: s.shortLabel, label: s.label }))
+  ];
 
   const tipoOptions = ['', 'Preventivo', 'Correctivo', 'Predictivo', 'Otro'];
 
@@ -492,9 +485,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({
             onChange={(e) => setSede(e.target.value)}
             className="w-full bg-slate-900 border border-white/10 rounded-2xl py-3 px-4 text-slate-200 text-sm"
           >
-            {sedeOptions.map((option) => (
-              <option key={option} value={option} className="uppercase">
-                {option || '-- Seleccionar sede --'}
+            {sedeOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
               </option>
             ))}
           </select>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { SEDE_OPTIONS, normalizeSede, formatSedeName } from '@/config/sedes';
 import { 
   Plus,
   LogOut, 
@@ -124,7 +125,7 @@ export default function Dashboard() {
 
   // Filters & Inputs
   const [selectedEquipoFilter, setSelectedEquipoFilter] = useState<string | null>(null);
-  const [selectedSedeFilter, setSelectedSedeFilter] = useState<'Lima' | 'Trujillo' | null>(null);
+  const [selectedSedeFilter, setSelectedSedeFilter] = useState<string | null>(null);
   const [selectedResponsableFilter, setSelectedResponsableFilter] = useState<string | null>(null);
   const [selectedTipoFilter, setSelectedTipoFilter] = useState<string | null>(null);
   const [selectedDocFilter, setSelectedDocFilter] = useState<'ALL' | 'CON_DOC' | 'SIN_DOC'>('ALL');
@@ -1765,10 +1766,8 @@ export default function Dashboard() {
         onSedeChange={(sede) => {
           if (sede === 'ALL') {
             setSelectedSedeFilter(null);
-          } else if (sede === 'LIMA') {
-            setSelectedSedeFilter('Lima');
-          } else if (sede === 'TRUJILLO') {
-            setSelectedSedeFilter('Trujillo');
+          } else {
+            setSelectedSedeFilter(formatSedeName(sede));
           }
           setCurrentPage(1);
           handleSearchTrigger();
@@ -2330,8 +2329,11 @@ export default function Dashboard() {
               }`}
             >
               <option value="">SEDE: TODAS</option>
-              <option value="Lima">LIMA</option>
-              <option value="Trujillo">TRUJILLO</option>
+              {SEDE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.shortLabel}>
+                  {opt.shortLabel.toUpperCase()}
+                </option>
+              ))}
             </select>
 
             <select

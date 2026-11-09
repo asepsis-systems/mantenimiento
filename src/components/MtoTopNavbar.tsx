@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { SEDE_OPTIONS } from '@/config/sedes';
 import {
   Menu,
   X,
@@ -88,8 +89,11 @@ export default function MtoTopNavbar({
             className="bg-transparent text-white font-semibold text-xs focus:outline-none cursor-pointer pr-1"
           >
             <option value="ALL" className="bg-[#0f172a] text-white">Todas</option>
-            <option value="LIMA" className="bg-[#0f172a] text-white">Lima</option>
-            <option value="TRUJILLO" className="bg-[#0f172a] text-white">Trujillo</option>
+            {SEDE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value} className="bg-[#0f172a] text-white">
+                {opt.shortLabel}
+              </option>
+            ))}
           </select>
         </div>
 

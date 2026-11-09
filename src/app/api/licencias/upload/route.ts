@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { saveStorageFile } from '@/lib/storage';
 import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
@@ -42,25 +43,31 @@ export async function POST(request: NextRequest) {
 
     const licenseId = licenseIdFromForm || crypto.randomUUID();
     
-    // Set up local storage path inside MTTO project
-    const uploadDir = path.join(process.cwd(), 'uploads', 'licencias');
-    
-    // Ensure the directory exists
-    await fs.mkdir(uploadDir, { recursive: true });
-    
-    let fileName = '';
-    let filePath = '';
+    // Obtener la sede de la licencia si existe
+    let licenseSede: string | null = (formData.get('sede') as string | null) || null;
+    if (!licenseSede && licenseIdFromForm) {
+      const existingLicense = await db.license.findUnique({ where: { id: licenseIdFromForm } });
+      if (existingLicense?.details) {
+        try {
+          const parsed = JSON.parse(existingLicense.details);
+          licenseSede = parsed.sede || null;
+        } catch {}
+      }
+    }
+
     let originalName = '';
+    let savedRelativePath = '';
 
     if (file) {
-      originalName = file.name;
-      const extension = path.extname(originalName);
-      fileName = `${licenseId}-${docType}${extension}`;
-      filePath = path.join(uploadDir, fileName);
-      
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      await fs.writeFile(filePath, buffer);
+      const saved = await saveStorageFile({
+        file,
+        module: 'licencias',
+        sede: licenseSede,
+        entityId: licenseId,
+        subType: docType
+      });
+      originalName = saved.originalName;
+      savedRelativePath = saved.relativePath;
     }
 
     const fieldMap: Record<string, { nameField: string; pathField: string; expiryField: string }> = {
@@ -77,7 +84,7 @@ export async function POST(request: NextRequest) {
     
     if (file) {
       fileData[selectedFields.nameField] = originalName;
-      fileData[selectedFields.pathField] = `uploads/licencias/${fileName}`;
+      fileData[selectedFields.pathField] = savedRelativePath;
     }
 
     if (expiryDate) {

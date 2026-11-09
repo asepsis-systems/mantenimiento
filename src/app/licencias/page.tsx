@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { SEDE_OPTIONS } from '@/config/sedes';
 import MtoTopNavbar from '@/components/MtoTopNavbar';
 import MtoSidebar from '@/components/MtoSidebar';
 import MtoLoadingScreen from '@/components/MtoLoadingScreen';
@@ -1279,13 +1280,18 @@ export default function LicensesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Sede</label>
-                  <input
-                    type="text"
+                  <select
                     value={detailSede}
                     onChange={(e) => setDetailSede(e.target.value)}
-                    placeholder="Sede"
-                    className="w-full bg-[#131d33] border border-slate-700/80 rounded-xl py-2 px-3 text-slate-200 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20"
-                  />
+                    className="w-full bg-[#131d33] border border-slate-700/80 rounded-xl py-2 px-3 text-slate-200 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 cursor-pointer"
+                  >
+                    <option value="">-- Seleccionar Sede --</option>
+                    {SEDE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.shortLabel}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nro Procesos x día</label>

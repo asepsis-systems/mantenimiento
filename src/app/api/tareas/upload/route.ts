@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { saveStorageFile } from '@/lib/storage';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -60,24 +61,15 @@ export async function POST(request: NextRequest) {
     const customName = formData.get('customName') as string | null;
     const originalName = file.name;
     const displayName = customName || originalName;
-    const extension = path.extname(originalName);
 
-    // Set up local storage path inside MTTO project
-    const uploadDir = path.join(process.cwd(), 'uploads', 'certificados');
-    
-    // Ensure the directory exists
-    await fs.mkdir(uploadDir, { recursive: true });
-    
-    // Unique file name based on task id + timestamp to keep history
-    const fileName = `${id}-certificado-${Date.now()}${extension}`;
-    const filePath = path.join(uploadDir, fileName);
-    
-    // Write buffer to disk
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await fs.writeFile(filePath, buffer);
-
-    const certificateRelativePath = `uploads/certificados/${fileName}`;
+    // Almacenamiento organizado por sede y módulo
+    const { relativePath: certificateRelativePath } = await saveStorageFile({
+      file,
+      module: 'certificados',
+      sede: existing.sede,
+      entityId: id,
+      subType: 'certificado'
+    });
 
     // Automatic State Transition Logic:
     // "Este estado (CULMINADO) se activa idealmente al completarse la fecha y el certificado."
