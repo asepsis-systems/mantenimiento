@@ -505,22 +505,13 @@ export default function SparePartsPage() {
     }
   };
 
-  // Filter spare parts by active tab
-  const currentTabParts = spareParts.filter(p => 
-    activeTab === 'MATACHANA' ? p.isMatachana : !p.isMatachana
-  );
-
-  // Calculations for dashboard summary widgets
-  const totalItems = currentTabParts.length;
-  const totalStock = currentTabParts.reduce((acc, p) => acc + p.stock, 0);
-  const totalUsados = currentTabParts.reduce((acc, p) => acc + (p.usados ?? 0), 0);
-  const uniqueLocations = new Set(currentTabParts.map(p => p.location || p.almacenado).filter(Boolean)).size;
-
   // Filter parts based on query
-  const filteredParts = currentTabParts.filter(p => 
+  const filteredParts = spareParts.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     p.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (p.location && p.location.toLowerCase().includes(searchQuery.toLowerCase()))
+    (p.repuesto && p.repuesto.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (p.location && p.location.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (p.almacenado && p.almacenado.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   if (loading) {
@@ -605,87 +596,6 @@ export default function SparePartsPage() {
           )}
         </div>
 
-        {/* Dashboard Widgets */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
-          <div className="bg-[#0c1322] rounded-2xl border border-[#1e293b] p-5 flex items-center justify-between shadow-lg">
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Repuestos</p>
-              <p className="text-2xl sm:text-3xl font-black text-white mt-1">{totalItems} <span className="text-xs font-normal text-slate-400">ítems</span></p>
-              <p className="text-[11px] text-cyan-400 mt-0.5">Catálogo {activeTab === 'MATACHANA' ? 'Matachana' : 'Planta'}</p>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-md shadow-cyan-500/10">
-              <Package className="w-6 h-6" />
-            </div>
-          </div>
-
-          <div className="bg-[#0c1322] rounded-2xl border border-[#1e293b] p-5 flex items-center justify-between shadow-lg">
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Stock Total en Planta</p>
-              <p className="text-2xl sm:text-3xl font-black text-emerald-400 mt-1">{totalStock} <span className="text-xs font-normal text-slate-400">unidades</span></p>
-              <p className="text-[11px] text-emerald-400 mt-0.5">Disponibles en almacén</p>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-md shadow-emerald-500/10">
-              <Package className="w-6 h-6" />
-            </div>
-          </div>
-
-          {activeTab === 'MATACHANA' ? (
-            <div className="bg-[#0c1322] rounded-2xl border border-[#1e293b] p-5 flex items-center justify-between shadow-lg animate-in fade-in duration-200">
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Usados</p>
-                <p className="text-2xl sm:text-3xl font-black text-amber-400 mt-1">{totalUsados} <span className="text-xs font-normal text-slate-400">unidades</span></p>
-                <p className="text-[11px] text-amber-400 mt-0.5">Consumidas en mantenimiento</p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-md shadow-amber-500/10">
-                <Wrench className="w-6 h-6" />
-              </div>
-            </div>
-          ) : (
-            <div className="bg-[#0c1322] rounded-2xl border border-[#1e293b] p-5 flex items-center justify-between shadow-lg animate-in fade-in duration-200">
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ubicaciones Registradas</p>
-                <p className="text-2xl sm:text-3xl font-black text-indigo-400 mt-1">{uniqueLocations} <span className="text-xs font-normal text-slate-400">áreas</span></p>
-                <p className="text-[11px] text-indigo-400 mt-0.5">Estantes y módulos</p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-md shadow-indigo-500/10">
-                <MapPin className="w-6 h-6" />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Navigation Tabs (INVENTARIOS vs REPUESTOS MATACHANA) */}
-        <div className="bg-[#0c1322] border border-[#1e293b] p-1.5 rounded-2xl mb-6 flex items-center justify-between shadow-md">
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => handleTabChange('INVENTARIOS')}
-              className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                activeTab === 'INVENTARIOS'
-                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md shadow-cyan-500/20 border border-cyan-400/30'
-                  : 'text-slate-400 hover:text-slate-100 hover:bg-[#121c33]'
-              }`}
-            >
-              <Package className={`w-4 h-4 ${activeTab === 'INVENTARIOS' ? 'text-cyan-300' : 'text-slate-400'}`} />
-              <span>INVENTARIOS</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('MATACHANA')}
-              className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                activeTab === 'MATACHANA'
-                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md shadow-cyan-500/20 border border-cyan-400/30'
-                  : 'text-slate-400 hover:text-slate-100 hover:bg-[#121c33]'
-              }`}
-            >
-              <Wrench className={`w-4 h-4 ${activeTab === 'MATACHANA' ? 'text-cyan-300' : 'text-slate-400'}`} />
-              <span>REPUESTOS MATACHANA</span>
-            </button>
-          </div>
-          
-          <div className="pr-3 text-xs text-slate-400 font-semibold hidden sm:block">
-            Mostrando <span className="text-cyan-400 font-bold">{totalItems}</span> repuestos en esta sección
-          </div>
-        </div>
-
         {/* Search Bar */}
         <div className="mb-6 relative max-w-md">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -706,68 +616,38 @@ export default function SparePartsPage() {
             <table className="w-full text-left border-collapse text-sm">
               <thead className="bg-[#0f172a] text-white shadow-sm">
                 <tr className="text-[10px] tracking-[0.24em] uppercase font-bold border-b border-slate-800">
-                  {activeTab === 'INVENTARIOS' ? (
-                    <>
-                      <th className="p-4 border-r border-white/5">Método</th>
-                      <th className="p-4 border-r border-white/5">Código</th>
-                      <th className="p-4 border-r border-white/5">Nombre</th>
-                      <th className="p-4 border-r border-white/5">Repuesto</th>
-                      <th className="p-4 border-r border-white/5">Código</th>
-                      <th className="p-4 border-r border-white/5">Marca 1</th>
-                      <th className="p-4 border-r border-white/5">Comentario</th>
-                      <th className="p-4 text-center border-r border-white/5">Stock</th>
-                      <th className="p-4 text-center border-r border-white/5">Foto</th>
-                      <th className="p-4 border-r border-white/5">Almacenado</th>
-                      <th className="p-4 border-r border-white/5">Sección</th>
-                    </>
-                  ) : (
-                    <>
-                      <th className="p-4 border-r border-white/5">Método</th>
-                      <th className="p-4 border-r border-white/5">Método 2</th>
-                      <th className="p-4 border-r border-white/5">Correlativo</th>
-                      <th className="p-4 border-r border-white/5">Descripción</th>
-                      <th className="p-4 border-r border-white/5">Código Mtchna</th>
-                      <th className="p-4 border-r border-white/5">Forma parte del kit</th>
-                      <th className="p-4 border-r border-white/5">Forma parte del kit 2</th>
-                      <th className="p-4 text-center border-r border-white/5">Stock</th>
-                      <th className="p-4 text-center border-r border-white/5">Usados</th>
-                      <th className="p-4 border-r border-white/5">Ubicación</th>
-                    </>
-                  )}
+                  <th className="p-4 border-r border-white/5">Método</th>
+                  <th className="p-4 border-r border-white/5">Código</th>
+                  <th className="p-4 border-r border-white/5">Nombre</th>
+                  <th className="p-4 border-r border-white/5">Repuesto</th>
+                  <th className="p-4 border-r border-white/5">Código Marca</th>
+                  <th className="p-4 border-r border-white/5">Marca 1</th>
+                  <th className="p-4 border-r border-white/5">Comentario</th>
+                  <th className="p-4 text-center border-r border-white/5">Stock</th>
+                  <th className="p-4 text-center border-r border-white/5">Foto</th>
+                  <th className="p-4 border-r border-white/5">Almacenado</th>
+                  <th className="p-4 border-r border-white/5">Sección</th>
                   {user?.role !== 'VIEWER' && <th className="p-4 text-center w-24">Acciones</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/80">
-                {tabTransition ? (
+                {filteredParts.length === 0 ? (
                   <tr>
                     <td 
-                      colSpan={
-                        activeTab === 'INVENTARIOS' 
-                          ? (user?.role !== 'VIEWER' ? 12 : 11) 
-                          : (user?.role !== 'VIEWER' ? 11 : 10)
-                      } 
+                      colSpan={user?.role !== 'VIEWER' ? 12 : 11} 
                       className="p-16 text-center"
                     >
-                      <div className="flex flex-col items-center justify-center gap-2.5">
-                        <svg className="animate-spin h-7 w-7 text-brand-600" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        <span className="text-slate-400 text-xs font-semibold animate-pulse">Cargando listado...</span>
+                      <div className="flex flex-col items-center justify-center gap-3 text-slate-400">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-800/40 border border-slate-700/40 flex items-center justify-center text-slate-500">
+                          <Package className="w-6 h-6" />
+                        </div>
+                        <p className="text-sm font-semibold text-slate-300">
+                          {searchQuery ? 'No se encontraron repuestos con ese criterio de búsqueda.' : 'No hay repuestos registrados en el inventario.'}
+                        </p>
+                        <p className="text-xs text-slate-500 max-w-sm">
+                          {searchQuery ? 'Intenta buscando por otro término o código.' : 'La tabla de inventario se encuentra actualmente vacía y lista para nuevos registros.'}
+                        </p>
                       </div>
-                    </td>
-                  </tr>
-                ) : filteredParts.length === 0 ? (
-                  <tr>
-                    <td 
-                      colSpan={
-                        activeTab === 'INVENTARIOS' 
-                          ? (user?.role !== 'VIEWER' ? 12 : 11) 
-                          : (user?.role !== 'VIEWER' ? 11 : 10)
-                      } 
-                      className="p-12 text-center text-slate-400 font-medium"
-                    >
-                      No se encontraron repuestos registrados.
                     </td>
                   </tr>
                 ) : (
@@ -775,143 +655,90 @@ export default function SparePartsPage() {
                     const hasNoStock = part.stock === 0;
                     return (
                       <tr key={part.id} className="hover:bg-[#121c33]/40 transition-colors">
-                        {activeTab === 'INVENTARIOS' ? (
-                          <>
-                            <td className="p-4 font-semibold text-slate-300">{part.metodo || '-'}</td>
-                            <td className="p-4 font-mono font-bold text-xs text-slate-500">{part.code}</td>
-                            <td className="p-4 font-semibold text-slate-800">
-                              <div className="flex items-center gap-2">
-                                <span>{part.name}</span>
-                                {hasNoStock && (
-                                  <span className="inline-flex items-center gap-1 py-0.5 px-2 rounded-full text-[9px] font-bold bg-rose-50 text-rose-600 border border-rose-100 animate-pulse">
-                                    Agotado
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="p-4 text-slate-600 font-medium">{part.repuesto || '-'}</td>
-                            <td className="p-4 font-mono text-xs text-slate-500">{part.codigoMarca || '-'}</td>
-                            <td className="p-4">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-50 text-brand-700 border border-brand-100">
-                                {part.marca1 || '-'}
+                        <td className="p-4 font-semibold text-slate-300">{part.metodo || '-'}</td>
+                        <td className="p-4 font-mono font-bold text-xs text-slate-400">{part.code}</td>
+                        <td className="p-4 font-semibold text-slate-200">
+                          <div className="flex items-center gap-2">
+                            <span>{part.name}</span>
+                            {hasNoStock && (
+                              <span className="inline-flex items-center gap-1 py-0.5 px-2 rounded-full text-[9px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                Agotado
                               </span>
-                            </td>
-                            <td className="p-4 text-slate-500 text-xs max-w-[150px] truncate font-medium" title={part.comentario || ''}>
-                              {part.comentario || '-'}
-                            </td>
-                            <td className={`p-4 text-center font-bold ${hasNoStock ? 'text-rose-600' : 'text-slate-300'}`}>
-                              {part.stock}
-                            </td>
-                            <td className="p-4 text-center">
-                              {part.fotoPath && !brokenImages[part.id] ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setActiveLightboxImg({
-                                    path: getFotoUrl(part.fotoPath),
-                                    name: part.name,
-                                    code: part.code,
-                                    seccion: part.seccion || undefined
-                                  })}
-                                  className="relative group inline-block overflow-hidden rounded-xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/30 cursor-zoom-in"
-                                  title="Ver foto del repuesto"
-                                >
-                                  <img 
-                                    src={getFotoUrl(part.fotoPath)} 
-                                    alt={part.fotoNombre || 'Foto'} 
-                                    onError={() => setBrokenImages(prev => ({ ...prev, [part.id]: true }))}
-                                    className="w-12 h-12 object-cover transition-transform duration-300 group-hover:scale-115 group-hover:rotate-1"
-                                  />
-                                  <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
-                                    <ZoomIn className="w-4 h-4 text-white" />
-                                  </div>
-                                </button>
-                              ) : (
-                                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 text-slate-400" title="Sin foto">
-                                  <ImageIcon className="w-5 h-5 opacity-60" />
-                                </div>
-                              )}
-                            </td>
-                            <td className="p-4">
-                              {part.almacenado ? (
-                                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs bg-slate-100 text-slate-300 border border-slate-200/45 font-medium">
-                                  {part.almacenado}
-                                </span>
-                              ) : (
-                                <span className="text-slate-300">-</span>
-                              )}
-                            </td>
-                            <td className="p-4">
-                              {part.seccion ? (
-                                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs bg-slate-100 text-slate-300 border border-slate-200/45 font-medium">
-                                  {part.seccion}
-                                </span>
-                              ) : (
-                                <span className="text-slate-300">-</span>
-                              )}
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="p-4 font-semibold text-slate-300">{part.metodo || '-'}</td>
-                            <td className="p-4 font-semibold text-slate-300">{part.metodo2 || '-'}</td>
-                            <td className="p-4 font-mono font-bold text-xs text-slate-500">{part.correlativo || '-'}</td>
-                            <td className="p-4 font-semibold text-slate-800">
-                              <div className="flex items-center gap-2">
-                                <span>{part.descripcion || part.name}</span>
-                                {hasNoStock && (
-                                  <span className="inline-flex items-center gap-1 py-0.5 px-2 rounded-full text-[9px] font-bold bg-rose-50 text-rose-600 border border-rose-100 animate-pulse">
-                                    Agotado
-                                  </span>
-                                )}
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-4 text-slate-300 font-medium">{part.repuesto || '-'}</td>
+                        <td className="p-4 font-mono text-xs text-slate-400">{part.codigoMarca || '-'}</td>
+                        <td className="p-4">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+                            {part.marca1 || '-'}
+                          </span>
+                        </td>
+                        <td className="p-4 text-slate-400 text-xs max-w-[150px] truncate font-medium" title={part.comentario || ''}>
+                          {part.comentario || '-'}
+                        </td>
+                        <td className={'p-4 text-center font-bold ' + (hasNoStock ? 'text-rose-400' : 'text-slate-200')}>
+                          {part.stock}
+                        </td>
+                        <td className="p-4 text-center">
+                          {part.fotoPath && !brokenImages[part.id] ? (
+                            <button
+                              type="button"
+                              onClick={() => setActiveLightboxImg({
+                                path: getFotoUrl(part.fotoPath),
+                                name: part.name,
+                                code: part.code,
+                                seccion: part.seccion || undefined
+                              })}
+                              className="relative group inline-block overflow-hidden rounded-xl border border-slate-700/80 shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 cursor-zoom-in"
+                              title="Ver foto del repuesto"
+                            >
+                              <img 
+                                src={getFotoUrl(part.fotoPath)} 
+                                alt={part.fotoNombre || 'Foto'} 
+                                onError={() => setBrokenImages(prev => ({ ...prev, [part.id]: true }))}
+                                className="w-12 h-12 object-cover transition-transform duration-300 group-hover:scale-115 group-hover:rotate-1"
+                              />
+                              <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
+                                <ZoomIn className="w-4 h-4 text-white" />
                               </div>
-                            </td>
-                            <td className="p-4 font-mono font-bold text-xs text-brand-600">{part.codigoMatachana || part.code}</td>
-                            <td className="p-4 text-slate-600 text-xs max-w-[150px] truncate font-medium" title={part.kit1 || ''}>
-                              {part.kit1 && part.kit1 !== 'Ninguno' ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-100">
-                                  {part.kit1.split(' - ')[0]}
-                                </span>
-                              ) : (
-                                <span className="text-slate-300">-</span>
-                              )}
-                            </td>
-                            <td className="p-4 text-slate-600 text-xs max-w-[150px] truncate font-medium" title={part.kit2 || ''}>
-                              {part.kit2 && part.kit2 !== 'Ninguno' ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-100">
-                                  {part.kit2.split(' - ')[0]}
-                                </span>
-                              ) : (
-                                <span className="text-slate-300">-</span>
-                              )}
-                            </td>
-                            <td className={`p-4 text-center font-bold ${hasNoStock ? 'text-rose-600' : 'text-slate-300'}`}>
-                              {part.stock}
-                            </td>
-                            <td className="p-4 text-center font-bold text-slate-500">{part.usados ?? 0}</td>
-                            <td className="p-4 text-slate-500 text-xs font-medium">
-                              {part.location ? (
-                                <div className="flex items-center gap-1">
-                                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                  <span>{part.location}</span>
-                                </div>
-                              ) : (
-                                <span className="text-slate-300">-</span>
-                              )}
-                            </td>
-                          </>
-                        )}
+                            </button>
+                          ) : (
+                            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-slate-800/60 border border-slate-700/60 text-slate-500" title="Sin foto">
+                              <ImageIcon className="w-5 h-5 opacity-60" />
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          {part.almacenado ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs bg-slate-800 text-slate-300 border border-slate-700 font-medium">
+                              {part.almacenado}
+                            </span>
+                          ) : (
+                            <span className="text-slate-500">-</span>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          {part.seccion ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs bg-slate-800 text-slate-300 border border-slate-700 font-medium">
+                              {part.seccion}
+                            </span>
+                          ) : (
+                            <span className="text-slate-500">-</span>
+                          )}
+                        </td>
                         {user?.role !== 'VIEWER' && (
                           <td className="p-4 flex items-center justify-center gap-1">
                             <button
                               onClick={() => openEditModal(part)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition-colors cursor-pointer"
                               title="Editar"
                             >
                               <Edit3 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDelete(part.id, part.name)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                               title="Eliminar"
                             >
                               <Trash2 className="w-4 h-4" />
